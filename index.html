@@ -307,7 +307,7 @@ function applyBoot(d){
     var keepView=ME&&ME.id===d.me.id; ME=d.me; if(!keepView)VIEW=ME.role==='owner'?'mine':'home';
     PKG_TYPES=d.types;CLIENTS=d.clients;PKGS=d.pkgs;LEADS=d.leads;RECURRING=d.recurring;EXPENSES=d.expenses;POS=d.pos;INVENTORY=d.inventory;
     SESS=d.sessions.concat(HIST||[]);SESS.forEach(function(s){s.clients.forEach(function(c){c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
-    INTAKES=d.intakes||[];FILES=d.files||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';}
+    INTAKES=d.intakes||[];FILES=d.files||[];REQUESTS=d.requests||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';}
 // older sessions (more than 70 days back) only load when the owner opens the numbers
 function loadHistory(){if(HIST||HIST_LOADING||!ME||ME.role!=='owner')return;HIST_LOADING=true;
   api('app_history').then(function(h){HIST=h.sessions||[];SESS=SESS.concat(HIST);HIST_LOADING=false;render()}).catch(function(){HIST_LOADING=false})}
@@ -367,7 +367,7 @@ function render(){
 }
 function loginView(){
   return '<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div><h1>Wellbe Team</h1><p>Open the private link Majd sent you on WhatsApp. It signs you in on this phone, once.</p>'+
-   '<p class="demo">Lost your link or changed phone? Ask Majd for a new one.</p></div>';
+   '<p class="demo">Lost your link or changed phone? Ask Majd for a new one. On iPhone: open your link in Safari first, wait for it to load, then Share, Add to Home Screen.</p></div>';
 }
 
 /* ---------------- shared pieces ---------------- */
@@ -415,6 +415,7 @@ function qbtn(act,ic,t,count){return '<button class="qb" data-act="'+act+'"><spa
 var DONE_TODO={};
 function todoItems(){
   var items=[];
+  (typeof REQUESTS!=='undefined'?REQUESTS:[]).forEach(function(q){var m=REQ_META[q.type]||['i-bell','mute'];items.push({id:'req-'+q.id,level:m[1],icon:m[0],title:esc(q.client)+' · '+esc(q.type),sub:esc(q.slot?q.slot+' · ':'')+esc(q.details).slice(0,120),btn:'Open',act:'req|'+q.id})});
   LEADS.filter(function(l){return l.status!=='Confirmed'}).forEach(function(l){items.push({id:'lead-'+l.id,level:l.date?'warn':'bad',icon:'i-users',title:esc(l.name)+(l.date?' booked a free trial':' left without booking'),sub:l.date?dayLabel(l.date)+' · '+l.time+' · '+l.type:'Call her to find a time',btn:l.date?'Confirm':'Call',act:'lead|'+l.id})});
   overdue().forEach(function(x){var m=melOwes(x.p);items.push({id:'pay-'+x.p.id,level:'bad',icon:'i-cash',title:m?'Melanie owes '+money(x.due)+' · '+esc(x.p.name):esc(x.p.name)+' owes '+money(x.due),sub:m?'Center share $4 x '+x.p.total+' passes, paid upfront':'Session '+x.p.used+' of '+x.p.total+' · late',btn:m?'Record':'Remind',act:(m?'paid|':'pay|')+x.p.id})});
   var tomorrowS=sessOn(ymd(nextWorkday())).reduce(function(n,s){return n+s.clients.filter(function(c){return !c.reminded}).length},0);
@@ -528,6 +529,7 @@ function bindView(){
   $$('[data-tdone]').forEach(function(b){b.onclick=function(){var id=b.dataset.tdone;DONE_TODO[id]=true;render();toast('Marked done',function(){delete DONE_TODO[id];render()})}});
   $$('[data-todo]').forEach(function(b){b.onclick=function(){var x=b.dataset.todo.split('|'),tid=b.dataset.tid;
     if(x[0]==='lead') confirmLead(x[1]);
+    if(x[0]==='req') reqSheet(x[1]);
     if(x[0]==='pay') ACTIONS.pay();
     if(x[0]==='paid') paySheet(x[1]);
     if(x[0]==='remind') ACTIONS.remind();
@@ -545,6 +547,21 @@ $('#scrim').onclick=closeSheet;$('#shClose').onclick=closeSheet;
 addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
 var tt;function toast(m,undo){var t=$('#toast');t.innerHTML=esc(m)+(undo?' <button id="undoBtn" style="color:var(--mint);font-weight:800;margin-left:10px;pointer-events:auto">Undo</button>':'');t.style.pointerEvents=undo?'auto':'none';t.classList.add('on');if(undo)$('#undoBtn').onclick=function(){t.classList.remove('on');undo()};clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},undo?5000:2600)}
 
+var REQUESTS=[];
+var REQ_META={'Physio visit':['i-heart','bad'],'Freeze':['i-cal','warn'],'Reschedule':['i-swap','warn'],'Session request':['i-cal','warn'],'Supplement order':['i-cash','warn'],'Supplement request':['i-cash','mute'],'3 month offer':['i-repeat','bad'],'6 month upgrade':['i-repeat','bad'],'Cancelled':['i-alert','mute'],'Joined a spot':['i-users','mute']};
+// client app requests: Romy reads, acts, and marks it handled
+function reqSheet(id){var q=REQUESTS.filter(function(x){return x.id===id})[0];if(!q)return;var c=clientById(q.cid)||{phone:''};
+  var acc={'Physio visit':['Accept: sell $40 visit + book it','Majd said yes? This sells "Physio - Single Session" at 20% off ($40) and books it in his room.'],
+    'Freeze':['Approve: +7 days','Moves the package end date 7 days later.'],
+    '3 month offer':['Accept: create the 3 months','Creates the 3 monthly packages (7% off, one payment), starting when the current one ends.']}[q.type];
+  var info={'6 month upgrade':'Months 4 to 6 are already created in PACKAGES. Collect the payment.','Supplement order':'Hand it over at the session, then log it in Payments > Product sale.','Cancelled':'Already applied on the schedule. Just for your info.','Joined a spot':'Already booked on the schedule. Just for your info.','Reschedule':'Move the session from Change, then mark done.','Session request':'Book it from Next week or the schedule, then mark done.'}[q.type]||'';
+  openSheet(q.type,'<div class="card" style="padding:12px 14px"><b>'+esc(q.client)+'</b><div class="muted" style="font-size:14px">'+esc(q.created)+(q.pkg?' · '+esc(q.pkg):'')+'</div>'+(q.slot?'<div style="margin-top:6px;font-weight:700">'+esc(q.slot)+'</div>':'')+'<p style="margin-top:6px">'+esc(q.details)+'</p></div>'+
+   (info?'<div class="note good" style="margin-top:12px">'+ICON('i-check')+'<span>'+info+'</span></div>':'')+(acc?'<div class="note warn" style="margin-top:12px">'+ICON('i-alert')+'<span>'+acc[1]+'</span></div>':''),
+   (acc?'<button class="btn" style="width:100%" id="rqA">'+acc[0]+'</button>':'')+'<div style="display:flex;gap:8px;margin-top:8px">'+(c.phone?'<a class="btn wa" style="flex:1" target="_blank" href="'+wa(c.phone,'Hi '+first(q.client)+', this is Romy from Wellbe about your request ('+q.type.toLowerCase()+'). ')+'">WhatsApp</a>':'')+'<button class="btn sec" style="flex:1" id="rqD">Mark done</button>'+(acc?'<button class="btn sec" style="flex:1" id="rqX">Decline</button>':'')+'</div>');
+  var go=function(act,msg){REQUESTS=REQUESTS.filter(function(x){return x.id!==id});closeSheet();render();save('app_req_done',{id:id,act:act},msg,act==='accept')};
+  if($('#rqA'))$('#rqA').onclick=function(){go('accept',q.type==='Physio visit'?'Physio booked for '+q.client:'Done for '+q.client)};
+  $('#rqD').onclick=function(){go('done','Marked done')};
+  if($('#rqX'))$('#rqX').onclick=function(){go('decline','Declined. Message '+first(q.client)+' so they know.')}}
 var ACTIONS={};
 ACTIONS.change=function(){
   var up=SESS.filter(function(s){return s.date>=T&&s.status!=='Cancelled'}).sort(function(a,b){return (a.date+a.start)<(b.date+b.start)?-1:1}).slice(0,30);
@@ -1005,7 +1022,8 @@ function askClaude(){
 /* boot */
 try{var th=store('wb_theme');if(th&&th!=='system')document.documentElement.setAttribute('data-theme',th)}catch(e){}
 // private link: #k=KEY, kept on this phone, then removed from the address bar
-var hk=/[#&]k=([a-f0-9]{16,64})/i.exec(location.hash);if(hk){KEY=hk[1];store('wb_key',KEY);history.replaceState(null,'',location.pathname)}else{KEY=store('wb_key')||null}
+// the key stays in the address so "Add to Home Screen" saves it (iPhone home screen apps do not share Safari's storage)
+var hk=/[#&]k=([a-f0-9]{16,64})/i.exec(location.hash);if(hk){KEY=hk[1];store('wb_key',KEY)}else{KEY=store('wb_key')||null;if(KEY)history.replaceState(null,'',location.pathname+'#k='+KEY)}
 if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
 render();if(KEY)boot(LOADED);
 // fresh data when the app comes back to the front, and every 3 minutes while open
