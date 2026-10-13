@@ -300,15 +300,23 @@ function save(action,data,okMsg,reload){BUSY++;paintBusy();
   return api(action,data).then(function(j){BUSY--;paintBusy();if(okMsg)toast(okMsg);if(reload)boot(true);return j})
    .catch(function(e){BUSY--;paintBusy();toast('Not saved: '+e.message);boot(true);throw e})}
 function paintBusy(){var b=$('#busy');if(b)b.hidden=!BUSY}
-function boot(silent){
-  if(!silent){LOADED=false;LOAD_ERR='';render()}
-  return api('app_boot').then(function(d){
+// the last answer is kept on this phone: the app opens instantly from it, then refreshes in the background
+var HIST=null, HIST_LOADING=false, CACHE_KEY='wb_cache_'+(String(store('wb_key')||'').slice(0,8));
+function applyBoot(d){
     TODAY=new Date(d.today+'T12:00:00');T=d.today;monday=addDays(TODAY,-((TODAY.getDay()+6)%7));
     var keepView=ME&&ME.id===d.me.id; ME=d.me; if(!keepView)VIEW=ME.role==='owner'?'mine':'home';
     PKG_TYPES=d.types;CLIENTS=d.clients;PKGS=d.pkgs;LEADS=d.leads;RECURRING=d.recurring;EXPENSES=d.expenses;POS=d.pos;INVENTORY=d.inventory;
-    SESS=d.sessions;SESS.forEach(function(s){s.clients.forEach(function(c){c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
-    INTAKES=d.intakes||[];FILES=d.files||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';render();
-  }).catch(function(e){if(e.message==='auth'){KEY=null;store('wb_key','')}LOAD_ERR=e.message;if(!LOADED||e.message==='auth')render();else toast('Could not refresh: '+e.message)})}
+    SESS=d.sessions.concat(HIST||[]);SESS.forEach(function(s){s.clients.forEach(function(c){c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
+    INTAKES=d.intakes||[];FILES=d.files||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';}
+// older sessions (more than 70 days back) only load when the owner opens the numbers
+function loadHistory(){if(HIST||HIST_LOADING||!ME||ME.role!=='owner')return;HIST_LOADING=true;
+  api('app_history').then(function(h){HIST=h.sessions||[];SESS=SESS.concat(HIST);HIST_LOADING=false;render()}).catch(function(){HIST_LOADING=false})}
+function boot(silent){
+  if(!silent){LOADED=false;LOAD_ERR='';render()}
+  return api('app_boot').then(function(d){
+    applyBoot(d);render();
+    try{CACHE_KEY='wb_cache_'+String(KEY).slice(0,8);localStorage.setItem(CACHE_KEY,JSON.stringify(d))}catch(e){}
+  }).catch(function(e){if(e.message==='auth'){try{localStorage.removeItem(CACHE_KEY)}catch(x){}KEY=null;store('wb_key','');LOADED=false}LOAD_ERR=e.message;if(!LOADED||e.message==='auth')render();else toast('Could not refresh: '+e.message)})}
 // weekly pattern from the last 60 days: a slot that ran in 3+ different weeks, with the clients who came at least half the time
 function buildPatterns(){
   var from=ymd(addDays(TODAY,-60)),slots={};
@@ -352,7 +360,7 @@ function render(){
   app.innerHTML='<header class="top"><div class="in"><div class="logo">W</div><div class="who"><b>'+esc(ME.name)+'</b><span>Wellbe Health Center</span></div><span class="rolechip">'+roleName+'</span>'+
     '<span class="busy" id="busy" hidden title="Saving">Saving</span><button class="iconbtn" id="refreshBtn" aria-label="Refresh from the sheets" title="Refresh">'+ICON('i-repeat')+'</button></div></header>'+
     (ME.role!=='trainer'?'<button class="fab" id="fab" aria-label="New">'+ICON('i-plus')+'</button>':'')+'<main id="main"></main><nav class="tabs" aria-label="Main"><div class="in">'+NAV[ME.role].map(function(n){var b=badgeFor(n[0]);return '<button class="tab" data-nav="'+n[0]+'" '+(VIEW===n[0]?'aria-current="page"':'')+'>'+ICON(n[2])+n[1]+(b?'<span class="badge">'+b+'</span>':'')+'</button>'}).join('')+'</div></nav>';
-  $('#refreshBtn').onclick=function(){boot(true);toast('Refreshing')};paintBusy();
+  $('#refreshBtn').onclick=function(){HIST=null;if(SESS)SESS=SESS.filter(function(x){return x.date>=ymd(addDays(TODAY,-70))});boot(true);toast('Refreshing')};paintBusy();
   if($('#fab')) $('#fab').onclick=ACTIONS.newMenu;
   $$('[data-nav]').forEach(function(b){b.onclick=function(){closeSheet();VIEW=b.dataset.nav;render();scrollTo(0,0)}});
   var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='numbers')bindNumbers();
@@ -848,9 +856,11 @@ UI.num='overview';UI.reveal=false;
 VIEWS.numbers=function(){
   var tabs=[['overview','Overview'],['analytics','Analytics'],['advisor','Next move']];
   var head='<div class="seg" role="tablist" style="margin-bottom:14px">'+tabs.map(function(t){return '<button data-num="'+t[0]+'" aria-pressed="'+(UI.num===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>';
+  if(UI.reveal)loadHistory();
   if(!UI.reveal)return '<div class="h"><h2>Numbers</h2></div>'+head+'<div class="card" style="padding:28px 18px;text-align:center"><p class="muted" style="margin-bottom:14px">Numbers stay hidden until you open them, so nobody reads them over your shoulder.</p><button class="btn" id="reveal">'+ICON('i-chart')+'Show numbers</button></div>';
   var body=UI.num==='analytics'?rangePicker()+analyticsView():UI.num==='advisor'?advisorView():rangePicker()+VIEWS.dash();
-  return head+body+'<button class="btn sec full" id="hideNum" style="margin-top:18px">Hide numbers</button>';
+  var R=curRange(),old=R.from<ymd(addDays(TODAY,-70));
+  return head+(old&&!HIST?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-repeat')+'<span>Loading older history… numbers before '+dayLabel(ymd(addDays(TODAY,-70)))+' fill in in a few seconds.</span></div>':'')+body+'<button class="btn sec full" id="hideNum" style="margin-top:18px">Hide numbers</button>';
 };
 function bindNumbers(){
   $$('[data-num]').forEach(function(b){b.onclick=function(){UI.num=b.dataset.num;render()}});bindRange();
@@ -996,7 +1006,8 @@ function askClaude(){
 try{var th=store('wb_theme');if(th&&th!=='system')document.documentElement.setAttribute('data-theme',th)}catch(e){}
 // private link: #k=KEY, kept on this phone, then removed from the address bar
 var hk=/[#&]k=([a-f0-9]{16,64})/i.exec(location.hash);if(hk){KEY=hk[1];store('wb_key',KEY);history.replaceState(null,'',location.pathname)}else{KEY=store('wb_key')||null}
-render();if(KEY)boot();
+if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
+render();if(KEY)boot(LOADED);
 // fresh data when the app comes back to the front, and every 3 minutes while open
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on'))boot(true)});
 setInterval(function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on'))boot(true)},180000);
