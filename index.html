@@ -287,7 +287,7 @@ function renewMsg(p){var left=p.total-p.used,o=offerOf(p),pk=p.type.split(' (')[
  var head='Hi '+first(p.name)+', this is Romy from Wellbe. You '+(left===0?'just finished':'have 1 session left on')+' your '+pk+' package.';
  if(!o)return head+' Want me to renew it so you keep your spot?';
  return head+' Before you renew, two ways to save:\n\n3 months: $'+o.p3+' instead of $'+o.t3+' (7% off), one payment.\n6 months: $'+o.p6+' instead of $'+o.t6+' (15% off), paid in 2: $'+o.half+' now and $'+(o.p6-o.half)+' on day 1 of month 3.\n\nSame spot, same coach. Which one works for you?'}
-function lateRule(p){ if(!p||!p.price||p.kind==='Madero') return null; if(p.status&&p.status!=='Active') return null; var due=Math.round(((melOwes(p)?Math.min(p.price,4*p.total):p.price)-p.paid)*100)/100; if(due<=0) return null; var limit=p.total>=12?3:(p.total>=8?2:1); return {due:due, late:p.used>=limit, limit:limit} }
+function lateRule(p){ if(!p||!p.price) return null; if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=p.total>=12?3:(p.total>=8?2:1); return {due:due, late:p.used>=limit, limit:limit} }
 var ROOMS={'1:1':'Training Room','1:2':'Training Room','1:3':'Training Room','Madero':'Madero Room','Prehab':'Physio Room','Physio':'Physio Room','Osteo':'Osteo Room'};
 function endT(t){var h=+t.split(':')[0]+1;return pad(h)+':'+t.split(':')[1]}
 
@@ -304,10 +304,10 @@ function boot(silent){
   if(!silent){LOADED=false;LOAD_ERR='';render()}
   return api('app_boot').then(function(d){
     TODAY=new Date(d.today+'T12:00:00');T=d.today;monday=addDays(TODAY,-((TODAY.getDay()+6)%7));
-    var keepView=ME&&ME.id===d.me.id; ME=d.me; if(!keepView)VIEW=ME.role==='owner'?'dash':'home';
+    var keepView=ME&&ME.id===d.me.id; ME=d.me; if(!keepView)VIEW=ME.role==='owner'?'mine':'home';
     PKG_TYPES=d.types;CLIENTS=d.clients;PKGS=d.pkgs;LEADS=d.leads;RECURRING=d.recurring;EXPENSES=d.expenses;POS=d.pos;INVENTORY=d.inventory;
     SESS=d.sessions;SESS.forEach(function(s){s.clients.forEach(function(c){c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
-    PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';render();
+    INTAKES=d.intakes||[];FILES=d.files||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';render();
   }).catch(function(e){if(e.message==='auth'){KEY=null;store('wb_key','')}LOAD_ERR=e.message;if(!LOADED||e.message==='auth')render();else toast('Could not refresh: '+e.message)})}
 // weekly pattern from the last 60 days: a slot that ran in 3+ different weeks, with the clients who came at least half the time
 function buildPatterns(){
@@ -326,7 +326,7 @@ var RATES={Majd:{fixed:true},Mikel:{tier:true,base:50},Joe:{tier:true,base:0},Me
 function fixedPay(s){if(s.trainer==='Jad')return 140;if(s.trainer!=='Majd')return 0;if(s.tab==='Prehab')return 38;if(s.tab==='Physio')return /insur/i.test(s.pay||'')?28:38;return 20}
 // Melanie's own clients pay her; the center only gets $4 per pass (paid upfront by Melanie). Madero is 100% Melanie's.
 function isMel(cid){var c=clientById(cid);return !!(c&&c.mel)}
-function melOwes(p){return p&&isMel(p.client)&&p.kind!=='Madero'}
+function melOwes(p){return false}   // Melanie pays her $4/pass upfront: nothing to chase from her
 function centerValue(s,c){if(s.tab==='Madero')return 0;if(isMel(c.cid))return 4;var p=pkgById(c.pkg);return p&&p.total?p.price/p.total:0}
 function delivered(s){return s.clients.some(function(c){return deducts(c.att||(s.date<=T?'Present':''))})}
 function tier(n){return n<40?7:(n<80?9:10.5)}
@@ -341,7 +341,7 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 var NAV={
  assistant:[['home','Today','i-home'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['money','Money','i-cash'],['more','More','i-more']],
  trainer:[['home','Today','i-home'],['week','My week','i-cal'],['myclients','Clients','i-users'],['me','Me','i-user']],
- owner:[['dash','Dashboard','i-chart'],['home','Today','i-home'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['more','More','i-more']]};
+ owner:[['mine','My day','i-user'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['numbers','Numbers','i-chart'],['more','More','i-more']]};
 function badgeFor(v){ if(v==='home'&&ME.role!=='trainer'){var n=overdue().length;return n?n:''} return '' }
 
 function render(){
@@ -354,8 +354,8 @@ function render(){
     (ME.role!=='trainer'?'<button class="fab" id="fab" aria-label="New">'+ICON('i-plus')+'</button>':'')+'<main id="main"></main><nav class="tabs" aria-label="Main"><div class="in">'+NAV[ME.role].map(function(n){var b=badgeFor(n[0]);return '<button class="tab" data-nav="'+n[0]+'" '+(VIEW===n[0]?'aria-current="page"':'')+'>'+ICON(n[2])+n[1]+(b?'<span class="badge">'+b+'</span>':'')+'</button>'}).join('')+'</div></nav>';
   $('#refreshBtn').onclick=function(){boot(true);toast('Refreshing')};paintBusy();
   if($('#fab')) $('#fab').onclick=ACTIONS.newMenu;
-  $$('[data-nav]').forEach(function(b){b.onclick=function(){VIEW=b.dataset.nav;render();scrollTo(0,0)}});
-  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView();
+  $$('[data-nav]').forEach(function(b){b.onclick=function(){closeSheet();VIEW=b.dataset.nav;render();scrollTo(0,0)}});
+  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='numbers')bindNumbers();
 }
 function loginView(){
   return '<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div><h1>Wellbe Team</h1><p>Open the private link Majd sent you on WhatsApp. It signs you in on this phone, once.</p>'+
@@ -442,7 +442,7 @@ VIEWS.money=function(){
 function payRow(x){var p=x.p;return '<button class="row" data-paycl="'+p.id+'"><div class="main"><b>'+esc(p.name)+'</b><span>'+esc(p.type)+' · session '+p.used+' of '+p.total+'</span></div><span class="pill '+(x.late?'p-bad':'p-warn')+' num">'+money(x.due)+'</span></button>'}
 VIEWS.more=function(){
   var items=[['leads','Trial leads','Landing page bookings'],['book','Book a session','One-off or new client'],['pos','Product sale','POS'],['expense','Expense','One-time or recurring'],['recurring','Recurring expenses','Rent, bills, subscriptions'],['inventory','Inventory','Stock left']];
-  if(ME.role==='owner') items.unshift(['payroll','Payroll','Trainer pay this month']);
+  if(ME.role==='owner'){items.unshift(['payroll','Payroll','Trainer pay this month']);items.unshift(['intake','New physio intake','Assessment, red flags, files']);items.unshift(['desk','Front desk','Romy\'s To do list and today'])}
   return '<div class="h"><h2>More</h2></div><div class="list">'+items.map(function(i){return '<button class="row" data-act="'+i[0]+'"><div class="main"><b>'+i[1]+'</b><span>'+i[2]+'</span></div></button>'}).join('')+'</div>'+
    '<div class="h"><h2>Display</h2></div><div class="seg" role="group" aria-label="Theme">'+['System','Light','Dark'].map(function(t){var cur=(document.documentElement.getAttribute('data-theme')||'system');return '<button data-theme-set="'+t.toLowerCase()+'" aria-pressed="'+(cur===t.toLowerCase())+'">'+t+'</button>'}).join('')+'</div>';
 };
@@ -477,14 +477,14 @@ VIEWS.dash=function(){
   done.forEach(function(s){ s.clients.forEach(function(c){ if(!deducts(c.att||'Present'))return; var v=centerValue(s,c); rev+=v; byType[s.tab]=(byType[s.tab]||0)+v }) });
   var pay=0; Object.keys(byTrainer).forEach(function(k){var t=byTrainer[k];t.pay=trainerPay(k,t);pay+=t.pay});
   var monthExp=EXPENSES.filter(function(e){return e.d>=monthStart&&e.d<=T});
-  var exp=monthExp.reduce(function(a,b){return a+b.amt},0), cash=PKGS.filter(function(p){return p.start>=monthStart}).reduce(function(a,p){return a+(p.paid||0)},0), net=rev-pay-exp;
+  var exp=monthExp.reduce(function(a,b){return a+b.amt},0), cash=PKGS.filter(function(p){return p.start>=monthStart&&p.kind!=='Madero'&&!isMel(p.client)}).reduce(function(a,p){return a+(p.paid||0)},0), net=rev-pay-exp;
   var owed=overdue().reduce(function(a,b){return a+b.due},0);
   // fill rate by hour for 1:3 (capacity 3)
   var hours={}; SESS.filter(function(s){return s.tab==='1:3'&&s.date>=monthStart&&s.date<=T&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=3});
   var maxType=Math.max.apply(null,Object.keys(byType).map(function(k){return byType[k]}).concat([1]));
   return '<div class="h"><h2>This month</h2><small>'+new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})+' · to date</small></div>'+
    '<div class="kpis"><div class="kpi hero"><span>Net profit</span><b class="num" style="color:'+(net>=0?'var(--good)':'var(--bad)')+'">'+money(net)+'</b><small>Delivered revenue minus trainer pay and expenses</small></div>'+
-   kpi('Delivered revenue',money(rev),'Sessions actually given')+kpi('Cash collected',money(cash),'Paid on packages started this month')+kpi('Trainer pay',money(pay),'Per your pay rules')+
+   kpi('Delivered revenue',money(rev),'Sessions actually given')+kpi('Cash collected',money(cash),'Center packages started this month')+kpi('Trainer pay',money(pay),'Per your pay rules')+
    kpi('Expenses',money(exp),monthExp.length+' entries')+kpi('Late payments',money(owed),overdue().length+' clients')+kpi('Sessions',done.length,'Given this month')+'</div>'+
    '<div class="h"><h2>Revenue by service</h2></div><div class="card bars">'+Object.keys(byType).sort(function(a,b){return byType[b]-byType[a]}).map(function(k){return bar(k,byType[k],maxType,money(byType[k]))}).join('')+'</div>'+
    '<div class="h"><h2>1:3 fill rate by hour</h2><small>Seats used of 3</small></div><div class="card bars">'+Object.keys(hours).sort().map(function(h){var x=hours[h],pct=Math.round(x.seats/x.cap*100);return bar(hl(h),pct,100,pct+'%')}).join('')+'</div>'+
@@ -625,11 +625,12 @@ ACTIONS.week=function(){
 function clientSheet(id){
   var c=clientById(id);if(!c){toast('Client file not found');return}var p=pkgOf(id),r=p&&lateRule(p),hist=SESS.filter(function(s){return s.clients.some(function(x){return x.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).slice(0,6);
   openSheet(c.name,'<div class="kv" style="margin-bottom:14px">'+(ME.role==='trainer'?'':'<dt>Phone</dt><dd>'+esc(c.phone)+'</dd><dt>Email</dt><dd>'+esc(c.email)+'</dd>')+'<dt>Package</dt><dd>'+(p?esc(p.type):'None')+'</dd>'+(p?'<dt>Passes left</dt><dd class="num">'+(p.total-p.used)+' of '+p.total+'</dd><dt>Expires</dt><dd>'+(p.expiry?dayLabel(p.expiry):'')+'</dd><dt>Balance</dt><dd class="num" style="color:'+(r&&r.due?'var(--bad)':'var(--good)')+'">'+(r&&r.due?money(r.due)+(melOwes(p)?' due from Melanie':' due'):'Paid')+'</dd>':'')+'</div>'+
-   (ME.role!=='trainer'?'<label style="display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:600"><input type="checkbox" id="melFlag" style="width:22px;height:22px"'+(c.mel?' checked':'')+'> Melanie\'s own client <span class="muted" style="font-weight:500;font-size:13px">(she collects, center gets $4/pass)</span></label>':'')+
+   (ME.role!=='trainer'?'<label style="display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:600"><input type="checkbox" id="melFlag" style="width:22px;height:22px"'+(c.mel?' checked':'')+'> Melanie\'s own client <span class="muted" style="font-weight:500;font-size:13px">(Melanie pays the center $4/pass)</span></label>':'')+
    (c.notes?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+(c.program?'<div class="notebox"><b>Training program</b>'+esc(c.program)+'</div>':'')+(c.log.length?'<div class="notebox"><b>Session notes</b>'+c.log.slice(0,4).map(function(l){return dayLabel(l.d)+' · '+esc(l.by)+': '+esc(l.t)}).join('<br>')+'</div>':'')+
-   '<span class="flabel">Recent sessions</span><div class="list" style="margin-top:8px">'+hist.map(function(s){var me=s.clients.filter(function(x){return x.cid===id})[0];return '<div class="row" style="min-height:50px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?'p-bad':'p-mute')+'">'+(me.att||'Scheduled')+'</span></div>'}).join('')+'</div>',
+   (ME.role==='owner'?ownerClientExtras(c):'')+'<span class="flabel">Recent sessions</span><div class="list" style="margin-top:8px">'+hist.map(function(s){var me=s.clients.filter(function(x){return x.cid===id})[0];return '<div class="row" style="min-height:50px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?'p-bad':'p-mute')+'">'+(me.att||'Scheduled')+'</span></div>'}).join('')+'</div>',
    ME.role==='trainer'?'<button class="btn ok full" id="editNotes">'+ICON('i-edit')+'Edit notes and program</button>':'<div class="two"><a class="btn wa" href="'+wa(c.phone,'Hi '+first(c.name)+', ')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'WhatsApp</a><button class="btn sec" id="sellTo">Sell package</button></div>');
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
+  if(ME.role==='owner')bindOwnerExtras(c);
   if($('#melFlag'))$('#melFlag').onchange=function(){c.mel=this.checked;save('app_flag',{cid:c.id,name:c.name,mel:c.mel},c.mel?first(c.name)+' is now Melanie\'s client':first(c.name)+' is a center client again');render()};
   if($('#editNotes'))$('#editNotes').onclick=function(){var s=SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).filter(function(x){return x.date<=T})[0]||SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})})[0];noteSheet(s.id,s.clients.findIndex(function(y){return y.cid===id}))};
 }
@@ -640,14 +641,14 @@ ACTIONS.sell=function(cid){
    '<div class="field"><span class="flabel">Paid by</span><div class="seg" id="sm"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div id="sumP" class="note good"></div>',
    '<button class="btn ok full" id="doSell">'+ICON('i-check')+'Create package</button>');
   $$('#sm button').forEach(function(b){b.onclick=function(){$$('#sm button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')}});
-  var sum=function(){var t=PKG_TYPES[+$('#st').value],mel=isMel($('#sc').value),mad=/madero/i.test(t.t);$('#sd').disabled=mel||mad;
-    if(mad){$('#sp').value=0;$('#sumP').innerHTML=ICON('i-check')+'<span>Madero: Melanie collects and keeps 100%. Recorded at $0 for the center, '+t.n+' passes, valid 2 months.</span>';return}
-    if(mel){var share=4*t.n;if(!sum.touched)$('#sp').value=share;$('#sumP').innerHTML=ICON('i-check')+'<span>Melanie\'s client: she collects from the client. Center share $4 x '+t.n+' = <b>'+money(share)+'</b>, paid upfront by Melanie'+((+$('#sp').value||0)<share?' ('+money(share-(+$('#sp').value||0))+' still due from her)':'')+'.</span>';return}
-    var price=t.p*(1-(+$('#sd').value||0)/100);$('#sumP').innerHTML=ICON('i-check')+'<span>'+t.n+' passes · '+money(price)+' · '+money(Math.max(0,price-(+$('#sp').value||0)))+' left to pay. Valid '+(/madero/i.test(t.t)?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+' from today.</span>'};
-  ['st','sd'].forEach(function(i){$('#'+i).oninput=sum});$('#sc').onchange=function(){sum.touched=false;sum()};$('#sp').oninput=function(){sum.touched=true;sum()};sum();
+  var sum=function(){var t=PKG_TYPES[+$('#st').value],mel=isMel($('#sc').value),mad=/madero/i.test(t.t);
+    var price=t.p*(1-(+$('#sd').value||0)/100);$('#sumP').innerHTML=ICON('i-check')+'<span>'+t.n+' passes · '+money(price)+' · '+money(Math.max(0,price-(+$('#sp').value||0)))+' left to pay. Valid '+(/madero/i.test(t.t)?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+' from today.'+(mad?' Madero: 100% Melanie, Romy collects from the client as usual.':mel?' Melanie\'s client: Romy collects from the client as usual, Melanie pays the center $4/pass upfront.':'')+'</span>'};
+  ['st','sd','sp'].forEach(function(i){$('#'+i).oninput=sum});$('#sc').onchange=sum;sum();
   $('#doSell').onclick=function(){var t=PKG_TYPES[+$('#st').value],c=clientById($('#sc').value),m=($('#sm [aria-pressed="true"]')||{}).textContent||'Cash';closeSheet();
     save('app_sell',{cid:c.id,type:t.t,discount:+$('#sd').value||0,paid:+$('#sp').value||0,method:m,start:T},null,true).then(function(j){toast(j.id+' created for '+c.name)})};
 };
+ACTIONS.desk=function(){VIEW='home';render();scrollTo(0,0)};
+ACTIONS.home=ACTIONS.desk;
 ACTIONS.newClient=function(){
   openSheet('New client','<div class="field"><label for="ncn">Full name</label><input id="ncn" type="text" autocomplete="off"></div><div class="field"><label for="ncp">Phone</label><input id="ncp" type="tel" inputmode="tel" placeholder="03 123 456"></div><div class="field"><label for="nce">Email <span class="muted" style="font-weight:500">(optional, for calendar invites)</span></label><input id="nce" type="email"></div><label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="ncm" style="width:22px;height:22px"> Melanie\'s own client</label>',
    '<button class="btn ok full" id="doNc">'+ICON('i-check')+'Save and sell a package</button>');
@@ -690,7 +691,7 @@ ACTIONS.recurring=function(){
 ACTIONS.inventory=function(){openSheet('Inventory','<div class="list">'+INVENTORY.map(function(i){return '<div class="row"><div class="main"><b>'+esc(i.p)+'</b><span>Sells at $'+i.price+'</span></div><span class="pill '+(i.left<=1?'p-warn':'p-mute')+'">'+i.left+' left</span></div>'}).join('')+'</div>')};
 ACTIONS.payroll=function(){
   var monthStart=ymd(new Date(TODAY.getFullYear(),TODAY.getMonth(),1)),by=monthByTrainer(monthStart);
-  openSheet('Payroll','<p class="muted" style="margin-bottom:10px">Month to date, from your pay rules. Final once every session is marked.</p><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th>Rule</th><th class="r">Pay</th></tr></thead><tbody>'+Object.keys(by).map(function(k){var r=RATES[k]||{},rule=r.tier?('Tier $'+tier(by[k].sessions)+(r.base?' + $'+r.base+' base':'')):r.flatCut?'Center clients: price minus $4/session. Her own clients and Madero: she collects':k==='Jad'?'$140/session':k==='Majd'?'$20 training, $38 physio/prehab, $28 insurance':'No pay rule';return '<tr><td><b>'+k+'</b></td><td class="r num">'+by[k].sessions+'</td><td>'+rule+'</td><td class="r num">'+money(trainerPay(k,by[k]))+'</td></tr>'}).join('')+'</tbody></table></div>')};
+  openSheet('Payroll','<p class="muted" style="margin-bottom:10px">Month to date, from your pay rules. Final once every session is marked.</p><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th>Rule</th><th class="r">Pay</th></tr></thead><tbody>'+Object.keys(by).map(function(k){var r=RATES[k]||{},rule=r.tier?('Tier $'+tier(by[k].sessions)+(r.base?' + $'+r.base+' base':'')):r.flatCut?'Center clients: price minus $4/session. Her own clients and Madero: paid to her directly, $0 here':k==='Jad'?'$140/session':k==='Majd'?'$20 training, $38 physio/prehab, $28 insurance':'No pay rule';return '<tr><td><b>'+k+'</b></td><td class="r num">'+by[k].sessions+'</td><td>'+rule+'</td><td class="r num">'+money(trainerPay(k,by[k]))+'</td></tr>'}).join('')+'</tbody></table></div>')};
 
 
 /* ---------- trainer notes ---------- */
@@ -762,6 +763,191 @@ ACTIONS.book=function(){
       '<a class="btn wa full" href="'+wa(c.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Send on WhatsApp</a><button class="btn sec full" id="bDone">Done</button>');
     $('#bDone').onclick=function(){closeSheet();render()}};
 };
+
+/* =====================================================================
+   OWNER: My day (trainer + physio desk), intake, files, numbers, analytics, advisor
+   ===================================================================== */
+var INTAKES=[], FILES=[];
+function intakesOf(cid){return INTAKES.filter(function(x){return x.cid===cid}).sort(function(a,b){return a.date<b.date?1:-1})}
+function filesOf(cid){return FILES.filter(function(x){return x.cid===cid}).sort(function(a,b){return a.date<b.date?1:-1})}
+
+VIEWS.mine=function(){
+  var mine=sessOn(T,ME.trainer), week='';
+  for(var i=1;i<7;i++){var d=ymd(addDays(TODAY,i)),m=sessOn(d,ME.trainer);if(!m.length)continue;
+    week+='<div class="day"><h3>'+dayLabel(d)+'<small>'+m.length+' sessions</small></h3>'+m.map(function(s){return '<div class="slot"><span class="t">'+hl(s.start).replace(':00','')+'</span><div class="main"><b>'+s.tab+'</b> · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'}).join('')+'</div>'}
+  var ids={};SESS.forEach(function(s){if(s.trainer===ME.trainer&&s.date>=ymd(addDays(TODAY,-45)))s.clients.forEach(function(c){if(c.cid)ids[c.cid]=c})});
+  var mineCl=Object.keys(ids).map(function(k){return clientById(k)}).filter(Boolean).sort(function(a,b){return a.name<b.name?-1:1});
+  return '<div class="h"><h2>My day</h2><small>'+dayLong(T)+'</small></div>'+
+   '<div class="two" style="margin-bottom:14px"><button class="btn" data-act="intake">'+ICON('i-plus')+'New intake</button><button class="btn sec" data-act="book">'+ICON('i-cal')+'Book</button></div>'+
+   '<div class="list">'+(mine.length?mine.map(function(s){return sessCard(s,{attendance:true,notes:true})}).join(''):'<div class="empty">No sessions for you today.</div>')+'</div>'+
+   (week?'<div class="h"><h2>Coming up</h2></div><div class="week">'+week+'</div>':'')+
+   '<div class="h"><h2>My clients</h2><small>'+mineCl.length+'</small></div><div class="list">'+mineCl.map(function(c){var it=intakesOf(c.id)[0],f=filesOf(c.id).length;
+     return '<button class="row" data-client="'+c.id+'"><span class="avatar">'+c.name[0]+'</span><div class="main"><b>'+esc(c.name)+'</b><span>'+(it?esc(it.area||'Intake')+' · '+dayLabel(it.date):'No intake yet')+(f?' · '+f+' file'+(f>1?'s':''):'')+'</span></div></button>'}).join('')+'</div>';
+};
+
+/* ---------- physio intake ---------- */
+var FLAGS=['Night pain not eased by position','Unexplained weight loss','Numbness / pins and needles','Bladder or bowel change','Fever or feeling unwell','History of cancer','Recent trauma / fall','Chest pain or shortness of breath'];
+var AREAS=['Neck','Shoulder','Elbow','Wrist / hand','Upper back','Lower back','Hip','Knee','Ankle / foot','Multiple / other'];
+ACTIONS.intake=function(cid){
+  var c=cid?clientById(cid):null, files=[];
+  var f=function(id,label,ph,type){return '<div class="field"><label for="'+id+'">'+label+'</label>'+(type==='area'?'<textarea id="'+id+'" placeholder="'+(ph||'')+'"></textarea>':'<input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'">')+'</div>'};
+  var sec=function(t){return '<span class="flabel" style="display:block;margin:18px 0 6px">'+t+'</span>'};
+  openSheet(c?'Intake · '+c.name:'New client intake',
+   (c?'':'<div class="note good" style="margin-bottom:10px">'+ICON('i-users')+'<span>Type a name: pick an existing client, or fill the details to create a new one.</span></div>'+
+     '<div class="field"><label for="iq">Client</label><input id="iq" type="search" autocomplete="off" placeholder="Name"><div class="pick" id="ipick"></div></div><div id="inew"><div class="two">'+f('iph','Phone','03 123 456','tel')+f('iem','Email','optional','email')+'</div><div class="two">'+f('idob','Date of birth','','date')+f('ijob','Occupation','e.g. office, nurse')+'</div>'+f('iref','How did they hear about us','Instagram, doctor, friend…')+'</div>')+
+   sec('Complaint')+'<div class="two"><div class="field"><label for="iar">Body area</label><select id="iar">'+AREAS.map(function(a){return '<option>'+a+'</option>'}).join('')+'</select></div><div class="field"><label for="isd">Side</label><select id="isd"><option>Right</option><option>Left</option><option>Both</option><option>Central</option></select></div></div>'+
+   f('icc','Main complaint, in their words','e.g. sharp pain in front of the knee on stairs','area')+
+   '<div class="two">'+f('ion','Started','','date')+'<div class="field"><label for="imech">How it started</label><select id="imech"><option>Gradual</option><option>Sudden / injury</option><option>After surgery</option><option>Unknown</option></select></div></div>'+
+   '<div class="two"><div class="field"><label for="ipn">Pain now (0-10)</label><input id="ipn" type="number" min="0" max="10" inputmode="numeric"></div><div class="field"><label for="ipw">Worst (0-10)</label><input id="ipw" type="number" min="0" max="10" inputmode="numeric"></div></div>'+
+   f('iagg','Makes it worse','stairs, sitting > 30 min…')+f('iease','Makes it better','rest, heat…')+
+   sec('Health')+f('ihx','Medical history and surgeries','','area')+f('imed','Medications','')+f('iimg','Imaging done (X-ray, MRI…)','results if known')+
+   '<div class="field"><span class="flabel">Red flags</span><div id="iflags" style="display:grid;gap:8px;margin-top:6px">'+FLAGS.map(function(x,i){return '<label style="display:flex;gap:10px;align-items:center;font-weight:500"><input type="checkbox" value="'+esc(x)+'" style="width:20px;height:20px"> '+x+'</label>'}).join('')+'</div></div>'+
+   sec('Goals')+f('igoal','What do they want to get back to','play padel again, carry my kid…','area')+
+   sec('Assessment')+f('irom','Range of motion','')+f('istr','Strength','')+f('itest','Special tests','')+f('idx','Clinical impression','e.g. patellofemoral pain, right','area')+
+   sec('Plan')+f('iplan','Plan','e.g. prehab 2x/week for 5 weeks, then 1:3','area')+'<div class="two"><div class="field"><label for="ipk">Suggested package</label><select id="ipk"><option value="">Decide later</option>'+PKG_TYPES.map(function(t){return '<option>'+esc(t.t)+'</option>'}).join('')+'</select></div>'+f('ifreq','Sessions per week','2','number')+'</div>'+
+   f('ialert','Warning for trainers (shown on every booking)','e.g. Right knee: no deep squats, no jumping')+
+   sec('Files')+'<label class="btn sec full" style="cursor:pointer">'+ICON('i-plus')+'Attach photos, scans, reports<input id="ifile" type="file" multiple accept="image/*,application/pdf" hidden></label><div id="ifl" class="muted" style="font-size:14px;margin-top:6px"></div>',
+   '<button class="btn ok full" id="saveIntake">'+ICON('i-check')+'Save intake</button>');
+  var st={cid:cid||null};
+  if(!c){var list=function(){var q=$('#iq').value.toLowerCase();$('#ipick').innerHTML=q.length>1?CLIENTS.filter(function(x){return x.name.toLowerCase().indexOf(q)>-1}).slice(0,5).map(function(x){return '<button class="row" style="min-height:46px" data-ic="'+x.id+'"><div class="main"><b>'+esc(x.name)+'</b><span>Existing client</span></div></button>'}).join(''):'';
+      $$('[data-ic]').forEach(function(b){b.onclick=function(){st.cid=b.dataset.ic;$('#iq').value=clientById(st.cid).name;$('#ipick').innerHTML='';$('#inew').hidden=true}})};
+    $('#iq').oninput=function(){st.cid=null;$('#inew').hidden=false;list()}}
+  $('#ifile').onchange=function(){files=files.concat([].slice.call(this.files));$('#ifl').textContent=files.map(function(x){return x.name}).join(', ')};
+  $('#saveIntake').onclick=function(){
+    var v=function(id){var e=$('#'+id);return e?e.value.trim():''};
+    var name=c?c.name:v('iq');if(!st.cid&&(!name||!v('iph'))){toast('Name and phone for a new client');return}
+    var d={name:name,phone:v('iph'),email:v('iem'),dob:v('idob'),job:v('ijob'),referral:v('iref'),area:v('iar'),side:v('isd'),complaint:v('icc'),onset:v('ion'),mechanism:v('imech'),painNow:v('ipn'),painWorst:v('ipw'),
+      worse:v('iagg'),better:v('iease'),history:v('ihx'),meds:v('imed'),imaging:v('iimg'),flags:$$('#iflags input:checked').map(function(x){return x.value}),goals:v('igoal'),rom:v('irom'),strength:v('istr'),tests:v('itest'),dx:v('idx'),plan:v('iplan'),pkg:v('ipk'),freq:v('ifreq')};
+    var alertTxt=v('ialert');closeSheet();toast('Saving intake…');
+    save('app_intake',{cid:st.cid,name:name,data:d,alert:alertTxt}).then(function(j){
+      INTAKES.unshift({date:T,cid:j.cid,by:ME.name,area:d.area,complaint:d.complaint,pain:d.painNow,flags:d.flags.join(', '),dx:d.dx,plan:d.plan,data:d});
+      return uploadAll(j.cid,name,files).then(function(){toast('Intake saved'+(files.length?' with '+files.length+' file'+(files.length>1?'s':''):''));return boot(true)}).then(function(){clientSheet(j.cid)})})};
+};
+// photos are shrunk to 1600px JPEG before upload; PDFs go as they are (max 15 MB)
+function prepFile(file){return new Promise(function(res,rej){
+  if(file.size>15*1024*1024){rej(new Error(file.name+' is over 15 MB'));return}
+  var r=new FileReader();r.onerror=function(){rej(new Error('Could not read '+file.name))};
+  if(/^image\//.test(file.type)&&!/gif|svg/.test(file.type)){r.onload=function(){var img=new Image();img.onload=function(){var k=Math.min(1,1600/Math.max(img.width,img.height)),cv=document.createElement('canvas');cv.width=Math.round(img.width*k);cv.height=Math.round(img.height*k);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      res({name:file.name.replace(/\.\w+$/,'')+'.jpg',mime:'image/jpeg',b64:cv.toDataURL('image/jpeg',0.85).split(',')[1]})};img.onerror=function(){res({name:file.name,mime:file.type,b64:r.result.split(',')[1]})};img.src=r.result};}
+  else r.onload=function(){res({name:file.name,mime:file.type||'application/pdf',b64:r.result.split(',')[1]})};
+  r.readAsDataURL(file)})}
+function uploadAll(cid,cname,files){var chain=Promise.resolve();files.forEach(function(file){chain=chain.then(function(){return prepFile(file)}).then(function(x){toast('Uploading '+x.name+'…');return save('app_upload',{cid:cid,cname:cname,name:x.name,mime:x.mime,b64:x.b64})}).then(function(j){FILES.unshift({cid:cid,name:j.name,url:j.url,date:T,by:ME.name})})});return chain}
+function ownerClientExtras(c){
+  var its=intakesOf(c.id),fs=filesOf(c.id),it=its[0];
+  return '<span class="flabel">Physio</span>'+(it?'<div class="notebox"><b>Intake '+dayLabel(it.date)+' · '+esc(it.area)+(it.data&&it.data.side?' ('+esc(it.data.side)+')':'')+'</b>'+esc(it.complaint)+(it.pain!==''&&it.pain!==undefined?'<br>Pain '+esc(it.pain)+'/10':'')+(it.flags?'<br><span style="color:var(--bad);font-weight:700">Red flags: '+esc(it.flags)+'</span>':'')+(it.dx?'<br><b style="display:inline">Impression:</b> '+esc(it.dx):'')+(it.plan?'<br><b style="display:inline">Plan:</b> '+esc(it.plan):'')+(its.length>1?'<br><span class="muted">'+(its.length-1)+' older intake'+(its.length>2?'s':'')+'</span>':'')+'</div>':'<div class="empty" style="padding:10px">No intake yet.</div>')+
+   '<div class="list" style="margin:8px 0">'+fs.map(function(x){return '<a class="row" style="min-height:46px;text-decoration:none" href="'+esc(x.url)+'" target="_blank" rel="noopener"><span class="ti">'+ICON('i-edit')+'</span><div class="main"><b>'+esc(x.name)+'</b><span>'+dayLabel(x.date)+(x.by?' · '+esc(x.by):'')+'</span></div></a>'}).join('')+'</div>'+
+   '<div class="two" style="margin-bottom:14px"><button class="btn sec sm" id="ownIntake">'+ICON('i-plus')+(it?'New intake':'Fill intake')+'</button><label class="btn sec sm" style="cursor:pointer">'+ICON('i-plus')+'Add files<input id="ownFile" type="file" multiple accept="image/*,application/pdf" hidden></label></div>';
+}
+function bindOwnerExtras(c){
+  if($('#ownIntake'))$('#ownIntake').onclick=function(){ACTIONS.intake(c.id)};
+  if($('#ownFile'))$('#ownFile').onchange=function(){var fl=[].slice.call(this.files);closeSheet();uploadAll(c.id,c.name,fl).then(function(){toast(fl.length+' file'+(fl.length>1?'s':'')+' added to '+first(c.name));clientSheet(c.id)})};
+}
+
+/* ---------- numbers: overview / analytics / advisor (hidden until you tap) ---------- */
+UI.num='overview';UI.reveal=false;
+VIEWS.numbers=function(){
+  var tabs=[['overview','Overview'],['analytics','Analytics'],['advisor','Next move']];
+  var head='<div class="seg" role="tablist" style="margin-bottom:14px">'+tabs.map(function(t){return '<button data-num="'+t[0]+'" aria-pressed="'+(UI.num===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>';
+  if(!UI.reveal)return '<div class="h"><h2>Numbers</h2></div>'+head+'<div class="card" style="padding:28px 18px;text-align:center"><p class="muted" style="margin-bottom:14px">Numbers stay hidden until you open them, so nobody reads them over your shoulder.</p><button class="btn" id="reveal">'+ICON('i-chart')+'Show numbers</button></div>';
+  var body=UI.num==='analytics'?analyticsView():UI.num==='advisor'?advisorView():VIEWS.dash();
+  return head+body+'<button class="btn sec full" id="hideNum" style="margin-top:18px">Hide numbers</button>';
+};
+function bindNumbers(){
+  $$('[data-num]').forEach(function(b){b.onclick=function(){UI.num=b.dataset.num;render()}});
+  if($('#reveal'))$('#reveal').onclick=function(){UI.reveal=true;render()};
+  if($('#hideNum'))$('#hideNum').onclick=function(){UI.reveal=false;render();scrollTo(0,0)};
+  if($('#askClaude'))$('#askClaude').onclick=askClaude;
+  $$('[data-go]').forEach(function(b){b.onclick=function(){var a=b.dataset.go;ACTIONS[a]&&ACTIONS[a]()}});
+}
+function monthKey(d){return d.slice(0,7)}
+function monthName(k){return new Date(k+'-15T12:00:00').toLocaleDateString('en-GB',{month:'short'})}
+function lastMonths(n){var out=[],d=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);for(var i=n-1;i>=0;i--){var x=new Date(d.getFullYear(),d.getMonth()-i,1);out.push(x.getFullYear()+'-'+pad(x.getMonth()+1))}return out}
+function stats(){
+  var months=lastMonths(6),m={};months.forEach(function(k){m[k]={rev:0,sessions:0,clients:{},newC:{},sold:0,soldN:0}});
+  var firstSeen={};SESS.slice().sort(function(a,b){return a.date<b.date?-1:1}).forEach(function(s){if(s.date>T||!delivered(s))return;s.clients.forEach(function(c){if(c.cid&&deducts(c.att||'Present')&&!firstSeen[c.cid])firstSeen[c.cid]=s.date})});
+  var att={Present:0,'Late Cancel':0,'No Show':0,'Early Cancel':0},attBy={},from30=ymd(addDays(TODAY,-30)),byClient={},from90=ymd(addDays(TODAY,-90)),slot={};
+  SESS.forEach(function(s){if(s.date>T)return;var k=monthKey(s.date),mm=m[k];
+    s.clients.forEach(function(c){var a=c.att||(s.status==='Cancelled'?'Early Cancel':'Present');
+      if(s.date>=from30){att[a]=(att[a]||0)+1;var t=attBy[s.trainer]=attBy[s.trainer]||{n:0,miss:0};t.n++;if(a==='No Show'||a==='Late Cancel')t.miss++}
+      if(!deducts(a))return;var v=centerValue(s,c);
+      if(mm){mm.rev+=v;if(c.cid){mm.clients[c.cid]=1;if(firstSeen[c.cid]&&monthKey(firstSeen[c.cid])===k)mm.newC[c.cid]=1}}
+      if(s.date>=from90&&c.cid)byClient[c.cid]=(byClient[c.cid]||0)+v});
+    if(mm&&delivered(s))mm.sessions++;
+    if(s.tab==='1:3'&&s.date>=from30&&s.status!=='Cancelled'){var h=s.start,x=slot[h]=slot[h]||{seats:0,cap:0,n:0};x.seats+=s.clients.length;x.cap+=3;x.n++}});
+  PKGS.forEach(function(p){var mm=m[monthKey(p.start||'')];if(mm&&p.price>0&&p.kind!=='Madero'&&!isMel(p.client)){mm.sold+=p.price;mm.soldN++}});
+  // renewals: packages that ended in the last 60 days, did the client start another within 21 days?
+  var ended=[],from60=ymd(addDays(TODAY,-60));
+  PKGS.forEach(function(p){if(!(p.price>0)||p.total<4)return;var end=p.expiry||'';var done=p.total-p.used<=0||(end&&end<T);if(!done||!end||end<from60||end>T)return;
+    var renewed=PKGS.some(function(q){return q!==p&&q.client===p.client&&q.start&&q.start>=p.start&&q.start<=ymd(addDays(new Date(end+'T12:00:00'),21))&&q.id!==p.id});ended.push({p:p,renewed:renewed})});
+  var cur=months[5],prev=months[4],retained=Object.keys(m[prev].clients).filter(function(c){return m[cur].clients[c]}).length;
+  var lost=Object.keys(m[prev].clients).filter(function(c){return !m[cur].clients[c]&&!SESS.some(function(s){return s.date>=T&&s.clients.some(function(x){return x.cid===c})})});
+  return {months:months,m:m,att:att,attBy:attBy,byClient:byClient,slot:slot,ended:ended,cur:cur,prev:prev,retained:retained,lost:lost};
+}
+function analyticsView(){
+  var S=stats(),M=S.months,mx=function(f){return Math.max.apply(null,M.map(function(k){return f(S.m[k])}).concat([1]))};
+  var cur=S.m[S.cur],prev=S.m[S.prev],nCur=Object.keys(cur.clients).length,nPrev=Object.keys(prev.clients).length;
+  var arpc=nCur?cur.rev/nCur:0,ren=S.ended.length?Math.round(S.ended.filter(function(x){return x.renewed}).length/S.ended.length*100):null;
+  var attT=Object.keys(S.att).reduce(function(a,k){return a+S.att[k]},0)||1;
+  var top=Object.keys(S.byClient).sort(function(a,b){return S.byClient[b]-S.byClient[a]}).slice(0,8);
+  var leads=LEADS.length,booked=LEADS.filter(function(l){return l.date}).length,conf=LEADS.filter(function(l){return l.status==='Confirmed'}).length;
+  var paidAfter=LEADS.filter(function(l){var c=CLIENTS.filter(function(x){return x.phone&&l.phone&&x.phone.replace(/\D/g,'').slice(-6)===l.phone.replace(/\D/g,'').slice(-6)})[0];return c&&PKGS.some(function(p){return p.client===c.id&&p.price>0})}).length;
+  var expCat={};EXPENSES.filter(function(e){return e.d>=T.slice(0,8)+'01'}).forEach(function(e){expCat[e.cat]=(expCat[e.cat]||0)+e.amt});
+  var mxE=Math.max.apply(null,Object.keys(expCat).map(function(k){return expCat[k]}).concat([1]));
+  return '<div class="kpis">'+kpi('Active clients',nCur,(nCur>=nPrev?'+':'')+(nCur-nPrev)+' vs '+monthName(S.prev))+kpi('Kept from last month',nPrev?Math.round(S.retained/nPrev*100)+'%':'-',S.retained+' of '+nPrev+' came back')+
+     kpi('Renewal rate',ren===null?'-':ren+'%','Packages ended in 60 days, renewed within 3 weeks')+kpi('Revenue per client',money(arpc),'This month to date')+
+     kpi('New clients',Object.keys(cur.newC).length,'First session this month')+kpi('Packages sold',money(cur.sold),cur.soldN+' center packages this month')+'</div>'+
+   '<div class="h"><h2>Delivered revenue</h2><small>Last 6 months</small></div><div class="card bars">'+M.map(function(k){return bar(monthName(k)+(k===S.cur?' (so far)':''),S.m[k].rev,mx(function(x){return x.rev}),money(S.m[k].rev))}).join('')+'</div>'+
+   '<div class="h"><h2>Active clients</h2><small>Came at least once</small></div><div class="card bars">'+M.map(function(k){var n=Object.keys(S.m[k].clients).length;return bar(monthName(k),n,mx(function(x){return Object.keys(x.clients).length}),n+' ('+Object.keys(S.m[k].newC).length+' new)')}).join('')+'</div>'+
+   '<div class="h"><h2>Packages sold</h2><small>Center only</small></div><div class="card bars">'+M.map(function(k){return bar(monthName(k),S.m[k].sold,mx(function(x){return x.sold}),money(S.m[k].sold))}).join('')+'</div>'+
+   '<div class="h"><h2>Attendance</h2><small>Last 30 days</small></div><div class="card bars">'+['Present','Late Cancel','No Show','Early Cancel'].map(function(k){return bar(k,S.att[k]||0,attT,Math.round((S.att[k]||0)/attT*100)+'%')}).join('')+'</div>'+
+   '<div class="card tblwrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Client visits</th><th class="r">Late / no show</th></tr></thead><tbody>'+Object.keys(S.attBy).map(function(k){var t=S.attBy[k];return '<tr><td><b>'+esc(k)+'</b></td><td class="r num">'+t.n+'</td><td class="r num">'+Math.round(t.miss/t.n*100)+'%</td></tr>'}).join('')+'</tbody></table></div>'+
+   '<div class="h"><h2>1:3 seats filled</h2><small>Last 30 days, by hour</small></div><div class="card bars">'+Object.keys(S.slot).sort().map(function(h){var x=S.slot[h],p=Math.round(x.seats/x.cap*100);return bar(hl(h)+' · '+x.n+' sessions',p,100,p+'%')}).join('')+'</div>'+
+   '<div class="h"><h2>Trial leads</h2><small>Landing page</small></div><div class="card bars">'+bar('Leads',leads,leads||1,leads)+bar('Booked a time',booked,leads||1,booked)+bar('Confirmed',conf,leads||1,conf)+bar('Bought a package',paidAfter,leads||1,paidAfter)+'</div>'+
+   '<div class="h"><h2>Top clients</h2><small>Center revenue, 90 days</small></div><div class="card tblwrap"><table class="tbl"><tbody>'+top.map(function(c){var cl=clientById(c);return '<tr><td>'+esc(cl?cl.name:c)+'</td><td class="r num">'+money(S.byClient[c])+'</td></tr>'}).join('')+'</tbody></table></div>'+
+   (Object.keys(expCat).length?'<div class="h"><h2>Expenses by category</h2><small>This month</small></div><div class="card bars">'+Object.keys(expCat).sort(function(a,b){return expCat[b]-expCat[a]}).map(function(k){return bar(k,expCat[k],mxE,money(expCat[k]))}).join('')+'</div>':'')+
+   (S.lost.length?'<div class="h"><h2>Did not come back</h2><small>Came in '+monthName(S.prev)+', nothing since or booked</small></div><div class="list">'+S.lost.slice(0,12).map(function(c){var cl=clientById(c);return cl?'<button class="row" data-client="'+c+'"><div class="main"><b>'+esc(cl.name)+'</b><span>Win back: call or WhatsApp</span></div></button>':''}).join('')+'</div>':'');
+}
+// one decision, ranked by money at stake; the full brief goes to Claude for a deeper answer
+function decisions(){
+  var S=stats(),out=[],seat=200/12;
+  var od=overdue(),late=od.reduce(function(a,b){return a+b.due},0);
+  if(late>0)out.push({usd:late,title:'Collect '+money(late)+' already owed',why:od.length+' clients are past their payment session. This is money you earned and have not received, it costs nothing to collect.',act:'pay',btn:'Open payment reminders'});
+  var empty=0,worst=null;Object.keys(S.slot).forEach(function(h){var x=S.slot[h],e=x.cap-x.seats;empty+=e;if(!worst||e>worst.e)worst={h:h,e:e,n:x.n}});
+  if(empty>0)out.push({usd:empty*seat,title:'Fill the empty 1:3 seats'+(worst?', starting with '+hl(worst.h):''),why:empty+' seats went empty in the last 30 days, about '+money(empty*seat)+' a month at the 12-session price. Empty seats cost you nothing to sell: point the morning W40 ads and a "bring a friend" offer at the emptiest hour.',act:'leads',btn:'See trial leads'});
+  var soon=PKGS.filter(function(p){return p.status==='Active'&&p.price>0&&p.total>1&&p.total-p.used<=2&&offerOf(p)});
+  if(soon.length)out.push({usd:soon.reduce(function(a,p){var o=offerOf(p);return a+(o?o.p3-o.mo:0)},0),title:'Offer 3 months to '+soon.length+' clients about to finish',why:'Each one moved from monthly to 3 months locks 2 extra months of revenue upfront and removes 2 chances to drop off.',act:'home',btn:'Open the To do list'});
+  if(S.lost.length)out.push({usd:S.lost.length*140,title:'Win back '+S.lost.length+' clients who stopped',why:'They trained with you last month and have nothing booked. A personal message from their coach is the cheapest new revenue you have.',act:null});
+  var ren=S.ended.length?S.ended.filter(function(x){return x.renewed}).length/S.ended.length:1;
+  if(S.ended.length>=4&&ren<0.7)out.push({usd:(0.7-ren)*S.ended.length*170,title:'Renewal rate is '+Math.round(ren*100)+'%',why:'Fewer than 7 in 10 finished packages are renewed. Ask for the renewal at session '+'6 of 8 or 9 of 12, not after the last one.',act:null});
+  return out.sort(function(a,b){return b.usd-a.usd});
+}
+function advisorView(){
+  var d=decisions(),top=d[0];
+  return (top?'<div class="card" style="padding:18px"><span class="flabel">Your next move</span><h3 style="font:800 26px/1.1 var(--display);text-transform:uppercase;margin:6px 0 8px">'+esc(top.title)+'</h3><p style="margin-bottom:12px">'+esc(top.why)+'</p><p class="muted" style="font-size:14px;margin-bottom:12px">Money at stake: about <b class="num">'+money(top.usd)+'</b></p>'+(top.act?'<button class="btn full" data-go="'+top.act+'">'+top.btn+'</button>':'')+'</div>':'<div class="empty">Nothing urgent. Ask Claude for growth ideas below.</div>')+
+   (d.length>1?'<div class="h"><h2>After that</h2></div><div class="list">'+d.slice(1).map(function(x){return '<div class="row"><div class="main"><b>'+esc(x.title)+'</b><span>About '+money(x.usd)+' at stake</span></div></div>'}).join('')+'</div>':'')+
+   '<div class="card" style="padding:16px;margin-top:16px"><b>Ask your marketing advisor</b><p class="muted" style="font-size:14px;margin:6px 0 12px">Sends this month\'s numbers (no client names or health data) to Claude with your consultant brief: challenge me, rank decisions by money, one clear next step.</p><textarea id="askQ" placeholder="Optional: what are you deciding? e.g. raise 1:3 prices or run a new ad?" style="min-height:70px"></textarea><button class="btn full" id="askClaude" style="margin-top:10px">'+ICON('i-chart')+'Ask Claude</button></div>';
+}
+function askClaude(){
+  var S=stats(),cur=S.m[S.cur],monthStart=T.slice(0,8)+'01',by=monthByTrainer(monthStart),d=decisions();
+  var lines=['You are my business consultant (Hormozi offers, Neil Patel acquisition, Iman Gadzhi operations). Do not start by agreeing. Challenge my assumptions, give the uncomfortable truth first, rank options by money and speed, end with ONE next decision for this week and a confidence rating. No dashes.',
+   '','Business: Wellbe Health Center, Beirut area. Semi-private 1:3 training ($200 for 12 / $140 for 8 per month), 1:2, 1:1, physio, prehab, osteo, Madero. Trial leads come from a Meta ad landing page for women 40+ in the mornings.',
+   '','Last 6 months (center delivered revenue | active clients | new | center packages sold):'];
+  S.months.forEach(function(k){var x=S.m[k];lines.push(monthName(k)+': '+money(x.rev)+' | '+Object.keys(x.clients).length+' | '+Object.keys(x.newC).length+' | '+money(x.sold))});
+  lines.push('','This month so far: trainer pay '+money(Object.keys(by).reduce(function(a,k){return a+trainerPay(k,by[k])},0))+', expenses '+money(EXPENSES.filter(function(e){return e.d>=monthStart}).reduce(function(a,e){return a+e.amt},0))+'.');
+  lines.push('Kept from last month: '+S.retained+' of '+Object.keys(S.m[S.prev].clients).length+'. Renewal rate (60 days): '+(S.ended.length?Math.round(S.ended.filter(function(x){return x.renewed}).length/S.ended.length*100)+'% of '+S.ended.length:'n/a')+'.');
+  var attT=Object.keys(S.att).reduce(function(a,k){return a+S.att[k]},0)||1;lines.push('Attendance 30 days: '+Object.keys(S.att).map(function(k){return k+' '+Math.round(S.att[k]/attT*100)+'%'}).join(', ')+'.');
+  lines.push('1:3 seat fill by hour (30 days): '+Object.keys(S.slot).sort().map(function(h){var x=S.slot[h];return hl(h)+' '+Math.round(x.seats/x.cap*100)+'%'}).join(', ')+'.');
+  lines.push('Late payments: '+money(overdue().reduce(function(a,b){return a+b.due},0))+' from '+overdue().length+' clients.');
+  lines.push('Trial leads: '+LEADS.length+' total, '+LEADS.filter(function(l){return l.date}).length+' booked, '+LEADS.filter(function(l){return l.status==='Confirmed'}).length+' confirmed.');
+  lines.push('Trainers this month: '+Object.keys(by).map(function(k){var t=by[k];return k+' '+t.sessions+' sessions, revenue '+money(t.rev)+', pay '+money(trainerPay(k,t))}).join('; ')+'.');
+  if(d.length)lines.push('','The app ranks these first: '+d.slice(0,3).map(function(x){return x.title+' (~'+money(x.usd)+')'}).join('; ')+'.');
+  var q=($('#askQ')&&$('#askQ').value.trim())||'What is the single best decision for me this week, and what am I not seeing?';
+  lines.push('','My question: '+q);
+  var text=lines.join('\n');
+  try{navigator.clipboard.writeText(text)}catch(e){}
+  window.open('https://claude.ai/new?q='+encodeURIComponent(text),'_blank');
+  toast('Opening Claude. The brief is also copied: paste it if the box is empty.');
+}
 
 /* boot */
 try{var th=store('wb_theme');if(th&&th!=='system')document.documentElement.setAttribute('data-theme',th)}catch(e){}
