@@ -471,21 +471,21 @@ VIEWS.me=function(){
 
 /* owner dashboard */
 VIEWS.dash=function(){
-  var monthStart=ymd(new Date(TODAY.getFullYear(),TODAY.getMonth(),1));
-  var done=SESS.filter(function(s){return s.date>=monthStart&&s.date<=T&&delivered(s)});
-  var byType={}, byTrainer=monthByTrainer(monthStart), rev=0;
+  var R=curRange(),monthStart=R.from,to=R.to;
+  var done=SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=T&&delivered(s)});
+  var byType={}, byTrainer=payByTrainer(monthStart,to), rev=0;
   done.forEach(function(s){ s.clients.forEach(function(c){ if(!deducts(c.att||'Present'))return; var v=centerValue(s,c); rev+=v; byType[s.tab]=(byType[s.tab]||0)+v }) });
-  var pay=0; Object.keys(byTrainer).forEach(function(k){var t=byTrainer[k];t.pay=trainerPay(k,t);pay+=t.pay});
-  var monthExp=EXPENSES.filter(function(e){return e.d>=monthStart&&e.d<=T});
-  var exp=monthExp.reduce(function(a,b){return a+b.amt},0), cash=PKGS.filter(function(p){return p.start>=monthStart&&p.kind!=='Madero'&&!isMel(p.client)}).reduce(function(a,p){return a+(p.paid||0)},0), net=rev-pay-exp;
+  var pay=0; Object.keys(byTrainer).forEach(function(k){pay+=byTrainer[k].pay});
+  var monthExp=EXPENSES.filter(function(e){return e.d>=monthStart&&e.d<=to});
+  var exp=monthExp.reduce(function(a,b){return a+b.amt},0), cash=PKGS.filter(function(p){return p.start>=monthStart&&p.start<=to&&p.kind!=='Madero'&&!isMel(p.client)}).reduce(function(a,p){return a+(p.paid||0)},0), net=rev-pay-exp;
   var owed=overdue().reduce(function(a,b){return a+b.due},0);
   // fill rate by hour for 1:3 (capacity 3)
-  var hours={}; SESS.filter(function(s){return s.tab==='1:3'&&s.date>=monthStart&&s.date<=T&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=3});
+  var hours={}; SESS.filter(function(s){return s.tab==='1:3'&&s.date>=monthStart&&s.date<=to&&s.date<=T&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=3});
   var maxType=Math.max.apply(null,Object.keys(byType).map(function(k){return byType[k]}).concat([1]));
-  return '<div class="h"><h2>This month</h2><small>'+new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'})+' · to date</small></div>'+
+  return '<div class="h"><h2>'+esc(R.label)+'</h2><small>'+rangeText(R)+'</small></div>'+
    '<div class="kpis"><div class="kpi hero"><span>Net profit</span><b class="num" style="color:'+(net>=0?'var(--good)':'var(--bad)')+'">'+money(net)+'</b><small>Delivered revenue minus trainer pay and expenses</small></div>'+
-   kpi('Delivered revenue',money(rev),'Sessions actually given')+kpi('Cash collected',money(cash),'Center packages started this month')+kpi('Trainer pay',money(pay),'Per your pay rules')+
-   kpi('Expenses',money(exp),monthExp.length+' entries')+kpi('Late payments',money(owed),overdue().length+' clients')+kpi('Sessions',done.length,'Given this month')+'</div>'+
+   kpi('Delivered revenue',money(rev),'Sessions actually given')+kpi('Cash collected',money(cash),'Paid on center packages started in this period')+kpi('Trainer pay',money(pay),'Per your pay rules')+
+   kpi('Expenses',money(exp),monthExp.length+' entries')+kpi('Late payments',money(owed),overdue().length+' clients')+kpi('Sessions',done.length,'Given in this period')+'</div>'+
    '<div class="h"><h2>Revenue by service</h2></div><div class="card bars">'+Object.keys(byType).sort(function(a,b){return byType[b]-byType[a]}).map(function(k){return bar(k,byType[k],maxType,money(byType[k]))}).join('')+'</div>'+
    '<div class="h"><h2>1:3 fill rate by hour</h2><small>Seats used of 3</small></div><div class="card bars">'+Object.keys(hours).sort().map(function(h){var x=hours[h],pct=Math.round(x.seats/x.cap*100);return bar(hl(h),pct,100,pct+'%')}).join('')+'</div>'+
    '<div class="h"><h2>Trainers</h2></div><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th class="r">Revenue</th><th class="r">Pay</th><th class="r">Margin</th></tr></thead><tbody>'+
@@ -496,8 +496,8 @@ VIEWS.dash=function(){
 function kpi(l,v,s){return '<div class="kpi"><span>'+l+'</span><b class="num">'+v+'</b><small>'+s+'</small></div>'}
 function bar(l,v,max,txt){return '<div class="bar" title="'+esc(l)+': '+esc(txt)+'"><span class="lab">'+esc(l)+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(1,v/max*100)+'%"></span></span><span class="val num">'+txt+'</span></div>'}
 // month to date per trainer: delivered sessions, revenue, Melanie's PT vs Madero, fixed per-session pay
-function monthByTrainer(monthStart){var by={};
-  SESS.filter(function(s){return s.date>=monthStart&&s.date<=T&&delivered(s)}).forEach(function(s){
+function monthByTrainer(monthStart,to){var by={};to=to||T;
+  SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=T&&delivered(s)}).forEach(function(s){
     var t=by[s.trainer]=by[s.trainer]||{sessions:0,rev:0,melPay:0,own:0,fixed:0};t.sessions++;t.fixed+=fixedPay(s);
     var v=0,centerV=0,centerN=0;s.clients.forEach(function(c){if(!deducts(c.att||'Present'))return;var x=centerValue(s,c);v+=x;
       if(s.tab!=='Madero'&&!isMel(c.cid)){centerV+=x;centerN++}else t.own++});
@@ -849,76 +849,118 @@ VIEWS.numbers=function(){
   var tabs=[['overview','Overview'],['analytics','Analytics'],['advisor','Next move']];
   var head='<div class="seg" role="tablist" style="margin-bottom:14px">'+tabs.map(function(t){return '<button data-num="'+t[0]+'" aria-pressed="'+(UI.num===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>';
   if(!UI.reveal)return '<div class="h"><h2>Numbers</h2></div>'+head+'<div class="card" style="padding:28px 18px;text-align:center"><p class="muted" style="margin-bottom:14px">Numbers stay hidden until you open them, so nobody reads them over your shoulder.</p><button class="btn" id="reveal">'+ICON('i-chart')+'Show numbers</button></div>';
-  var body=UI.num==='analytics'?analyticsView():UI.num==='advisor'?advisorView():VIEWS.dash();
+  var body=UI.num==='analytics'?rangePicker()+analyticsView():UI.num==='advisor'?advisorView():rangePicker()+VIEWS.dash();
   return head+body+'<button class="btn sec full" id="hideNum" style="margin-top:18px">Hide numbers</button>';
 };
 function bindNumbers(){
-  $$('[data-num]').forEach(function(b){b.onclick=function(){UI.num=b.dataset.num;render()}});
+  $$('[data-num]').forEach(function(b){b.onclick=function(){UI.num=b.dataset.num;render()}});bindRange();
   if($('#reveal'))$('#reveal').onclick=function(){UI.reveal=true;render()};
   if($('#hideNum'))$('#hideNum').onclick=function(){UI.reveal=false;render();scrollTo(0,0)};
   if($('#askClaude'))$('#askClaude').onclick=askClaude;
   $$('[data-go]').forEach(function(b){b.onclick=function(){var a=b.dataset.go;ACTIONS[a]&&ACTIONS[a]()}});
 }
+/* ---------- period picker: one choice drives Overview and Analytics ---------- */
+UI.range='month';UI.rMonth='';UI.rFrom='';UI.rTo='';
+function dOf(y,m,d){return ymd(new Date(y,m,d,12))}
+function rangeOf(key){var y=TODAY.getFullYear(),m=TODAY.getMonth();
+  if(key==='today')return {from:T,to:T,label:'Today'};
+  if(key==='yesterday'){var x=ymd(addDays(TODAY,-1));return {from:x,to:x,label:'Yesterday'}}
+  if(key==='week')return {from:ymd(monday),to:T,label:'This week'};
+  if(key==='lastmonth')return {from:dOf(y,m-1,1),to:dOf(y,m,0),label:'Last month'};
+  if(key==='pick'&&UI.rMonth){var p=UI.rMonth.split('-');return {from:dOf(+p[0],+p[1]-1,1),to:dOf(+p[0],+p[1],0),label:new Date(+p[0],+p[1]-1,15).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}}
+  if(key==='year')return {from:dOf(y,0,1),to:T,label:'This year'};
+  if(key==='lastyear')return {from:dOf(y-1,0,1),to:dOf(y-1,11,31),label:'Last year ('+(y-1)+')'};
+  if(key==='custom'&&UI.rFrom&&UI.rTo)return {from:UI.rFrom<UI.rTo?UI.rFrom:UI.rTo,to:UI.rFrom<UI.rTo?UI.rTo:UI.rFrom,label:'Custom'};
+  return {from:dOf(y,m,1),to:T,label:'This month'}}
+function curRange(){return rangeOf(UI.range)}
+function daysIn(R){return Math.round((new Date(R.to+'T12:00:00')-new Date(R.from+'T12:00:00'))/864e5)+1}
+function prevRange(R){var n=daysIn(R),to=ymd(addDays(new Date(R.from+'T12:00:00'),-1));return {from:ymd(addDays(new Date(to+'T12:00:00'),-(n-1))),to:to,label:'previous '+n+' days'}}
+function rangeText(R){return R.from===R.to?dayLabel(R.from):dayLabel(R.from)+' to '+dayLabel(R.to)}
+function rangePicker(){
+  var opts=[['today','Today'],['yesterday','Yesterday'],['week','This week'],['month','This month'],['lastmonth','Last month'],['pick','Pick a month'],['year','This year'],['lastyear','Last year'],['custom','Custom']];
+  return '<div class="field" style="margin-bottom:12px"><label for="rsel">Period</label><select id="rsel">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(UI.range===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+   (UI.range==='pick'?'<div class="field"><label for="rmon">Month</label><input id="rmon" type="month" value="'+(UI.rMonth||T.slice(0,7))+'" max="'+T.slice(0,7)+'"></div>':'')+
+   (UI.range==='custom'?'<div class="two"><div class="field"><label for="rfr">From</label><input id="rfr" type="date" value="'+(UI.rFrom||T.slice(0,8)+'01')+'" max="'+T+'"></div><div class="field"><label for="rto">To</label><input id="rto" type="date" value="'+(UI.rTo||T)+'" max="'+T+'"></div></div>':'');
+}
+function bindRange(){
+  if($('#rsel'))$('#rsel').onchange=function(){UI.range=this.value;if(UI.range==='pick'&&!UI.rMonth)UI.rMonth=T.slice(0,7);if(UI.range==='custom'){UI.rFrom=UI.rFrom||T.slice(0,8)+'01';UI.rTo=UI.rTo||T}render()};
+  if($('#rmon'))$('#rmon').onchange=function(){UI.rMonth=this.value;render()};
+  if($('#rfr'))$('#rfr').onchange=function(){UI.rFrom=this.value;render()};
+  if($('#rto'))$('#rto').onchange=function(){UI.rTo=this.value;render()};
+}
+// pay per trainer over any period: each calendar month is paid on its own tier, then added up
+function payByTrainer(from,to){var out={},d=new Date(from+'T12:00:00');
+  while(ymd(d)<=to){var ms=ymd(d),me=dOf(d.getFullYear(),d.getMonth()+1,0),a=ms<from?from:ms,b=me>to?to:me,by=monthByTrainer(a,b);
+    Object.keys(by).forEach(function(k){var t=by[k],o=out[k]=out[k]||{sessions:0,rev:0,pay:0};o.sessions+=t.sessions;o.rev+=t.rev;o.pay+=trainerPay(k,t)});
+    d=new Date(d.getFullYear(),d.getMonth()+1,1,12)}
+  return out}
 function monthKey(d){return d.slice(0,7)}
-function monthName(k){return new Date(k+'-15T12:00:00').toLocaleDateString('en-GB',{month:'short'})}
-function lastMonths(n){var out=[],d=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);for(var i=n-1;i>=0;i--){var x=new Date(d.getFullYear(),d.getMonth()-i,1);out.push(x.getFullYear()+'-'+pad(x.getMonth()+1))}return out}
-function stats(){
-  var months=lastMonths(6),m={};months.forEach(function(k){m[k]={rev:0,sessions:0,clients:{},newC:{},sold:0,soldN:0}});
-  var firstSeen={};SESS.slice().sort(function(a,b){return a.date<b.date?-1:1}).forEach(function(s){if(s.date>T||!delivered(s))return;s.clients.forEach(function(c){if(c.cid&&deducts(c.att||'Present')&&!firstSeen[c.cid])firstSeen[c.cid]=s.date})});
-  var att={Present:0,'Late Cancel':0,'No Show':0,'Early Cancel':0},attBy={},from30=ymd(addDays(TODAY,-30)),byClient={},from90=ymd(addDays(TODAY,-90)),slot={};
-  SESS.forEach(function(s){if(s.date>T)return;var k=monthKey(s.date),mm=m[k];
+function monthName(k){return new Date(k+'-15T12:00:00').toLocaleDateString('en-GB',{month:'short'})+(k.slice(0,4)!==String(TODAY.getFullYear())?' '+k.slice(2,4):'')}
+// buckets: days for up to 2 weeks, weeks up to 3 months, months beyond
+function bucketOf(R){var n=daysIn(R);return n<=14?'day':n<=92?'week':'month'}
+function bucketKey(d,kind){if(kind==='day')return d;if(kind==='month')return d.slice(0,7);var x=new Date(d+'T12:00:00');return ymd(addDays(x,-((x.getDay()+6)%7)))}
+function bucketLabel(k,kind){return kind==='day'?dayLabel(k):kind==='week'?'Week of '+dayLabel(k).split(' ').slice(1).join(' '):monthName(k)}
+function stats(R){
+  R=R||curRange();var P=prevRange(R),kind=bucketOf(R),B={},keys=[];
+  for(var d=new Date(R.from+'T12:00:00');ymd(d)<=R.to;d=addDays(d,1)){var k=bucketKey(ymd(d),kind);if(!B[k]){B[k]={rev:0,clients:{},newC:{},sold:0,soldN:0};keys.push(k)}}
+  var firstSeen={};SESS.slice().sort(function(a,b){return a.date<b.date?-1:1}).forEach(function(s){if(s.date>T)return;s.clients.forEach(function(c){if(c.cid&&deducts(c.att||'Present')&&!firstSeen[c.cid])firstSeen[c.cid]=s.date})});
+  var tot={rev:0,clients:{},newC:{},sold:0,soldN:0},prevC={},att={Present:0,'Late Cancel':0,'No Show':0,'Early Cancel':0},attBy={},byClient={},slot={};
+  SESS.forEach(function(s){if(s.date>T)return;var inR=s.date>=R.from&&s.date<=R.to,inP=s.date>=P.from&&s.date<=P.to;if(!inR&&!inP)return;
     s.clients.forEach(function(c){var a=c.att||(s.status==='Cancelled'?'Early Cancel':'Present');
-      if(s.date>=from30){att[a]=(att[a]||0)+1;var t=attBy[s.trainer]=attBy[s.trainer]||{n:0,miss:0};t.n++;if(a==='No Show'||a==='Late Cancel')t.miss++}
-      if(!deducts(a))return;var v=centerValue(s,c);
-      if(mm){mm.rev+=v;if(c.cid){mm.clients[c.cid]=1;if(firstSeen[c.cid]&&monthKey(firstSeen[c.cid])===k)mm.newC[c.cid]=1}}
-      if(s.date>=from90&&c.cid)byClient[c.cid]=(byClient[c.cid]||0)+v});
-    if(mm&&delivered(s))mm.sessions++;
-    if(s.tab==='1:3'&&s.date>=from30&&s.status!=='Cancelled'){var h=s.start,x=slot[h]=slot[h]||{seats:0,cap:0,n:0};x.seats+=s.clients.length;x.cap+=3;x.n++}});
-  PKGS.forEach(function(p){var mm=m[monthKey(p.start||'')];if(mm&&p.price>0&&p.kind!=='Madero'&&!isMel(p.client)){mm.sold+=p.price;mm.soldN++}});
-  // renewals: packages that ended in the last 60 days, did the client start another within 21 days?
-  var ended=[],from60=ymd(addDays(TODAY,-60));
-  PKGS.forEach(function(p){if(!(p.price>0)||p.total<4)return;var end=p.expiry||'';var done=p.total-p.used<=0||(end&&end<T);if(!done||!end||end<from60||end>T)return;
-    var renewed=PKGS.some(function(q){return q!==p&&q.client===p.client&&q.start&&q.start>=p.start&&q.start<=ymd(addDays(new Date(end+'T12:00:00'),21))&&q.id!==p.id});ended.push({p:p,renewed:renewed})});
-  var cur=months[5],prev=months[4],retained=Object.keys(m[prev].clients).filter(function(c){return m[cur].clients[c]}).length;
-  var lost=Object.keys(m[prev].clients).filter(function(c){return !m[cur].clients[c]&&!SESS.some(function(s){return s.date>=T&&s.clients.some(function(x){return x.cid===c})})});
-  return {months:months,m:m,att:att,attBy:attBy,byClient:byClient,slot:slot,ended:ended,cur:cur,prev:prev,retained:retained,lost:lost};
+      if(inP){if(deducts(a)&&c.cid)prevC[c.cid]=1;return}
+      att[a]=(att[a]||0)+1;var t=attBy[s.trainer]=attBy[s.trainer]||{n:0,miss:0};t.n++;if(a==='No Show'||a==='Late Cancel')t.miss++;
+      if(!deducts(a))return;var v=centerValue(s,c),b=B[bucketKey(s.date,kind)];
+      tot.rev+=v;b.rev+=v;if(c.cid){tot.clients[c.cid]=1;b.clients[c.cid]=1;byClient[c.cid]=(byClient[c.cid]||0)+v;if(firstSeen[c.cid]===s.date||(firstSeen[c.cid]>=R.from&&firstSeen[c.cid]<=R.to)){tot.newC[c.cid]=1;if(bucketKey(firstSeen[c.cid],kind)===bucketKey(s.date,kind))b.newC[c.cid]=1}}});
+    if(inR&&s.tab==='1:3'&&s.status!=='Cancelled'){var x=slot[s.start]=slot[s.start]||{seats:0,cap:0,n:0};x.seats+=s.clients.length;x.cap+=3;x.n++}});
+  PKGS.forEach(function(p){if(!p.start||p.start<R.from||p.start>R.to||!(p.price>0)||p.kind==='Madero'||isMel(p.client))return;tot.sold+=p.price;tot.soldN++;var b=B[bucketKey(p.start,kind)];if(b){b.sold+=p.price;b.soldN++}});
+  var ended=[];PKGS.forEach(function(p){if(!(p.price>0)||p.total<4||!p.expiry)return;var done=p.total-p.used<=0||p.expiry<T;if(!done||p.expiry<R.from||p.expiry>R.to)return;
+    var lim=ymd(addDays(new Date(p.expiry+'T12:00:00'),21));ended.push({p:p,renewed:PKGS.some(function(q){return q.id!==p.id&&q.client===p.client&&q.start&&q.start>=p.start&&q.start<=lim})})});
+  var retained=Object.keys(prevC).filter(function(c){return tot.clients[c]}).length;
+  var lost=R.to===T?Object.keys(prevC).filter(function(c){return !tot.clients[c]&&!SESS.some(function(s){return s.date>=T&&s.clients.some(function(x){return x.cid===c})})}):[];
+  return {R:R,P:P,kind:kind,keys:keys,B:B,tot:tot,prevN:Object.keys(prevC).length,retained:retained,lost:lost,att:att,attBy:attBy,byClient:byClient,slot:slot,ended:ended};
 }
 function analyticsView(){
-  var S=stats(),M=S.months,mx=function(f){return Math.max.apply(null,M.map(function(k){return f(S.m[k])}).concat([1]))};
-  var cur=S.m[S.cur],prev=S.m[S.prev],nCur=Object.keys(cur.clients).length,nPrev=Object.keys(prev.clients).length;
-  var arpc=nCur?cur.rev/nCur:0,ren=S.ended.length?Math.round(S.ended.filter(function(x){return x.renewed}).length/S.ended.length*100):null;
+  var S=stats(),R=S.R,K=S.keys,mx=function(f){return Math.max.apply(null,K.map(function(k){return f(S.B[k])}).concat([1]))};
+  var nCur=Object.keys(S.tot.clients).length,arpc=nCur?S.tot.rev/nCur:0,ren=S.ended.length?Math.round(S.ended.filter(function(x){return x.renewed}).length/S.ended.length*100):null;
   var attT=Object.keys(S.att).reduce(function(a,k){return a+S.att[k]},0)||1;
   var top=Object.keys(S.byClient).sort(function(a,b){return S.byClient[b]-S.byClient[a]}).slice(0,8);
-  var leads=LEADS.length,booked=LEADS.filter(function(l){return l.date}).length,conf=LEADS.filter(function(l){return l.status==='Confirmed'}).length;
-  var paidAfter=LEADS.filter(function(l){var c=CLIENTS.filter(function(x){return x.phone&&l.phone&&x.phone.replace(/\D/g,'').slice(-6)===l.phone.replace(/\D/g,'').slice(-6)})[0];return c&&PKGS.some(function(p){return p.client===c.id&&p.price>0})}).length;
-  var expCat={};EXPENSES.filter(function(e){return e.d>=T.slice(0,8)+'01'}).forEach(function(e){expCat[e.cat]=(expCat[e.cat]||0)+e.amt});
+  var inL=function(l){var d=parseYmdLoose(l.submitted)||l.date;return !d||(d>=R.from&&d<=R.to)},L=LEADS.filter(inL);
+  var booked=L.filter(function(l){return l.date}).length,conf=L.filter(function(l){return l.status==='Confirmed'}).length;
+  var paidAfter=L.filter(function(l){var c=CLIENTS.filter(function(x){return x.phone&&l.phone&&x.phone.replace(/\D/g,'').slice(-6)===l.phone.replace(/\D/g,'').slice(-6)})[0];return c&&PKGS.some(function(p){return p.client===c.id&&p.price>0})}).length;
+  var expCat={};EXPENSES.filter(function(e){return e.d>=R.from&&e.d<=R.to}).forEach(function(e){expCat[e.cat]=(expCat[e.cat]||0)+e.amt});
   var mxE=Math.max.apply(null,Object.keys(expCat).map(function(k){return expCat[k]}).concat([1]));
-  return '<div class="kpis">'+kpi('Active clients',nCur,(nCur>=nPrev?'+':'')+(nCur-nPrev)+' vs '+monthName(S.prev))+kpi('Kept from last month',nPrev?Math.round(S.retained/nPrev*100)+'%':'-',S.retained+' of '+nPrev+' came back')+
-     kpi('Renewal rate',ren===null?'-':ren+'%','Packages ended in 60 days, renewed within 3 weeks')+kpi('Revenue per client',money(arpc),'This month to date')+
-     kpi('New clients',Object.keys(cur.newC).length,'First session this month')+kpi('Packages sold',money(cur.sold),cur.soldN+' center packages this month')+'</div>'+
-   '<div class="h"><h2>Delivered revenue</h2><small>Last 6 months</small></div><div class="card bars">'+M.map(function(k){return bar(monthName(k)+(k===S.cur?' (so far)':''),S.m[k].rev,mx(function(x){return x.rev}),money(S.m[k].rev))}).join('')+'</div>'+
-   '<div class="h"><h2>Active clients</h2><small>Came at least once</small></div><div class="card bars">'+M.map(function(k){var n=Object.keys(S.m[k].clients).length;return bar(monthName(k),n,mx(function(x){return Object.keys(x.clients).length}),n+' ('+Object.keys(S.m[k].newC).length+' new)')}).join('')+'</div>'+
-   '<div class="h"><h2>Packages sold</h2><small>Center only</small></div><div class="card bars">'+M.map(function(k){return bar(monthName(k),S.m[k].sold,mx(function(x){return x.sold}),money(S.m[k].sold))}).join('')+'</div>'+
-   '<div class="h"><h2>Attendance</h2><small>Last 30 days</small></div><div class="card bars">'+['Present','Late Cancel','No Show','Early Cancel'].map(function(k){return bar(k,S.att[k]||0,attT,Math.round((S.att[k]||0)/attT*100)+'%')}).join('')+'</div>'+
-   '<div class="card tblwrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Client visits</th><th class="r">Late / no show</th></tr></thead><tbody>'+Object.keys(S.attBy).map(function(k){var t=S.attBy[k];return '<tr><td><b>'+esc(k)+'</b></td><td class="r num">'+t.n+'</td><td class="r num">'+Math.round(t.miss/t.n*100)+'%</td></tr>'}).join('')+'</tbody></table></div>'+
-   '<div class="h"><h2>1:3 seats filled</h2><small>Last 30 days, by hour</small></div><div class="card bars">'+Object.keys(S.slot).sort().map(function(h){var x=S.slot[h],p=Math.round(x.seats/x.cap*100);return bar(hl(h)+' · '+x.n+' sessions',p,100,p+'%')}).join('')+'</div>'+
-   '<div class="h"><h2>Trial leads</h2><small>Landing page</small></div><div class="card bars">'+bar('Leads',leads,leads||1,leads)+bar('Booked a time',booked,leads||1,booked)+bar('Confirmed',conf,leads||1,conf)+bar('Bought a package',paidAfter,leads||1,paidAfter)+'</div>'+
-   '<div class="h"><h2>Top clients</h2><small>Center revenue, 90 days</small></div><div class="card tblwrap"><table class="tbl"><tbody>'+top.map(function(c){var cl=clientById(c);return '<tr><td>'+esc(cl?cl.name:c)+'</td><td class="r num">'+money(S.byClient[c])+'</td></tr>'}).join('')+'</tbody></table></div>'+
-   (Object.keys(expCat).length?'<div class="h"><h2>Expenses by category</h2><small>This month</small></div><div class="card bars">'+Object.keys(expCat).sort(function(a,b){return expCat[b]-expCat[a]}).map(function(k){return bar(k,expCat[k],mxE,money(expCat[k]))}).join('')+'</div>':'')+
-   (S.lost.length?'<div class="h"><h2>Did not come back</h2><small>Came in '+monthName(S.prev)+', nothing since or booked</small></div><div class="list">'+S.lost.slice(0,12).map(function(c){var cl=clientById(c);return cl?'<button class="row" data-client="'+c+'"><div class="main"><b>'+esc(cl.name)+'</b><span>Win back: call or WhatsApp</span></div></button>':''}).join('')+'</div>':'');
+  var by=S.kind==='day'?'by day':S.kind==='week'?'by week':'by month';
+  var bl=function(k){return S.kind==='week'&&k<R.from?'Week from '+dayLabel(R.from).split(' ').slice(1).join(' '):bucketLabel(k,S.kind)};
+  return '<div class="h"><h2>'+esc(R.label)+'</h2><small>'+rangeText(R)+'</small></div>'+
+   '<div class="kpis">'+kpi('Delivered revenue',money(S.tot.rev),'Center share of sessions given')+kpi('Active clients',nCur,(nCur>=S.prevN?'+':'')+(nCur-S.prevN)+' vs '+S.P.label)+
+     kpi('Kept from before',S.prevN?Math.round(S.retained/S.prevN*100)+'%':'-',S.retained+' of '+S.prevN+' from the '+S.P.label)+kpi('Revenue per client',money(arpc),'In this period')+
+     kpi('New clients',Object.keys(S.tot.newC).length,'First ever session in this period')+kpi('Packages sold',money(S.tot.sold),S.tot.soldN+' center packages')+
+     kpi('Renewal rate',ren===null?'-':ren+'%','Packages that ended in this period, renewed within 3 weeks')+'</div>'+
+   (K.length>1?'<div class="h"><h2>Delivered revenue</h2><small>'+by+'</small></div><div class="card bars">'+K.map(function(k){return bar(bl(k),S.B[k].rev,mx(function(x){return x.rev}),money(S.B[k].rev))}).join('')+'</div>'+
+    '<div class="h"><h2>Active clients</h2><small>'+by+'</small></div><div class="card bars">'+K.map(function(k){var n=Object.keys(S.B[k].clients).length;return bar(bl(k),n,mx(function(x){return Object.keys(x.clients).length}),n+(Object.keys(S.B[k].newC).length?' ('+Object.keys(S.B[k].newC).length+' new)':''))}).join('')+'</div>'+
+    '<div class="h"><h2>Packages sold</h2><small>'+by+', center only</small></div><div class="card bars">'+K.map(function(k){return bar(bl(k),S.B[k].sold,mx(function(x){return x.sold}),money(S.B[k].sold))}).join('')+'</div>':'')+
+   '<div class="h"><h2>Attendance</h2></div><div class="card bars">'+['Present','Late Cancel','No Show','Early Cancel'].map(function(k){return bar(k,S.att[k]||0,attT,Math.round((S.att[k]||0)/attT*100)+'%')}).join('')+'</div>'+
+   (Object.keys(S.attBy).length?'<div class="card tblwrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Client visits</th><th class="r">Late / no show</th></tr></thead><tbody>'+Object.keys(S.attBy).map(function(k){var t=S.attBy[k];return '<tr><td><b>'+esc(k)+'</b></td><td class="r num">'+t.n+'</td><td class="r num">'+Math.round(t.miss/t.n*100)+'%</td></tr>'}).join('')+'</tbody></table></div>':'')+
+   (Object.keys(S.slot).length?'<div class="h"><h2>1:3 seats filled</h2><small>By hour</small></div><div class="card bars">'+Object.keys(S.slot).sort().map(function(h){var x=S.slot[h],p=Math.round(x.seats/x.cap*100);return bar(hl(h)+' · '+x.n+' sessions',p,100,p+'%')}).join('')+'</div>':'')+
+   '<div class="h"><h2>Trial leads</h2><small>Landing page</small></div><div class="card bars">'+bar('Leads',L.length,L.length||1,L.length)+bar('Booked a time',booked,L.length||1,booked)+bar('Confirmed',conf,L.length||1,conf)+bar('Bought a package',paidAfter,L.length||1,paidAfter)+'</div>'+
+   (top.length?'<div class="h"><h2>Top clients</h2><small>Center revenue</small></div><div class="card tblwrap"><table class="tbl"><tbody>'+top.map(function(c){var cl=clientById(c);return '<tr><td>'+esc(cl?cl.name:c)+'</td><td class="r num">'+money(S.byClient[c])+'</td></tr>'}).join('')+'</tbody></table></div>':'')+
+   (Object.keys(expCat).length?'<div class="h"><h2>Expenses by category</h2></div><div class="card bars">'+Object.keys(expCat).sort(function(a,b){return expCat[b]-expCat[a]}).map(function(k){return bar(k,expCat[k],mxE,money(expCat[k]))}).join('')+'</div>':'')+
+   (S.lost.length?'<div class="h"><h2>Did not come back</h2><small>Came in the '+S.P.label+', nothing since or booked</small></div><div class="list">'+S.lost.slice(0,12).map(function(c){var cl=clientById(c);return cl?'<button class="row" data-client="'+c+'"><div class="main"><b>'+esc(cl.name)+'</b><span>Win back: call or WhatsApp</span></div></button>':''}).join('')+'</div>':'');
 }
-// one decision, ranked by money at stake; the full brief goes to Claude for a deeper answer
+function parseYmdLoose(s){s=String(s||'');var m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?m[3]+'-'+pad(+m[2])+'-'+pad(+m[1]):''}
+function last30(){return {from:ymd(addDays(TODAY,-29)),to:T,label:'Last 30 days'}}
+// one decision, ranked by money at stake (always on the last 30 days, whatever period is picked)
 function decisions(){
-  var S=stats(),out=[],seat=200/12;
+  var S=stats(last30()),out=[],seat=200/12;
   var od=overdue(),late=od.reduce(function(a,b){return a+b.due},0);
   if(late>0)out.push({usd:late,title:'Collect '+money(late)+' already owed',why:od.length+' clients are past their payment session. This is money you earned and have not received, it costs nothing to collect.',act:'pay',btn:'Open payment reminders'});
   var empty=0,worst=null;Object.keys(S.slot).forEach(function(h){var x=S.slot[h],e=x.cap-x.seats;empty+=e;if(!worst||e>worst.e)worst={h:h,e:e,n:x.n}});
   if(empty>0)out.push({usd:empty*seat,title:'Fill the empty 1:3 seats'+(worst?', starting with '+hl(worst.h):''),why:empty+' seats went empty in the last 30 days, about '+money(empty*seat)+' a month at the 12-session price. Empty seats cost you nothing to sell: point the morning W40 ads and a "bring a friend" offer at the emptiest hour.',act:'leads',btn:'See trial leads'});
   var soon=PKGS.filter(function(p){return p.status==='Active'&&p.price>0&&p.total>1&&p.total-p.used<=2&&offerOf(p)});
   if(soon.length)out.push({usd:soon.reduce(function(a,p){var o=offerOf(p);return a+(o?o.p3-o.mo:0)},0),title:'Offer 3 months to '+soon.length+' clients about to finish',why:'Each one moved from monthly to 3 months locks 2 extra months of revenue upfront and removes 2 chances to drop off.',act:'home',btn:'Open the To do list'});
-  if(S.lost.length)out.push({usd:S.lost.length*140,title:'Win back '+S.lost.length+' clients who stopped',why:'They trained with you last month and have nothing booked. A personal message from their coach is the cheapest new revenue you have.',act:null});
+  if(S.lost.length)out.push({usd:S.lost.length*140,title:'Win back '+S.lost.length+' clients who stopped',why:'They trained with you in the 30 days before and have nothing booked now. A personal message from their coach is the cheapest new revenue you have.',act:null});
   var ren=S.ended.length?S.ended.filter(function(x){return x.renewed}).length/S.ended.length:1;
-  if(S.ended.length>=4&&ren<0.7)out.push({usd:(0.7-ren)*S.ended.length*170,title:'Renewal rate is '+Math.round(ren*100)+'%',why:'Fewer than 7 in 10 finished packages are renewed. Ask for the renewal at session '+'6 of 8 or 9 of 12, not after the last one.',act:null});
+  if(S.ended.length>=4&&ren<0.7)out.push({usd:(0.7-ren)*S.ended.length*170,title:'Renewal rate is '+Math.round(ren*100)+'%',why:'Fewer than 7 in 10 finished packages are renewed. Ask for the renewal at session 6 of 8 or 9 of 12, not after the last one.',act:null});
   return out.sort(function(a,b){return b.usd-a.usd});
 }
 function advisorView(){
@@ -928,15 +970,16 @@ function advisorView(){
    '<div class="card" style="padding:16px;margin-top:16px"><b>Ask your marketing advisor</b><p class="muted" style="font-size:14px;margin:6px 0 12px">Sends this month\'s numbers (no client names or health data) to Claude with your consultant brief: challenge me, rank decisions by money, one clear next step.</p><textarea id="askQ" placeholder="Optional: what are you deciding? e.g. raise 1:3 prices or run a new ad?" style="min-height:70px"></textarea><button class="btn full" id="askClaude" style="margin-top:10px">'+ICON('i-chart')+'Ask Claude</button></div>';
 }
 function askClaude(){
-  var S=stats(),cur=S.m[S.cur],monthStart=T.slice(0,8)+'01',by=monthByTrainer(monthStart),d=decisions();
+  var y=TODAY.getFullYear(),m=TODAY.getMonth(),S=stats({from:dOf(y,m-5,1),to:T,label:'Last 6 months'}),S30=stats(last30()),monthStart=T.slice(0,8)+'01',by=monthByTrainer(monthStart),d=decisions();
   var lines=['You are my business consultant (Hormozi offers, Neil Patel acquisition, Iman Gadzhi operations). Do not start by agreeing. Challenge my assumptions, give the uncomfortable truth first, rank options by money and speed, end with ONE next decision for this week and a confidence rating. No dashes.',
    '','Business: Wellbe Health Center, Beirut area. Semi-private 1:3 training ($200 for 12 / $140 for 8 per month), 1:2, 1:1, physio, prehab, osteo, Madero. Trial leads come from a Meta ad landing page for women 40+ in the mornings.',
    '','Last 6 months (center delivered revenue | active clients | new | center packages sold):'];
-  S.months.forEach(function(k){var x=S.m[k];lines.push(monthName(k)+': '+money(x.rev)+' | '+Object.keys(x.clients).length+' | '+Object.keys(x.newC).length+' | '+money(x.sold))});
+  S.keys.forEach(function(k){var x=S.B[k];lines.push(bucketLabel(k,S.kind)+': '+money(x.rev)+' | '+Object.keys(x.clients).length+' | '+Object.keys(x.newC).length+' | '+money(x.sold))});
+  if(UI.range!=='month'){var C=stats();lines.push('','Period I am looking at ('+C.R.label+', '+rangeText(C.R)+'): revenue '+money(C.tot.rev)+', '+Object.keys(C.tot.clients).length+' active clients, '+Object.keys(C.tot.newC).length+' new, packages sold '+money(C.tot.sold)+'.')}
   lines.push('','This month so far: trainer pay '+money(Object.keys(by).reduce(function(a,k){return a+trainerPay(k,by[k])},0))+', expenses '+money(EXPENSES.filter(function(e){return e.d>=monthStart}).reduce(function(a,e){return a+e.amt},0))+'.');
-  lines.push('Kept from last month: '+S.retained+' of '+Object.keys(S.m[S.prev].clients).length+'. Renewal rate (60 days): '+(S.ended.length?Math.round(S.ended.filter(function(x){return x.renewed}).length/S.ended.length*100)+'% of '+S.ended.length:'n/a')+'.');
-  var attT=Object.keys(S.att).reduce(function(a,k){return a+S.att[k]},0)||1;lines.push('Attendance 30 days: '+Object.keys(S.att).map(function(k){return k+' '+Math.round(S.att[k]/attT*100)+'%'}).join(', ')+'.');
-  lines.push('1:3 seat fill by hour (30 days): '+Object.keys(S.slot).sort().map(function(h){var x=S.slot[h];return hl(h)+' '+Math.round(x.seats/x.cap*100)+'%'}).join(', ')+'.');
+  lines.push('Last 30 days: kept '+S30.retained+' of '+S30.prevN+' clients from the 30 days before. Renewal rate: '+(S30.ended.length?Math.round(S30.ended.filter(function(x){return x.renewed}).length/S30.ended.length*100)+'% of '+S30.ended.length:'n/a')+'.');
+  var attT=Object.keys(S30.att).reduce(function(a,k){return a+S30.att[k]},0)||1;lines.push('Attendance 30 days: '+Object.keys(S30.att).map(function(k){return k+' '+Math.round(S30.att[k]/attT*100)+'%'}).join(', ')+'.');
+  lines.push('1:3 seat fill by hour (30 days): '+Object.keys(S30.slot).sort().map(function(h){var x=S30.slot[h];return hl(h)+' '+Math.round(x.seats/x.cap*100)+'%'}).join(', ')+'.');
   lines.push('Late payments: '+money(overdue().reduce(function(a,b){return a+b.due},0))+' from '+overdue().length+' clients.');
   lines.push('Trial leads: '+LEADS.length+' total, '+LEADS.filter(function(l){return l.date}).length+' booked, '+LEADS.filter(function(l){return l.status==='Confirmed'}).length+' confirmed.');
   lines.push('Trainers this month: '+Object.keys(by).map(function(k){var t=by[k];return k+' '+t.sessions+' sessions, revenue '+money(t.rev)+', pay '+money(trainerPay(k,t))}).join('; ')+'.');
@@ -944,7 +987,7 @@ function askClaude(){
   var q=($('#askQ')&&$('#askQ').value.trim())||'What is the single best decision for me this week, and what am I not seeing?';
   lines.push('','My question: '+q);
   var text=lines.join('\n');
-  try{navigator.clipboard.writeText(text)}catch(e){}
+  try{navigator.clipboard.writeText(text).catch(function(){})}catch(e){}
   window.open('https://claude.ai/new?q='+encodeURIComponent(text),'_blank');
   toast('Opening Claude. The brief is also copied: paste it if the box is empty.');
 }
