@@ -42,6 +42,7 @@
   --good:#7fd3bd; --good-soft:#163a31; --warn:#f2c46b; --warn-soft:#3a2d10; --bad:#ef7c93; --bad-soft:#3a1820;
   --series:#199e70; --track:#24302f; --wa:#2fae63; color-scheme:dark }
 *{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
 body{font-family:var(--body);font-size:16px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 input,select,textarea{font:inherit;color:var(--ink)}
@@ -435,11 +436,15 @@ VIEWS.schedule=function(){
    '<div class="chips" role="tablist">'+days.map(function(d){return '<button class="chip" aria-pressed="'+(d===DAY)+'" data-day="'+d+'">'+(d===T?'Today':dayLabel(d))+'</button>'}).join('')+'</div>'+
    '<div class="list">'+(sessOn(DAY).length?sessOn(DAY).map(function(s){return sessCard(s,{change:true})}).join(''):'<div class="empty">Nothing booked on '+dayLabel(DAY)+'.</div>')+'</div>';
 };
+function isActive(cid){return PKGS.some(function(p){return p.client===cid&&p.status==='Active'&&(p.total-p.used>0||(p.expiry&&p.expiry>=T))})}
+function clientRow(c){var p=pkgOf(c.id),r=p&&lateRule(p);return '<button class="row" data-client="'+c.id+'"><span class="avatar">'+esc(c.name[0]||'?')+'</span><div class="main"><b>'+esc(c.name)+'</b><span>'+(p?esc(p.type)+' · '+(p.total-p.used)+' left':'No package')+'</span></div>'+(c.disc?'<span class="pill p-good">'+c.disc+'% off</span>':'')+(c.mel?'<span class="pill p-mute">Melanie</span>':'')+(r&&r.late?'<span class="pill p-bad">Owes '+money(r.due)+'</span>':'')+'</button>'}
+function clientSearch(){return '<div class="searchwrap">'+ICON('i-search')+'<input class="search" id="q" type="search" placeholder="Search name or phone" value="'+esc(UI.q)+'" aria-label="Search clients" autocomplete="off"></div>'}
+function matchQ(c){var q=UI.q.toLowerCase().trim();return !q||c.name.toLowerCase().indexOf(q)>-1||String(c.phone||'').replace(/\s/g,'').indexOf(q.replace(/\s/g,''))>-1}
 VIEWS.clients=function(){
-  var q=UI.q.toLowerCase(), list=CLIENTS.filter(function(c){return !q||c.name.toLowerCase().indexOf(q)>-1||c.phone.indexOf(q)>-1});
-  return '<div class="h"><h2>Clients</h2><div style="display:flex;gap:8px"><button class="btn sec sm" data-act="newClient">'+ICON('i-plus')+'New client</button><button class="btn sm" data-act="sell">'+ICON('i-plus')+'Sell package</button></div></div>'+
-   '<div class="searchwrap">'+ICON('i-search')+'<input class="search" id="q" type="search" placeholder="Search name or phone" value="'+esc(UI.q)+'" aria-label="Search clients"></div>'+
-   '<div class="list">'+list.map(function(c){var p=pkgOf(c.id),r=p&&lateRule(p);return '<button class="row" data-client="'+c.id+'"><span class="avatar">'+c.name[0]+'</span><div class="main"><b>'+esc(c.name)+'</b><span>'+(p?esc(p.type)+' · '+(p.total-p.used)+' left':'No package')+'</span></div>'+(c.mel?'<span class="pill p-mute">Melanie</span>':'')+(r&&r.late?'<span class="pill p-bad">Owes '+money(r.due)+'</span>':'')+'</button>'}).join('')+'</div>';
+  var list=CLIENTS.filter(matchQ).sort(function(a,b){return a.name<b.name?-1:1}),act=list.filter(function(c){return isActive(c.id)}),off=list.filter(function(c){return !isActive(c.id)});
+  return '<div class="h"><h2>Clients</h2><div style="display:flex;gap:8px"><button class="btn sec sm" data-act="newClient">'+ICON('i-plus')+'New client</button><button class="btn sm" data-act="sell">'+ICON('i-plus')+'Sell package</button></div></div>'+clientSearch()+
+   '<div class="h"><h2 style="font-size:20px">Active</h2><small>'+act.length+'</small></div><div class="list">'+(act.length?act.map(clientRow).join(''):'<div class="empty">No active client matches.</div>')+'</div>'+
+   '<div class="h"><h2 style="font-size:20px">Not active</h2><small>'+off.length+'</small></div><div class="list">'+(off.length?off.map(clientRow).join(''):'<div class="empty">Nobody here.</div>')+'</div>';
 };
 VIEWS.money=function(){
   var od=overdue(), soon=dueSoon();
@@ -469,9 +474,8 @@ VIEWS.week=function(){
   return '<div class="h"><h2>My week</h2></div><div class="week">'+(out||'<div class="empty">Nothing booked.</div>')+'</div>';
 };
 VIEWS.myclients=function(){
-  var ids={};SESS.forEach(function(s){if(s.trainer===ME.trainer)s.clients.forEach(function(c){ids[c.cid]=c})});
-  var list=Object.keys(ids).map(function(k){return ids[k]});
-  return '<div class="h"><h2>My clients</h2><small>'+list.length+'</small></div><div class="list">'+list.map(function(c){var cl=clientById(c.cid);return '<button class="row" data-client="'+c.cid+'" style="flex-direction:column;align-items:flex-start"><b>'+esc(c.name)+'</b><div class="meta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'+clientBadges(c)+'</div></button>'}).join('')+'</div>';
+  var list=CLIENTS.filter(function(c){return isActive(c.id)&&matchQ(c)}).sort(function(a,b){return a.name<b.name?-1:1});
+  return '<div class="h"><h2>Clients</h2><small>'+list.length+' active</small></div>'+clientSearch()+'<div class="list">'+(list.length?list.map(function(c){return '<button class="row" data-client="'+c.id+'" style="flex-direction:column;align-items:flex-start"><b>'+esc(c.name)+'</b><div class="meta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">'+clientBadges({cid:c.id})+'</div></button>'}).join(''):'<div class="empty">No active client matches.</div>')+'</div>';
 };
 VIEWS.me=function(){
   var monthStart=ymd(new Date(TODAY.getFullYear(),TODAY.getMonth(),1)), n=SESS.filter(function(s){return s.trainer===ME.trainer&&s.date>=monthStart&&s.date<=T&&s.status==='Done'}).length;
@@ -647,30 +651,64 @@ ACTIONS.week=function(){
     save('app_week',{items:draft.map(function(s){return {type:s.tab,date:s.date,time:s.start,trainer:s.trainer,clients:s.clients.map(function(c){return {pkg:c.pkg,name:c.name}})}})},null,true)
      .then(function(j){toast(j.added+' bookings added'+(j.skipped.length?' · '+j.skipped.length+' skipped (Joe full or no package)':''))})};
 };
+// discount + freeze, inside the client sheet
+function staffClientTools(c){
+  var open=PKGS.filter(function(p){return p.client===c.id&&p.status==='Active'&&(p.total-p.used>0||(p.expiry&&p.expiry>=T))}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1});
+  return '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div style="display:flex;gap:10px;align-items:flex-end"><div class="field" style="margin:0;flex:1"><label for="cdisc">Client discount %</label><input id="cdisc" type="number" inputmode="decimal" min="0" max="100" value="'+(c.disc||0)+'"></div><button class="btn sec sm" id="saveDisc" style="min-height:48px">Save</button></div><div class="muted" style="font-size:13px;margin-top:6px">Filled in automatically every time you sell this client a package.</div></div>'+
+   (open.length?'<span class="flabel">Freeze (1 week per package)</span><div class="list" style="margin:8px 0 14px">'+open.map(function(p){return '<div class="row" style="min-height:54px"><div class="main"><b>'+esc(p.type.split(' (')[0])+'</b><span>Ends '+(p.expiry?dayLabel(p.expiry):'?')+' · '+(p.total-p.used)+' left</span></div>'+(p.frozen?'<span class="pill p-mute">Freeze used</span>':'<button class="btn sec sm" data-frz="'+p.id+'">'+ICON('i-cal')+'Freeze 1 week</button>')+'</div>'}).join('')+'</div>':'');
+}
+function bindStaffClientTools(c){
+  if($('#saveDisc'))$('#saveDisc').onclick=function(){var d=Math.max(0,Math.min(100,+$('#cdisc').value||0));c.disc=d;save('app_disc',{cid:c.id,name:c.name,disc:d},d?first(c.name)+' now gets '+d+'% off':'Discount removed for '+first(c.name));render()};
+  $$('[data-frz]').forEach(function(b){b.onclick=function(){var p=pkgById(b.dataset.frz);
+    openSheet('Freeze '+first(c.name)+'’s package','<div class="card" style="padding:12px 14px"><b>'+esc(p.type)+'</b><div class="muted" style="font-size:14px">Ends '+(p.expiry?dayLabel(p.expiry):'?')+'</div></div><div class="note good" style="margin-top:12px">'+ICON('i-cal')+'<span>Moves the end date 7 days later. Only once per package.</span></div>'+
+     '<div class="two"><div class="field"><label for="fzf">Freeze starts</label><input id="fzf" type="date" value="'+T+'"></div><div class="field"><label for="fzn">Reason</label><input id="fzn" type="text" placeholder="e.g. travel"></div></div>','<button class="btn ok full" id="doFz">'+ICON('i-check')+'Freeze 1 week</button>');
+    $('#doFz').onclick=function(){var from=$('#fzf').value,note=$('#fzn').value.trim();p.frozen=1;closeSheet();save('app_freeze',{pkg:p.id,from:from,note:note},null,true).then(function(j){toast('Frozen: '+first(c.name)+' now ends '+dayLabel(j.end))})}}});
+}
 function clientSheet(id){
   var c=clientById(id);if(!c){toast('Client file not found');return}var p=pkgOf(id),r=p&&lateRule(p),hist=SESS.filter(function(s){return s.clients.some(function(x){return x.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).slice(0,6);
   openSheet(c.name,'<div class="kv" style="margin-bottom:14px">'+(ME.role==='trainer'?'':'<dt>Phone</dt><dd>'+esc(c.phone)+'</dd><dt>Email</dt><dd>'+esc(c.email)+'</dd>')+'<dt>Package</dt><dd>'+(p?esc(p.type):'None')+'</dd>'+(p?'<dt>Passes left</dt><dd class="num">'+(p.total-p.used)+' of '+p.total+'</dd><dt>Expires</dt><dd>'+(p.expiry?dayLabel(p.expiry):'')+'</dd><dt>Balance</dt><dd class="num" style="color:'+(r&&r.due?'var(--bad)':'var(--good)')+'">'+(r&&r.due?money(r.due)+(melOwes(p)?' due from Melanie':' due'):'Paid')+'</dd>':'')+'</div>'+
    (ME.role!=='trainer'?'<label style="display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:600"><input type="checkbox" id="melFlag" style="width:22px;height:22px"'+(c.mel?' checked':'')+'> Melanie\'s own client <span class="muted" style="font-weight:500;font-size:13px">(Melanie pays the center $4/pass)</span></label>':'')+
+   (ME.role!=='trainer'?'<button class="btn sec full" id="editCl" style="margin-bottom:12px">'+ICON('i-edit')+'Edit name, phone, email</button>':'')+
+   (ME.role!=='trainer'&&!c.email?'<div class="note warn" style="margin-bottom:12px">'+ICON('i-alert')+'<span>No email: '+esc(first(c.name))+' cannot sign in to the client app yet.</span></div>':'')+
+   (ME.role!=='trainer'?staffClientTools(c):'')+
    (c.notes?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+(c.program?'<div class="notebox"><b>Training program</b>'+esc(c.program)+'</div>':'')+(c.log.length?'<div class="notebox"><b>Session notes</b>'+c.log.slice(0,4).map(function(l){return dayLabel(l.d)+' · '+esc(l.by)+': '+esc(l.t)}).join('<br>')+'</div>':'')+
    (ME.role==='owner'?ownerClientExtras(c):'')+'<span class="flabel">Recent sessions</span><div class="list" style="margin-top:8px">'+hist.map(function(s){var me=s.clients.filter(function(x){return x.cid===id})[0];return '<div class="row" style="min-height:50px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?'p-bad':'p-mute')+'">'+(me.att||'Scheduled')+'</span></div>'}).join('')+'</div>',
    ME.role==='trainer'?'<button class="btn ok full" id="editNotes">'+ICON('i-edit')+'Edit notes and program</button>':'<div class="two"><a class="btn wa" href="'+wa(c.phone,'Hi '+first(c.name)+', ')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'WhatsApp</a><button class="btn sec" id="sellTo">Sell package</button></div>');
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
   if(ME.role==='owner')bindOwnerExtras(c);
+  if(ME.role!=='trainer')bindStaffClientTools(c);
+  if($('#editCl'))$('#editCl').onclick=function(){
+    openSheet('Edit '+first(c.name),'<div class="field"><label for="ecn">Full name</label><input id="ecn" type="text" value="'+esc(c.name)+'" autocomplete="off"></div><div class="field"><label for="ecp">Phone</label><input id="ecp" type="tel" inputmode="tel" value="'+esc(c.phone)+'"></div><div class="field"><label for="ece">Email <span class="muted" style="font-weight:500">(used to sign in to the client app)</span></label><input id="ece" type="email" inputmode="email" autocomplete="off" value="'+esc(c.email)+'"></div><p class="muted" style="font-size:13px;margin-top:10px">Parents: put the parent\u2019s email on the child\u2019s profile, they will see it from their own sign in.</p>',
+     '<button class="btn ok full" id="doEc">'+ICON('i-check')+'Save</button>');
+    $('#doEc').onclick=function(){var n=$('#ecn').value.trim(),ph=$('#ecp').value.trim(),em=$('#ece').value.trim().toLowerCase();
+      if(!n){toast('Name needed');return}if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){toast('Check the email');return}
+      c.name=n;c.phone=ph;c.email=em;closeSheet();render();save('app_cedit',{cid:c.id,name:n,phone:ph,email:em},'Saved: '+first(n)+(em?' can now sign in with '+em:''))}};
   if($('#melFlag'))$('#melFlag').onchange=function(){c.mel=this.checked;save('app_flag',{cid:c.id,name:c.name,mel:c.mel},c.mel?first(c.name)+' is now Melanie\'s client':first(c.name)+' is a center client again');render()};
   if($('#editNotes'))$('#editNotes').onclick=function(){var s=SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).filter(function(x){return x.date<=T})[0]||SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})})[0];noteSheet(s.id,s.clients.findIndex(function(y){return y.cid===id}))};
 }
 ACTIONS.sell=function(cid){
+  var months=1;
   openSheet('Sell a package','<div class="field"><label for="sc">Client</label><select id="sc">'+CLIENTS.slice().sort(function(a,b){return a.name<b.name?-1:1}).map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.name)+'</option>'}).join('')+'</select></div>'+
    '<div class="field"><label for="st">Package</label><select id="st">'+PKG_TYPES.map(function(t,i){return '<option value="'+i+'">'+esc(t.t)+'</option>'}).join('')+'</select></div>'+
+   '<div class="field" id="smf"><span class="flabel">Length</span><div class="seg" id="smo"><button aria-pressed="true" data-m="1">1 month</button><button aria-pressed="false" data-m="3">3 months · 7% off</button><button aria-pressed="false" data-m="6">6 months · 15% off</button></div></div>'+
    '<div class="two"><div class="field"><label for="sd">Discount %</label><input id="sd" type="number" inputmode="decimal" value="0" min="0" max="100"></div><div class="field"><label for="sp">Paid now ($)</label><input id="sp" type="number" inputmode="decimal" value="0" min="0"></div></div>'+
+   '<div class="field"><label for="sday">Starts</label><input id="sday" type="date" value="'+T+'"></div>'+
    '<div class="field"><span class="flabel">Paid by</span><div class="seg" id="sm"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div id="sumP" class="note good"></div>',
    '<button class="btn ok full" id="doSell">'+ICON('i-check')+'Create package</button>');
   $$('#sm button').forEach(function(b){b.onclick=function(){$$('#sm button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')}});
-  var sum=function(){var t=PKG_TYPES[+$('#st').value],mel=isMel($('#sc').value),mad=/madero/i.test(t.t);
-    var price=t.p*(1-(+$('#sd').value||0)/100);$('#sumP').innerHTML=ICON('i-check')+'<span>'+t.n+' passes · '+money(price)+' · '+money(Math.max(0,price-(+$('#sp').value||0)))+' left to pay. Valid '+(/madero/i.test(t.t)?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+' from today.'+(mad?' Madero: 100% Melanie, Romy collects from the client as usual.':mel?' Melanie\'s client: Romy collects from the client as usual, Melanie pays the center $4/pass upfront.':'')+'</span>'};
-  ['st','sd','sp'].forEach(function(i){$('#'+i).oninput=sum});$('#sc').onchange=sum;sum();
+  var clientDisc=function(){var c=clientById($('#sc').value);return c&&c.disc||0};
+  var setDisc=function(){$('#sd').value=Math.max(clientDisc(),months===3?7:months===6?15:0)};
+  $$('#smo button').forEach(function(b){b.onclick=function(){$$('#smo button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');months=+b.dataset.m;setDisc();
+    var t=PKG_TYPES[+$('#st').value],tot=Math.round(t.p*months*(1-(+$('#sd').value||0)/100));$('#sp').value=months===6?Math.round(tot/2):months===3?tot:0;sum()}});
+  var sum=function(){var t=PKG_TYPES[+$('#st').value],mel=isMel($('#sc').value),mad=/madero/i.test(t.t),monthly=/x\/month/.test(t.t);
+    $('#smf').hidden=!monthly;if(!monthly&&months!==1){months=1;$$('#smo button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.m==='1'?'true':'false')});setDisc()}
+    var d=+$('#sd').value||0,total=Math.round(t.p*months*(1-d/100)),paid=Math.min(total,+$('#sp').value||0),st=$('#sday').value||T,each=Math.round(total/months*100)/100;
+    var lines=months>1?'<br>'+[].concat.apply([],Array(months).fill(0).map(function(x,k){return [k]})).map(function(k){var dd=ymd(addDays(new Date(st+'T12:00:00'),30*k));return 'Month '+(k+1)+': '+dayLabel(dd)+' · '+t.n+' sessions · '+money(k<months-1?each:total-each*(months-1))}).join('<br>'):'';
+    $('#sumP').innerHTML=ICON('i-check')+'<span>'+(months>1?'<b>'+months+' packages, one per month.</b> ':'')+t.n+' passes'+(months>1?' each':'')+' · total '+money(total)+(months>1?' instead of '+money(t.p*months):'')+' · '+money(Math.max(0,total-paid))+' left to pay'+(months===6?' (2nd half due on day 1 of month 3)':'')+'.'+
+      (months===1?' Valid '+(mad?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+'.':'')+lines+(mad?'<br>Madero: 100% Melanie, Romy collects from the client as usual.':mel?'<br>Melanie\'s client: Romy collects from the client, Melanie pays the center $4/pass upfront.':'')+'</span>'};
+  ['st','sd','sp','sday'].forEach(function(i){$('#'+i).oninput=sum});$('#st').onchange=sum;$('#sc').onchange=function(){setDisc();sum()};setDisc();sum();
   $('#doSell').onclick=function(){var t=PKG_TYPES[+$('#st').value],c=clientById($('#sc').value),m=($('#sm [aria-pressed="true"]')||{}).textContent||'Cash';closeSheet();
-    save('app_sell',{cid:c.id,type:t.t,discount:+$('#sd').value||0,paid:+$('#sp').value||0,method:m,start:T},null,true).then(function(j){toast(j.id+' created for '+c.name)})};
+    save('app_sell',{cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,paid:+$('#sp').value||0,method:m,start:$('#sday').value||T},null,true).then(function(j){toast((j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name)})};
 };
 ACTIONS.desk=function(){VIEW='home';render();scrollTo(0,0)};
 ACTIONS.home=ACTIONS.desk;
@@ -682,10 +720,21 @@ ACTIONS.newClient=function(){
 };
 ACTIONS.leads=function(){
   openSheet('Trial leads','<div class="list">'+LEADS.map(function(l){return '<div class="card" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(l.name)+'</b><span class="pill '+(l.status==='Confirmed'?'p-good':l.status==='Pending'?'p-warn':'p-bad')+'">'+l.status+'</span></div><div class="muted" style="font-size:14px">'+(l.date?dayLabel(l.date)+' · '+l.time+' · '+l.type:'No time picked')+' · Injuries: '+esc(l.injuries)+'</div>'+
-    (l.status!=='Confirmed'?'<div class="two" style="margin-top:10px"><a class="btn wa sm" href="'+wa(l.phone,'Hi '+first(l.name)+', this is Romy from Wellbe! Thank you for booking your free session'+(l.date?' on '+dayLabel(l.date)+' at '+l.time:'')+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'WhatsApp</a><button class="btn ok sm" data-confirm="'+l.id+'"'+(l.date?'':' disabled')+'>Confirm</button></div>':'')+'</div>'}).join('')+'</div>'+
+    (l.status!=='Confirmed'?'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px"><button class="btn ok sm" data-confirm="'+l.id+'"'+(l.date?'':' disabled')+'>Confirm</button><a class="btn wa sm" href="'+wa(l.phone,otherTimeMsg(l))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'New time</a><button class="btn sec sm" data-lcancel="'+l.id+'">Cancel</button></div>':'')+'</div>'}).join('')+'</div>'+
     '<p class="muted" style="font-size:13px;margin-top:12px">Confirm creates the client, the free trial package and the 1:3 session, then opens WhatsApp with her confirmation message.</p>');
   $$('[data-confirm]').forEach(function(b){b.onclick=function(){confirmLead(b.dataset.confirm)}});
+  $$('[data-lcancel]').forEach(function(b){b.onclick=function(){cancelLead(b.dataset.lcancel)}});
 };
+// next free trial slots (Mon to Sat, 7 to 10 AM, Joe under 3 clients), for the "pick another time" message
+function freeTrialSlots(n,skip){var out=[];for(var i=1;i<15&&out.length<n;i++){var d=addDays(TODAY,i);if(d.getDay()===0)continue;var dd=ymd(d);
+  ['07:00','08:00','09:00','10:00'].forEach(function(t){if(out.length<n&&joeLoad(dd,t)<3&&!(skip&&skip.date===dd&&hl(t)===skip.time))out.push(dayLabel(dd)+' at '+hl(t))})}return out}
+function otherTimeMsg(l){var sl=freeTrialSlots(3,l);
+  return 'Hi '+first(l.name)+', this is Romy from Wellbe Health Center. Thank you for booking your free session'+(l.date?' on '+dayLabel(l.date)+' at '+l.time:'')+'! '+(l.date?'That time is not available anymore. ':'')+'Which of these suits you better?\n\n'+sl.map(function(x,i){return (i+1)+'. '+x}).join('\n')+'\n\nJust reply with the number, or tell me another morning that works for you.'}
+function cancelLead(id){var l=LEADS.filter(function(x){return x.id===id})[0];
+  openSheet('Cancel '+first(l.name)+'\u2019s trial?','<div class="card" style="padding:12px 14px"><b>'+esc(l.name)+'</b><div class="muted" style="font-size:14px">'+(l.date?dayLabel(l.date)+' · '+l.time:'No time picked')+'</div></div><div class="field"><label for="lcr">Reason (optional)</label><input id="lcr" type="text" placeholder="e.g. not interested, no answer"></div>',
+   '<div class="two"><button class="btn sec" id="lcKeep">Keep it</button><button class="btn" style="background:var(--bad);color:#fff" id="lcGo">Cancel trial</button></div>');
+  $('#lcKeep').onclick=closeSheet;
+  $('#lcGo').onclick=function(){var r=$('#lcr').value.trim();LEADS=LEADS.filter(function(x){return x.id!==id});closeSheet();render();save('app_lead',{row:l.row,id:l.id,act:'cancel',reason:r},l.name+'\u2019s trial cancelled')}}
 ACTIONS.pos=function(){
   if(!INVENTORY.length){openSheet('Product sale','<div class="empty">No products in POS INVENTORY.</div>');return}
   openSheet('Product sale','<div class="field"><label for="pp">Product</label><select id="pp">'+INVENTORY.map(function(i,k){return '<option value="'+k+'">'+esc(i.p)+' · '+i.left+' left · $'+i.price+'</option>'}).join('')+'</select></div><div class="two"><div class="field"><label for="pq">Qty</label><input id="pq" type="number" value="1" min="1"></div><div class="field"><label for="pr">Price each ($)</label><input id="pr" type="number" value="'+INVENTORY[0].price+'"></div></div><div class="field"><label for="pt">Sold to</label><input id="pt" type="text" placeholder="Client name"></div>',
@@ -742,7 +791,8 @@ function confirmLead(id){
   openSheet('Confirm '+first(l.name),
    '<div class="note good" style="margin-bottom:12px">'+ICON('i-check')+'<span>Confirming creates her client file, the free trial package and her spot in the 1:3 session.</span></div>'+
    '<p class="muted" style="margin-bottom:8px">She receives this on WhatsApp when you press send:</p><div class="card" style="padding:12px 14px;font-size:15px;white-space:pre-line">'+esc(msg)+'</div>',
-   '<a class="btn wa full" id="cfSend" href="'+wa(l.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Confirm and send on WhatsApp</a><button class="btn sec full" id="cfOnly">Confirm without message</button>');
+   '<a class="btn wa full" id="cfSend" href="'+wa(l.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Confirm and send on WhatsApp</a><button class="btn sec full" id="cfOnly">Confirm without message</button><div class="two" style="margin-top:8px"><a class="btn sec" href="'+wa(l.phone,otherTimeMsg(l))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Ask for another time</a><button class="btn sec" id="cfCancel">Cancel trial</button></div>');
+  $('#cfCancel').onclick=function(){cancelLead(id)};
   var done=function(){l.status='Confirmed';closeSheet();render();save('app_lead',{row:l.row,id:l.id},null,true).then(function(){toast(l.name+' confirmed: client, trial package and session created')})};
   $('#cfSend').addEventListener('click',function(){setTimeout(done,200)});$('#cfOnly').onclick=done;
 }
