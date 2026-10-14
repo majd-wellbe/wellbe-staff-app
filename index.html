@@ -577,19 +577,22 @@ function changeSession(id){
   var s=SESS.filter(function(x){return x.id===id})[0]; var kind=cancelKind(s);
   var body='<div class="card" style="padding:12px 14px;margin-bottom:14px"><b>'+dayLong(s.date)+' · '+hl(s.start)+'</b><div class="muted" style="font-size:14px">'+s.tab+' with '+esc(s.trainer)+' · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'+
    (s.clients.length>1?'<div class="field"><span class="flabel">Who?</span><div class="seg" id="who">'+s.clients.map(function(c,i){return '<button aria-pressed="'+(i===0)+'" data-i="'+i+'">'+esc(first(c.name))+'</button>'}).join('')+'<button data-i="all" aria-pressed="false">Whole session</button></div></div>':'')+
-   '<div class="field"><span class="flabel">What happened?</span><div class="seg" id="what"><button aria-pressed="true" data-w="move">Reschedule</button><button aria-pressed="false" data-w="cancel">Cancel</button><button aria-pressed="false" data-w="trainer">Change trainer</button></div></div>'+
+   '<div class="field"><span class="flabel">What happened?</span><div class="seg" id="what"><button aria-pressed="true" data-w="move">Reschedule</button><button aria-pressed="false" data-w="cancel">Cancel / No show</button><button aria-pressed="false" data-w="trainer">Change trainer</button></div></div>'+
    '<div id="whatBody"></div>';
   openSheet('Change session',body,'<button class="btn full" id="doChange">Save change</button>');
-  var who=0, what='move';
+  var who=0, what='move', pick=kind;
   $$('#who button').forEach(function(b){b.onclick=function(){$$('#who button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');who=b.dataset.i==='all'?'all':+b.dataset.i}});
   function paint(){
     var h='';
     if(what==='move'){h='<div class="two"><div class="field"><label for="nd">New day</label><input id="nd" type="date" value="'+s.date+'" min="'+T+'"></div><div class="field"><label for="nt">New time</label><input id="nt" type="time" value="'+s.start+'" step="1800"></div></div><div id="cap"></div><div class="note good">'+ICON('i-check')+'<span>A reschedule never costs a pass.</span></div>'}
-    if(what==='cancel'){h='<div class="note '+(kind==='Early Cancel'?'good':'bad')+'">'+ICON('i-alert')+'<span>Cancelled '+(kind==='Early Cancel'?'a day or more before':'on the day')+': counts as <b>'+kind+'</b>'+(kind==='Early Cancel'?' (pass kept).':' (1 pass used).')+'</span></div>'+
-      (kind==='Late Cancel'?'<label style="display:flex;gap:10px;align-items:center;margin:12px 0;font-weight:600"><input type="checkbox" id="exc" style="width:22px;height:22px"> Make an exception: count as Early cancel</label><div class="field" id="excWhy" hidden><label for="why">Reason (required)</label><input id="why" type="text" placeholder="e.g. sick, urgent at work"></div>':'')}
+    if(what==='cancel'){h='<div class="field" style="margin-top:0"><span class="flabel">Mark as</span><div class="seg" id="ck">'+[['Early Cancel','Early cancel'],['Late Cancel','Late cancel'],['No Show','No show']].map(function(x){return '<button aria-pressed="'+(x[0]===pick)+'" data-k="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div></div>'+
+      '<div id="ckNote"></div><div class="field" id="excWhy" hidden><label for="why">Reason for the exception (required)</label><input id="why" type="text" placeholder="e.g. sick, urgent at work"></div>'}
     if(what==='trainer'){h='<div class="field"><label for="ntr">New trainer</label><select id="ntr">'+['Joe','Mikel','Melanie','Majd'].map(function(t){return '<option'+(t===s.trainer?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div>';if(['1:1','1:2','1:3'].indexOf(s.tab)<0)h='<div class="note warn">'+ICON('i-alert')+'<span>'+s.tab+' always runs with '+esc(s.trainer)+'.</span></div>'}
     $('#whatBody').innerHTML=h;
-    var exc=$('#exc'); if(exc) exc.onchange=function(){$('#excWhy').hidden=!exc.checked};
+    var ckPaint=function(){if(!$('#ckNote'))return;var ex=pick==='Early Cancel'&&kind==='Late Cancel';
+      $('#ckNote').innerHTML='<div class="note '+(pick==='Early Cancel'?'good':'bad')+'">'+ICON('i-alert')+'<span>'+(pick==='Early Cancel'?'<b>Early cancel:</b> pass kept.'+(ex?' This is an exception: the rule says late (same day).':''):pick==='Late Cancel'?'<b>Late cancel:</b> cancelled on the day, 1 pass used.':'<b>No show:</b> did not come and did not tell us, 1 pass used.')+'</span></div>';
+      $('#excWhy').hidden=!ex};
+    $$('#ck button').forEach(function(b){b.onclick=function(){$$('#ck button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');pick=b.dataset.k;ckPaint()}});ckPaint();
     var check=function(){var nd=$('#nd'),nt=$('#nt');if(!nd)return;var n=joeLoad(nd.value,nt.value)+(s.trainer==='Joe'?1:0);$('#cap').innerHTML=(s.trainer==='Joe'&&n>3)?'<div class="note bad" style="margin-bottom:10px">'+ICON('i-alert')+'<span>Joe would have '+n+' clients at that hour. Max is 3.</span></div>':''};
     if($('#nd')){$('#nd').onchange=check;$('#nt').onchange=check;check()}
   }
@@ -598,9 +601,10 @@ function changeSession(id){
   $('#doChange').onclick=function(){
     var targets=who==='all'?s.clients:[s.clients[who]], msg='';
     var req={ref:s.ref,id:s.id,who:who==='all'?'all':s.clients[who].slot,what:what};
-    if(what==='cancel'){var k=kind;if($('#exc')&&$('#exc').checked){if(!$('#why').value.trim()){toast('Add the reason for the exception');return}k='Early Cancel';req.reason=$('#why').value.trim()}
-      req.kind=k;targets.forEach(function(c){c.att=k}); if(who==='all') s.status='Cancelled';
-      msg='Hi '+first(targets[0].name)+', your session on '+dayLabel(s.date)+' at '+hl(s.start)+' is cancelled. '+(k==='Early Cancel'?'No pass was used.':'As it was cancelled on the day, it counts as a session.')+' See you next time! Wellbe';}
+    if(what==='cancel'){var k=pick;if(k==='Early Cancel'&&kind==='Late Cancel'){if(!$('#why').value.trim()){toast('Add the reason for the exception');return}req.reason=$('#why').value.trim()}
+      req.kind=k;targets.forEach(function(c){c.att=k}); if(who==='all') s.status=k==='No Show'?'Done':'Cancelled';
+      msg=k==='No Show'?'Hi '+first(targets[0].name)+', we missed you at your session today ('+hl(s.start)+'). As it was not cancelled, it counts as a session. Let us know next time and we will move it for you. Wellbe'
+        :'Hi '+first(targets[0].name)+', your session on '+dayLabel(s.date)+' at '+hl(s.start)+' is cancelled. '+(k==='Early Cancel'?'No pass was used.':'As it was cancelled on the day, it counts as a session.')+' See you next time! Wellbe';}
     if(what==='move'){var nd=$('#nd').value,nt=$('#nt').value;if(!nd||!nt){toast('Pick the new day and time');return}if(s.trainer==='Joe'&&joeLoad(nd,nt)+targets.length>3&&!(nd===s.date&&nt===s.start)){toast('Joe is full at that hour');return}
       req.date=nd;req.time=nt;if(who==='all'){s.date=nd;s.start=nt;s.end=endT(nt)}else{s.clients.splice(who,1)}
       msg='Hi '+first(targets[0].name)+', your session is moved to '+dayLabel(nd)+' at '+hl(nt)+' with '+s.trainer+'. See you then! Wellbe';}
