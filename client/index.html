@@ -20,6 +20,7 @@
   --mint:#6fc7b1; --mint-deep:#1f6e5b; --mint-soft:#e3f4ef; --mint-ink:#0f3d33;
   --crimson:#a3263f; --crimson-soft:#f9e8ec; --amber:#8a5a00; --amber-soft:#fff3d9;
   --wa:#1f8f4e; --track:#e6ecea;
+  --pink:#a3263f; --pink-2:#c2405a; --pink-soft:#f9e8ec; --accent:var(--pink);
   --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --body:Barlow,"Segoe UI",Roboto,Arial,sans-serif;
   --r:18px; --shadow:0 1px 2px rgba(16,40,34,.06),0 6px 20px rgba(16,40,34,.06);
@@ -57,9 +58,13 @@ main{max-width:640px;margin:0 auto;padding:4px 16px calc(96px + env(safe-area-in
 .acc[aria-pressed="true"]{background:var(--mint-deep);color:#fff}
 .hello{margin:6px 0 16px}
 .hello h1{font-size:34px}
+.hello h1 em{font-style:normal;color:var(--accent)}
+:root[data-accent="mint"]{--accent:#1f6e5b}:root[data-accent="ocean"]{--accent:#1e5f8c}:root[data-accent="sunset"]{--accent:#c2571a}:root[data-accent="plum"]{--accent:#6b2d7a}
+.top{background-image:linear-gradient(115deg,transparent 0 78%,rgba(163,38,63,.10) 78% 86%,rgba(111,199,177,.18) 86% 100%)}
 .hello p{color:var(--ink-3);font-size:15px}
 .sec{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 10px}
-.sec h2{font-size:23px}
+.sec h2{font-size:23px;display:flex;align-items:center;gap:8px}
+.sec h2::before{content:"";width:6px;height:20px;border-radius:3px;background:var(--accent)}
 .sec small{color:var(--ink-3);font-size:14px}
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
 .stack>*+*{margin-top:12px}
@@ -99,7 +104,35 @@ main{max-width:640px;margin:0 auto;padding:4px 16px calc(96px + env(safe-area-in
 
 /* next session */
 .next{display:flex;gap:16px;align-items:center}
-.datebox{width:68px;flex:none;text-align:center;border-radius:14px;background:var(--mint-soft);color:var(--mint-deep);padding:8px 0}
+.datebox{width:68px;flex:none;text-align:center;border-radius:14px;background:var(--pink-soft);color:var(--pink);padding:8px 0}
+.today{margin-bottom:14px;border-radius:22px;padding:18px;color:#fff;background:linear-gradient(140deg,#a3263f,#c2405a 55%,#e0607a);box-shadow:0 10px 28px rgba(163,38,63,.3);position:relative;overflow:hidden}
+.today .tag{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.9}
+.today h3{font:800 34px/1 var(--display);margin:6px 0 2px}
+.today p{opacity:.92}
+.today .acts .btn{background:#fff;color:#a3263f}.today .acts .btn.ghost{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
+.promise{border-radius:24px;padding:20px;color:#fff;background:radial-gradient(120% 90% at 100% 0%,#e0607a 0%,rgba(224,96,122,0) 55%),linear-gradient(150deg,#151b1e,#2a1d24 60%,#4a1f2e);position:relative;overflow:hidden;box-shadow:0 12px 30px rgba(74,31,46,.35)}
+.promise .tag{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#f3a8b8}
+.promise blockquote{font:700 26px/1.15 var(--display);margin:8px 0 14px;text-wrap:pretty}
+.promise .edit{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff}
+.keys{display:flex;flex-direction:column;gap:8px}
+.key{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;border-radius:14px;background:rgba(255,255,255,.08);color:#fff;font-weight:600;font-size:15.5px;line-height:1.3;transition:background .2s}
+.key .n{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font:800 15px var(--display);background:rgba(255,255,255,.14)}
+.key[aria-pressed="true"]{background:rgba(111,199,177,.22)}
+.key[aria-pressed="true"] .n{background:var(--mint);color:#0f3d33}
+.key[aria-pressed="true"] span.t{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.5)}
+.promise .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13.5px;color:#f3c9d3;font-weight:600}
+.onb{min-height:100dvh;display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:calc(26px + env(safe-area-inset-top,0px)) 22px 26px}
+.onb h1{font-size:40px;line-height:1;margin:18px 0 10px}.onb h1 em{font-style:normal;color:var(--pink)}
+.onb .chipset{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.onb .chipset button{padding:9px 13px;border-radius:999px;background:var(--card);box-shadow:var(--shadow);font-size:14.5px;font-weight:600}
+.thinking{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;flex:1}
+.thinking .orb2{width:84px;height:84px;border-radius:50%;background:conic-gradient(var(--pink),var(--mint),var(--pink));animation:spin 1.4s linear infinite;-webkit-mask:radial-gradient(circle,transparent 52%,#000 54%);mask:radial-gradient(circle,transparent 52%,#000 54%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.review{display:flex;gap:14px;align-items:center;border-radius:18px;padding:16px;background:var(--card);box-shadow:var(--shadow);border:1.5px solid #f2d27a}
+.stars{color:#e8a400;font-size:20px;letter-spacing:2px;line-height:1}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.swatches button{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 3px var(--card),0 0 0 2px var(--line)}
+.swatches button[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--card),0 0 0 3px var(--ink)}
 .datebox small{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .datebox b{display:block;font:800 30px/1 var(--display)}
 .next h3{font-size:24px}
@@ -179,8 +212,8 @@ main{max-width:640px;margin:0 auto;padding:4px 16px calc(96px + env(safe-area-in
 .tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabs .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0 10px;font-size:12.5px;font-weight:700;color:var(--ink-3);position:relative}
-.tabs button[aria-current="page"]{color:var(--mint-deep)}
-.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;width:34px;height:3px;border-radius:0 0 3px 3px;background:var(--mint-deep)}
+.tabs button[aria-current="page"]{color:var(--accent)}
+.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;width:34px;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
 .tabs .dot{position:absolute;top:6px;left:calc(50% + 8px);min-width:18px;height:18px;border-radius:9px;background:var(--crimson);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 5px}
 
 /* sheet */
@@ -262,6 +295,8 @@ textarea.inp{min-height:84px;resize:vertical}
  <symbol id="i-snow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v20M4.9 6.5l14.2 11M19.1 6.5 4.9 17.5M9 3.5l3 2 3-2M9 20.5l3-2 3 2"/></symbol>
  <symbol id="i-swap" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
  <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+ <symbol id="i-edit" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></symbol>
+ <symbol id="i-clock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></g></symbol>
  <symbol id="i-out" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></symbol>
 </svg>
 
@@ -363,10 +398,11 @@ function waLink(text,to){return 'https://wa.me/'+(to||(D&&D.wa)||WA_DEFAULT)+'?t
 function tabName(t){return {'1:1':'Private 1:1','1:2':'Duo 1:2','1:3':'Small group 1:3','Physio':'Physio','Prehab':'Prehab','Osteo':'Osteo','Madero':'Madero'}[t]||t}
 
 /* ---------- state ---------- */
-var TOKEN=null, D=null, A=0, VIEW='home', CART={}, LOGIN={step:'email',email:'',busy:false,err:''};
+var ONB=null, TOKEN=null, D=null, A=0, VIEW='home', CART={}, LOGIN={step:'email',email:'',busy:false,err:''};
 (function(){var m=/[#&]t=([^&]+)/.exec(location.hash);if(m){TOKEN=decodeURIComponent(m[1]);store('wbc_t',TOKEN)}else{TOKEN=store('wbc_t')||null;if(TOKEN)history.replaceState(null,'','#t='+encodeURIComponent(TOKEN))}
   try{CART=JSON.parse(store('wbc_cart')||'{}')}catch(e){CART={}}
-  A=+(store('wbc_acc')||0)||0;})();
+  A=+(store('wbc_acc')||0)||0;
+  var ac=store('wbc_accent');if(ac&&ac!=='rose')document.documentElement.setAttribute('data-accent',ac);})();
 function ACC(){return D&&D.accounts[A]||D&&D.accounts[0]}
 
 function api(action,data){data=data||{};data.action=action;if(TOKEN)data.token=TOKEN;
@@ -388,6 +424,7 @@ function render(){
   if(!TOKEN){app.innerHTML=loginView();bindLogin();return}
   if(!D){app.innerHTML=loadingView();return}
   var a=ACC(), full=a.full;
+  if(ONB||(!a.goal&&!store('wbc_goal_later_'+a.cid))){app.innerHTML=onbView(a);bindOnb(a);return}
   if(!full)VIEW='home';
   var body=full?VIEWS[VIEW]():VIEWS.basic();
   app.innerHTML='<div class="top"><div class="in"><div class="brand">WELLBE</div><a class="help" href="'+waLink('Hi Romy, this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+'Romy</a></div></div>'+
@@ -470,13 +507,56 @@ function spotsRow(a){if(!a.open||!a.open.length)return '';
   return '<div class="sec"><h2>Open group spots</h2><small>'+a.canJoin+' session'+(a.canJoin>1?'s':'')+' to use</small></div><div class="hscroll">'+a.open.slice(0,12).map(function(o,i){
    return '<button class="spot" data-join="'+i+'"><small>'+rel(o.date)+'</small><b>'+hl(o.start)+'</b><small>with '+esc(o.trainer)+'</small><br><span class="pill">'+o.spots+' spot'+(o.spots>1?'s':'')+' left</span></button>'}).join('')+'</div>'}
 
+/* ---------- personal: promise, today, review ---------- */
+function keyState(a){try{return JSON.parse(store('wbc_keys_'+a.cid+'_'+D.today)||'[false,false,false]')}catch(e){return [false,false,false]}}
+function streakDays(a){try{return JSON.parse(store('wbc_streak_'+a.cid)||'{}')}catch(e){return {}}}
+function streak(a){var st=streakDays(a),n=0,d=D.today;if(!st[d])d=addDays(d,-1);while(st[d]){n++;d=addDays(d,-1)}return n}
+function promiseCard(a){
+  if(!a.goal)return '<button class="promise" data-act="goal" style="width:100%;text-align:left;display:block"><div class="tag">Your promise</div><blockquote>What do you promise yourself to achieve with Wellbe?</blockquote><span class="btn sm" style="background:var(--pink);display:inline-flex">Write my promise</span></button>';
+  var k=keyState(a),done=k.filter(Boolean).length,sk=streak(a);
+  return '<div class="promise"><button class="edit" data-act="goal" aria-label="Change my promise">'+ICON('i-edit','width:18px;height:18px')+'</button><div class="tag">My promise</div><blockquote>“'+esc(a.goal.promise)+'”</blockquote>'+
+   '<div class="keys">'+a.goal.keys.map(function(x,i){return '<button class="key" aria-pressed="'+!!k[i]+'" data-key="'+i+'"><span class="n">'+(k[i]?'✓':(i+1))+'</span><span class="t">'+esc(x)+'</span></button>'}).join('')+'</div>'+
+   '<div class="foot"><span>'+done+' of 3 today</span><span>'+(sk?'🔥 '+sk+' day'+(sk>1?'s':'')+' in a row':'Tick them as you go')+'</span></div></div>'}
+function todayCard(s){var started=s.at<=Date.now();
+  return '<div class="today"><div class="tag">Today</div><h3>'+hl(s.start)+'</h3><p>'+tabName(s.tab)+' with '+esc(s.trainer)+'</p>'+
+   (started?'<div class="status" style="color:#fff">'+ICON('i-dumbbell','width:18px;height:18px')+'Happening now. Enjoy it!</div>':'<div class="acts"><button class="btn sm" data-late="'+s.id+'">'+ICON('i-clock','width:18px;height:18px')+'I’ll be late</button><button class="btn sm ghost" data-cancel="'+s.id+'">Cancel my session</button></div>')+'</div>'}
+function reviewCard(always){return '<div class="review"><div class="grow"><div class="stars">★★★★★</div><b style="display:block;margin-top:4px">'+(always?'Review Wellbe on Google':'Enjoying Wellbe?')+'</b><div class="muted" style="font-size:14px">'+(always?'It takes 30 seconds and helps others find us.':'A 30 second Google review helps other people find us.')+'</div></div><button class="btn sm" style="background:#e8a400" data-review="1">Review</button></div>'}
+function lateSheet(s){if(!s)return;var m=10;
+  openSheet('Running late?',sessLine(s)+'<div class="field"><span class="flabel">How late?</span><div class="seg" id="lm">'+[5,10,15,20].map(function(x){return '<button aria-pressed="'+(x===m)+'" data-m="'+x+'">'+x+(x===20?'+':'')+' min</button>'}).join('')+'</div></div>'+
+   '<div class="field"><label for="ln">Message (optional)</label><input class="inp" id="ln" placeholder="e.g. stuck in traffic"></div><p class="muted" style="font-size:14px;margin-top:10px">Your coach is told. Your session stays on and ends at the usual time.</p>','<button class="btn block" id="go">Tell my coach</button>');
+  pickOne('#lm',function(b){m=+b.dataset.m});
+  $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'late',minutes:m,sid:s.id,pkg:s.pkg,slabel:s.date+' '+s.start,note:$('#ln').value.trim()}).then(function(){success('Got it, drive safe','We told your coach you’re about '+m+' minutes late.')}).catch(function(e){fail(b,e)})}}
+// first sign in: the promise, then 3 keys
+var PROMISE_IDEAS=['Feel strong in my body again','Live without back or knee pain','Lose weight and keep it off','Have energy for my family','Train consistently, no more stopping','Be my fittest at 40, 50 and beyond'];
+function onbView(a){var st=ONB||{step:'write',text:a.goal?a.goal.promise:''};ONB=st;
+  if(st.step==='thinking')return '<div class="onb"><div class="brand">WELLBE</div><div class="thinking"><div class="orb2"></div><h2 style="font-size:28px">Building your 3 keys…</h2><p class="muted">Turning your promise into what matters most.</p></div></div>';
+  if(st.step==='done'){var g=st.goal;return '<div class="onb"><div class="brand">WELLBE</div><h1>Your promise, <em>'+esc(a.first)+'</em></h1><div class="promise" style="margin-top:8px"><div class="tag">I promise myself</div><blockquote>“'+esc(g.promise)+'”</blockquote><div class="keys">'+g.keys.map(function(x,i){return '<div class="key" style="animation:rise .6s '+(0.25*i+.2)+'s both"><span class="n">'+(i+1)+'</span><span class="t">'+esc(x)+'</span></div>'}).join('')+'</div></div>'+
+    '<p class="muted" style="margin-top:14px;font-size:15px">These 3 keys live on your home screen. Tick them every day and watch your streak grow.</p><button class="btn block" style="margin-top:auto;background:var(--pink)" id="onbGo">Let’s go</button></div>'}
+  return '<div class="onb"><div class="brand">WELLBE</div><h1>'+(a.goal?'Change your promise':'Before we start, <em>'+esc(a.first)+'</em>')+'</h1><p class="muted" style="font-size:16px">What do you promise yourself to achieve with Wellbe? Say it in your own words.</p>'+
+   '<textarea class="inp" id="onbT" maxlength="240" style="margin-top:16px;min-height:110px;font-size:18px" placeholder="I promise myself to…">'+esc(st.text||'')+'</textarea>'+
+   '<div class="chipset">'+PROMISE_IDEAS.map(function(x){return '<button data-idea="'+esc(x)+'">'+esc(x)+'</button>'}).join('')+'</div>'+
+   (st.err?'<div class="note bad" style="margin-top:12px">'+ICON('i-alert')+'<span>'+esc(st.err)+'</span></div>':'')+
+   '<button class="btn block" style="margin-top:22px;background:var(--pink)" id="onbMake">Make my promise</button><button class="btn ghost block" style="margin-top:10px" id="onbLater">'+(a.goal?'Cancel':'Later')+'</button></div>'}
+function bindOnb(a){var st=ONB;
+  $$('[data-idea]').forEach(function(b){b.onclick=function(){$('#onbT').value=b.dataset.idea;$('#onbT').focus()}});
+  if($('#onbLater'))$('#onbLater').onclick=function(){if(!a.goal)store('wbc_goal_later_'+a.cid,'1');ONB=null;render()};
+  if($('#onbGo'))$('#onbGo').onclick=function(){ONB=null;VIEW='home';render();scrollTo(0,0)};
+  if($('#onbMake'))$('#onbMake').onclick=function(){var t=$('#onbT').value.trim();if(t.length<4){st.err='Write a few words first.';render();return}
+    st.text=t;st.err='';st.step='thinking';render();var t0=Date.now();
+    send('app_cl_goal',{promise:t}).then(function(j){setTimeout(function(){a.goal=j.goal;st.goal=j.goal;st.step='done';render()},Math.max(0,1600-(Date.now()-t0)))})
+     .catch(function(e){st.step='write';st.err=e.message;render()})}}
+
 /* ---------- views ---------- */
 var VIEWS={};
 VIEWS.home=function(){var a=ACC(),p=currentPkg(a),nx=a.upcoming.filter(function(s){return s.at>Date.now()})[0];
-  var h='<div class="hello"><h1>Hi '+esc(a.first)+'</h1><p>'+dayLong(D.today)+'</p></div>'+quoteCard();
-  h+='<div class="sec"><h2>Next session</h2>'+(a.upcoming.length>1?'<button class="link" data-nav="sessions">All '+a.upcoming.length+'</button>':'')+'</div>';
+  var h='<div class="hello"><h1>Hi <em>'+esc(a.first)+'</em></h1><p>'+dayLong(D.today)+'</p></div>';
+  var td=a.upcoming.filter(function(s){return s.date===D.today})[0];
+  if(td)h+=todayCard(td);
+  h+=promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
+  if(td&&td===nx)nx=a.upcoming.filter(function(s){return s!==td&&s.at>Date.now()})[0];
+  h+='<div class="sec"><h2>'+(td?'After today':'Next session')+'</h2>'+(a.upcoming.length>1?'<button class="link" data-nav="sessions">All '+a.upcoming.length+'</button>':'')+'</div>';
   h+=nx?'<div class="card"><div class="next"><div class="datebox"><small>'+(rel(nx.date).length<10?rel(nx.date):dOf(nx.date).toLocaleDateString('en-GB',{weekday:'short'}))+'</small><b class="num">'+dOf(nx.date).getDate()+'</b></div><div class="grow"><h3>'+hl(nx.start)+'</h3><p>'+tabName(nx.tab)+' with '+esc(nx.trainer)+'</p></div></div><div class="acts"><button class="btn sec2 sm" data-resch="'+nx.id+'">'+ICON('i-swap','width:18px;height:18px')+'Reschedule</button><button class="btn ghost sm" data-cancel="'+nx.id+'">Cancel</button></div></div>'
-     :'<div class="card row"><div class="grow"><b>Nothing booked yet</b><div class="muted" style="font-size:14px">Tell Romy when you want to train.</div></div><button class="btn sm" data-act="session">Request</button></div>';
+     :'<div class="card row"><div class="grow"><b>'+(td?'Nothing else booked yet':'Nothing booked yet')+'</b><div class="muted" style="font-size:14px">Tell Romy when you want to train.</div></div><button class="btn sm" data-act="session">Request</button></div>';
   if(p)h+='<div class="sec"><h2>My package</h2><button class="link" data-nav="plan">Details</button></div>'+pkgCard(p,true);
   var off=offerCards(a);if(off)h+='<div style="margin-top:14px">'+off+'</div>';
   if(a.physio&&a.physio.show)h+='<div style="margin-top:14px">'+physioCard(a)+'</div>';
@@ -484,6 +564,7 @@ VIEWS.home=function(){var a=ACC(),p=currentPkg(a),nx=a.upcoming.filter(function(
   var feat=featured().slice(0,3);
   if(feat.length)h+='<div class="sec"><h2>Fuel your training</h2><button class="link" data-nav="shop">Shop</button></div><div class="hscroll">'+feat.map(function(x){return '<button class="spot" style="width:140px" data-nav="shop"><div style="height:90px;display:grid;place-items:center">'+imgTag(x,80)+'</div><b style="font-size:17px">'+esc(x.n)+'</b><small>'+money(x.price)+'</small></button>'}).join('')+'</div>';
   h+='<div style="margin-top:22px">'+friendCard()+'</div>';
+  if(a.past.filter(function(s){return /Present|Done/.test(s.att)}).length>=3&&!store('wbc_reviewed'))h+='<div style="margin-top:12px">'+reviewCard()+'</div>';
   return h};
 VIEWS.sessions=function(){var a=ACC();
   var h='<div class="hello"><h1>Sessions</h1><p>Cancel, reschedule, or grab an open spot.</p></div>';
@@ -509,11 +590,14 @@ VIEWS.plan=function(){var a=ACC(),cur=a.pkgs.filter(function(p){return p.phase==
   if(fut.length)h+='<div class="sec"><h2>Coming next</h2><small>'+fut.length+'</small></div><div class="stack">'+fut.map(function(p){return pkgCard(p)}).join('')+'</div>';
   if(a.requests.length)h+='<div class="sec"><h2>My requests</h2></div><div class="list">'+a.requests.slice(0,12).map(reqItem).join('')+'</div>';
   if(past.length)h+='<details style="margin-top:22px"><summary class="link" style="cursor:pointer;list-style:none">Show past packages ('+past.length+')</summary><div class="stack" style="margin-top:10px">'+past.slice(0,12).map(function(p){return pkgCard(p)}).join('')+'</div></details>';
+  h+='<div class="sec"><h2>Make it yours</h2></div><div class="card"><b>My promise</b><div class="muted" style="font-size:14px;margin-bottom:10px">'+(a.goal?'\u201C'+esc(a.goal.promise)+'\u201D':'Not written yet')+'</div><button class="btn sec2 block" data-act="goal">'+(a.goal?'Change my promise':'Write my promise')+'</button>'+
+   '<div style="margin-top:16px"><b>App color</b><div class="swatches">'+[['rose','#a3263f'],['mint','#1f6e5b'],['ocean','#1e5f8c'],['sunset','#c2571a'],['plum','#6b2d7a']].map(function(x){return '<button aria-label="'+x[0]+'" aria-pressed="'+((store('wbc_accent')||'rose')===x[0])+'" data-accent="'+x[0]+'" style="background:'+x[1]+'"></button>'}).join('')+'</div></div></div>';
+  h+='<div style="margin-top:14px">'+reviewCard(true)+'</div>';
   h+='<div class="card" style="margin-top:22px"><div class="muted" style="font-size:14px">Signed in as</div><b>'+esc(D.email)+'</b><button class="btn ghost block" style="margin-top:12px" data-act="out">'+ICON('i-out')+'Sign out</button></div>';
   return h};
 // clients without a package
 VIEWS.basic=function(){var a=ACC(),past=a.pkgs.slice().reverse();
-  var h='<div class="hello"><h1>Hi '+esc(a.first)+'</h1><p>Good to see you. Ready for your next step?</p></div>'+quoteCard();
+  var h='<div class="hello"><h1>Hi <em>'+esc(a.first)+'</em></h1><p>Good to see you. Ready for your next step?</p></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
   h+='<div class="sec"><h2>Book with us</h2></div><div class="list">'+
    bigBtn('i-steth','Book an assessment with Majd','Start with a full check of how you move','book|assess')+
    bigBtn('i-heart','Book a Physio Session','Pain, injury or recovery','book|physio')+
@@ -549,6 +633,10 @@ function bind(){
   $$('[data-freeze]').forEach(function(b){b.onclick=function(){freezeSheet(ACC().pkgs.filter(function(p){return p.id===b.dataset.freeze})[0])}});
   $$('[data-inc]').forEach(function(b){b.onclick=function(){setQty(b.dataset.inc,1)}});
   $$('[data-dec]').forEach(function(b){b.onclick=function(){setQty(b.dataset.dec,-1)}});
+  $$('[data-late]').forEach(function(b){b.onclick=function(){lateSheet(findSess(b.dataset.late))}});
+  $$('[data-key]').forEach(function(b){b.onclick=function(){var a=ACC(),k=keyState(a),i=+b.dataset.key;k[i]=!k[i];store('wbc_keys_'+a.cid+'_'+D.today,JSON.stringify(k));if(k.every(Boolean)){var st=streakDays(a);st[D.today]=1;store('wbc_streak_'+a.cid,JSON.stringify(st));toast('All 3 done today. That\u2019s how promises are kept.')}var y=scrollY;render();scrollTo(0,y)}});
+  $$('[data-accent]').forEach(function(b){b.onclick=function(){var v=b.dataset.accent;store('wbc_accent',v);if(v==='rose')document.documentElement.removeAttribute('data-accent');else document.documentElement.setAttribute('data-accent',v);var y=scrollY;render();scrollTo(0,y)}});
+  $$('[data-review]').forEach(function(b){b.onclick=function(){store('wbc_reviewed','1');window.open(D.review||'https://www.google.com/maps/search/?api=1&query=Wellbe+Health+Center+Bsalim','_blank');setTimeout(function(){render()},500)}});
 }
 function findSess(id){return ACC().upcoming.filter(function(s){return s.id===id})[0]}
 
@@ -568,13 +656,13 @@ function pickOne(sel,cb){$$(sel+' [aria-pressed]').forEach(function(b){b.onclick
 function cancelSheet(s){if(!s)return;var early=s.date>D.today;
   openSheet('Cancel this session?',sessLine(s)+
    (early?'<div class="note" style="margin-top:14px">'+ICON('i-check')+'<span><b>You are cancelling a day or more before.</b> This session is not counted. You keep it.</span></div>'
-         :'<div class="note bad" style="margin-top:14px">'+ICON('i-alert')+'<span><b>Same day cancel.</b> Cancelling on the day of the session counts it as done (1 session used).</span></div>')+
+         :'<div class="note bad" style="margin-top:14px">'+ICON('i-alert')+'<span><b>Late cancellation.</b> Your session is today, so cancelling now will be deducted from your passes (counts as done). Running late instead? Tell us and keep your session.</span></div>')+
    '<p class="muted" style="margin-top:12px;font-size:15px">Want another time instead? Rescheduling never costs a session.</p>',
    '<div class="btns"><button class="btn sec2" id="keep">Keep it</button><button class="btn '+(early?'ghost':'danger')+'" id="yes">'+(early?'Yes, cancel':'Cancel anyway')+'</button></div><button class="btn ghost block" style="margin-top:10px" id="rs">'+ICON('i-swap','width:18px;height:18px')+'Reschedule instead</button>');
   $('#keep').onclick=closeSheet;$('#rs').onclick=function(){reschSheet(s)};
   $('#yes').onclick=function(){var b=this;busy(b,true,'Cancelling...');send('app_cl_cancel',{ref:s.ref,id:s.id}).then(function(j){
     s.att=j.kind;ACC().upcoming=ACC().upcoming.filter(function(x){return x!==s});render();
-    success('Session cancelled',j.kind==='Early Cancel'?'Your session is kept on your package. See you soon.':'It counts as done because it was the same day.')}).catch(function(e){fail(b,e)})}}
+    success(j.kind==='Early Cancel'?'Done, it\u2019s cancelled':'Cancelled, 1 session used',j.kind==='Early Cancel'?'You cancelled in time, so nothing is deducted. Your session stays on your package.':'Because it was cancelled on the same day, this session is deducted from your passes (late cancellation).')}).catch(function(e){fail(b,e)})}}
 
 function reschSheet(s){if(!s)return;var days=nextDays(8,s.date>D.today?D.today:addDays(D.today,1)),sel='',part='';
   openSheet('Reschedule',sessLine(s)+'<div class="note" style="margin-top:12px">'+ICON('i-check')+'<span>Rescheduling never costs a session. Romy finds the new time and confirms with you.</span></div>'+
@@ -599,6 +687,7 @@ function freezeSheet(p){if(!p)return;var min=p.start>D.today?p.start:D.today;
   $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'freeze',pkg:p.id,from:$('#ff').value,note:$('#fn').value.trim()}).then(function(){success('Freeze requested','Romy will confirm it. Your new end date shows here once it’s done.')}).catch(function(e){fail(b,e)})}}
 
 var ACT={};
+ACT.goal=function(){ONB={step:'write',text:ACC().goal?ACC().goal.promise:''};render();scrollTo(0,0)};
 ACT.out=function(){signOut(false)};
 ACT.friend=function(){var a=ACC(),link=(D.friend||'')+encodeURIComponent(a.first);
   var msg='Hey! I train at Wellbe Health Center in Bsalim and I love it. Book with my link and we both get a free session: '+link;
