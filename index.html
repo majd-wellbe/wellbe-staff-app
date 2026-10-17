@@ -220,9 +220,6 @@ button.row:hover{border-color:var(--ink-3)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 @media (min-width:700px){ .tiles{grid-template-columns:repeat(4,1fr)} .kpis{grid-template-columns:repeat(3,1fr)} .kpi.hero{grid-column:span 3} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-[data-bpk] .radio{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 2px var(--line)}
-[data-bpk][aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--mint-deep)}
-[data-bpk][aria-pressed="true"] .radio{box-shadow:inset 0 0 0 7px var(--mint-deep)}
 </style>
 </head>
 <body>
@@ -277,19 +274,6 @@ var ICON=function(id,cls){return '<svg class="'+(cls||'icon')+'"><use href="#'+i
 var API='https://script.google.com/macros/s/AKfycbxrCVPkY-h2xqTqeHhhaChdaSAf1KbEsJ_HbRSP-oyg4r-qgF-sgSJtFZ0D0uyhDiOS/exec';
 var TODAY=new Date(); TODAY.setHours(12,0,0,0); var T=ymd(TODAY);
 var KEY=null, LOADED=false, LOAD_ERR='', BUSY=0;
-var WALLET={},INS={clients:[],claims:[]};
-function insOf(cid){cid=String(cid||'').toUpperCase();return INS.clients.filter(function(x){return String(x.cid).toUpperCase()===cid&&x.insurer})[0]||null}
-function ym(d){return String(d).slice(0,7)}
-function monthName(m){return new Date(m+'-15T12:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'})}
-function nextMonth(m){var d=new Date(m+'-15T12:00:00');d.setMonth(d.getMonth()+1);return ymd(d).slice(0,7)}
-function prevMonth(m){var d=new Date(m+'-15T12:00:00');d.setMonth(d.getMonth()-1);return ymd(d).slice(0,7)}
-// sessions that count for a client in a month (Present, Late Cancel, No Show), with the value of each pass
-function insSessions(cid,m){var out=[];SESS.forEach(function(s){if(ym(s.date)!==m||s.date>T||s.status==='Cancelled')return;s.clients.forEach(function(c){if(c.cid===cid&&deducts(c.att||'Present')){var pk=pkgById(c.pkg);out.push({date:s.date,tab:s.tab,pkg:c.pkg,val:pk&&pk.total?Math.round(pk.price/pk.total*100)/100:0})}})});return out.sort(function(a,b){return a.date<b.date?-1:1})}
-function claimOf(cid,m){return INS.claims.filter(function(c){return String(c.cid).toUpperCase()===String(cid).toUpperCase()&&c.month===m})[0]||null}
-function clientDue(cid){return Math.round(PKGS.filter(function(p){return p.client===cid&&p.status==='Active'}).reduce(function(a,p){return a+pkgDue(p)},0)*100)/100}function walletOf(cid){return Math.round((+WALLET[String(cid||'').toUpperCase()]||0)*100)/100}
-function perSess(p){return p&&p.total?Math.round(p.price/p.total*100)/100:0}
-function pkgDue(p){return Math.max(0,Math.round(((+p.price||0)-(+p.paid||0))*100)/100)}
-function usablePkgs(cid){return PKGS.filter(function(p){return p.client===cid&&p.status==='Active'&&p.total-p.used>0}).sort(function(m,n){return (m.start||'')<(n.start||'')?-1:1})}
 var PKG_TYPES=[], CLIENTS=[], PKGS=[], SESS=[], LEADS=[], RECURRING=[], EXPENSES=[], POS=[], INVENTORY=[], PATTERNS=[];
 var REM={}; try{REM=JSON.parse(localStorage.getItem('wb_rem')||'{}')}catch(e){REM={}}
 function saveRem(){try{localStorage.setItem('wb_rem',JSON.stringify(REM))}catch(e){}}
@@ -304,7 +288,7 @@ function renewMsg(p){var left=p.total-p.used,o=offerOf(p),pk=p.type.split(' (')[
  var head='Hi '+first(p.name)+', this is Romy from Wellbe. You '+(left===0?'just finished':'have 1 session left on')+' your '+pk+' package.';
  if(!o)return head+' Want me to renew it so you keep your spot?';
  return head+' Before you renew, two ways to save:\n\n3 months: $'+o.p3+' instead of $'+o.t3+' (7% off), one payment.\n6 months: $'+o.p6+' instead of $'+o.t6+' (15% off), paid in 2: $'+o.half+' now and $'+(o.p6-o.half)+' on day 1 of month 3.\n\nSame spot, same coach. Which one works for you?'}
-function lateRule(p){ if(!p||!p.price) return null; if(insOf(p.client)) return null; if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=p.total>=12?3:(p.total>=8?2:1); return {due:due, late:p.used>=limit, limit:limit} }
+function lateRule(p){ if(!p||!p.price) return null; if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=p.total>=12?3:(p.total>=8?2:1); return {due:due, late:p.used>=limit, limit:limit} }
 var ROOMS={'1:1':'Training Room','1:2':'Training Room','1:3':'Training Room','Madero':'Madero Room','Prehab':'Physio Room','Physio':'Physio Room','Osteo':'Osteo Room'};
 function endT(t){var h=+t.split(':')[0]+1;return pad(h)+':'+t.split(':')[1]}
 
@@ -324,7 +308,7 @@ function applyBoot(d){
     var keepView=ME&&ME.id===d.me.id; ME=d.me; if(!keepView)VIEW=ME.role==='owner'?'mine':'home';
     PKG_TYPES=d.types;CLIENTS=d.clients;PKGS=d.pkgs;LEADS=d.leads;RECURRING=d.recurring;EXPENSES=d.expenses;POS=d.pos;INVENTORY=d.inventory;
     SESS=d.sessions.concat(HIST||[]);SESS.forEach(function(s){s.clients.forEach(function(c){c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
-    INTAKES=d.intakes||[];FILES=d.files||[];WALLET=d.wallet||{};INS=d.ins||{clients:[],claims:[]};REQUESTS=d.requests||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';}
+    INTAKES=d.intakes||[];FILES=d.files||[];REQUESTS=d.requests||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';}
 // older sessions (more than 70 days back) only load when the owner opens the numbers
 function loadHistory(){if(HIST||HIST_LOADING||!ME||ME.role!=='owner')return;HIST_LOADING=true;
   api('app_history').then(function(h){HIST=h.sessions||[];SESS=SESS.concat(HIST);HIST_LOADING=false;render()}).catch(function(){HIST_LOADING=false})}
@@ -380,7 +364,7 @@ function render(){
   $('#refreshBtn').onclick=function(){HIST=null;if(SESS)SESS=SESS.filter(function(x){return x.date>=ymd(addDays(TODAY,-70))});boot(true);toast('Refreshing')};paintBusy();
   if($('#fab')) $('#fab').onclick=ACTIONS.newMenu;
   $$('[data-nav]').forEach(function(b){b.onclick=function(){closeSheet();VIEW=b.dataset.nav;render();scrollTo(0,0)}});
-  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='insurance')bindIns(); if(VIEW==='numbers')bindNumbers();
+  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='numbers')bindNumbers();
 }
 function loginView(){
   return '<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div><h1>Wellbe Team</h1><p>Open the private link Majd sent you on WhatsApp. It signs you in on this phone, once.</p>'+
@@ -433,7 +417,7 @@ var DONE_TODO={};
 function todoItems(){
   var items=[];
   (typeof REQUESTS!=='undefined'?REQUESTS:[]).forEach(function(q){var m=REQ_META[q.type]||['i-bell','mute'];items.push({id:'req-'+q.id,level:m[1],icon:m[0],title:esc(q.client)+' · '+esc(q.type),sub:esc(q.slot?q.slot+' · ':'')+esc(q.details).slice(0,120),btn:'Open',act:'req|'+q.id})});
-  LEADS.filter(function(l){return l.status!=='Confirmed'}).forEach(function(l){items.push({id:'lead-'+l.id,level:l.date?'warn':'bad',icon:'i-users',title:esc(l.name)+(l.date?' booked a free trial':' left without booking'),sub:l.date?dayLabel(l.date)+' · '+l.time+' · '+l.type:'Call her to find a time',btn:l.date?'Confirm':'Call',act:'lead|'+l.id})});
+  LEADS.filter(function(l){return l.status!=='Confirmed'}).forEach(function(l){items.push({id:'lead-'+l.id,level:l.date?'warn':'bad',icon:'i-users',title:esc(l.name)+(l.date?' booked a free trial':' left without booking'),sub:l.date?dayLabel(l.date)+' · '+l.time+' · '+l.type:'Call her to find a time',btn:'Open',act:'lead|'+l.id})});
   overdue().forEach(function(x){var m=melOwes(x.p);items.push({id:'pay-'+x.p.id,level:'bad',icon:'i-cash',title:m?'Melanie owes '+money(x.due)+' · '+esc(x.p.name):esc(x.p.name)+' owes '+money(x.due),sub:m?'Center share $4 x '+x.p.total+' passes, paid upfront':'Session '+x.p.used+' of '+x.p.total+' · late',btn:m?'Record':'Remind',act:(m?'paid|':'pay|')+x.p.id})});
   var tomorrowS=sessOn(ymd(nextWorkday())).reduce(function(n,s){return n+s.clients.filter(function(c){return !c.reminded}).length},0);
   if(tomorrowS) items.push({id:'rem-'+ymd(nextWorkday())+'-'+tomorrowS,level:'warn',icon:'i-bell',title:'Send '+tomorrowS+' session reminders',sub:'For '+dayLabel(ymd(nextWorkday())),btn:'Start',act:'remind'});
@@ -470,37 +454,8 @@ VIEWS.money=function(){
    '<div class="h"><h2>Quick entry</h2></div><div class="tiles"><button class="tile" data-act="recurring"><span class="ic">'+ICON('i-repeat')+'</span><b>Recurring</b><span>'+RECURRING.length+' running</span></button><button class="tile" data-act="pos"><span class="ic">'+ICON('i-cash')+'</span><b>Product sale</b><span>Supplements, POS</span></button><button class="tile" data-act="expense"><span class="ic">'+ICON('i-plus')+'</span><b>Expense</b><span>Bills, supplies</span></button></div>';
 };
 function payRow(x){var p=x.p;return '<button class="row" data-paycl="'+p.id+'"><div class="main"><b>'+esc(p.name)+'</b><span>'+esc(p.type)+' · session '+p.used+' of '+p.total+'</span></div><span class="pill '+(x.late?'p-bad':'p-warn')+' num">'+money(x.due)+'</span></button>'}
-VIEWS.insurance=function(){
-  var cur=ym(T),last=prevMonth(cur),day=+T.slice(8,10),cls=INS.clients.filter(function(x){return x.insurer}).sort(function(a,b){return a.name<b.name?-1:1});
-  var stateTxt=day<=10?'Submit by the 10th ('+(10-day)+' day'+(10-day===1?'':'s')+' left)':day<=14?'Late: last day is the 14th ('+(14-day)+' left)':'Deadline passed (14th)';
-  var todo=cls.map(function(x){var ss=insSessions(String(x.cid).toUpperCase(),last),cl=claimOf(x.cid,last);ss.forEach(function(z){z.val=+x.rate||27});return {x:x,ss:ss,cl:cl}}).filter(function(o){return o.ss.length&&!o.cl});
-  var waiting=INS.claims.filter(function(c){return c.status==='Submitted'}).sort(function(a,b){return a.expected<b.expected?-1:1});
-  var paid=INS.claims.filter(function(c){return c.status==='Paid'}).sort(function(a,b){return a.paidOn<b.paidOn?1:-1}).slice(0,10);
-  var h='<div class="h"><h2>Insurance</h2><small>'+cls.length+' client'+(cls.length===1?'':'s')+'</small></div>';
-  h+='<div class="h"><h2 style="font-size:20px">Send now: '+monthName(last)+'</h2><small style="color:'+(day<=10?'var(--ink-3)':'var(--bad)')+';font-weight:700">'+(todo.length?stateTxt:'')+'</small></div>';
-  h+='<div class="list">'+(todo.length?todo.map(function(o){var amt=o.ss.reduce(function(a,b){return a+b.val},0);return '<div class="card" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:10px"><div><b>'+esc(o.x.name)+'</b><div class="muted" style="font-size:13.5px">'+esc(o.x.insurer)+' · '+o.ss.length+' session'+(o.ss.length>1?'s':'')+' in '+monthName(last).split(' ')[0]+'</div></div><b class="num">'+money(amt)+'</b></div><button class="btn sm full" style="margin-top:10px" data-insub="'+esc(o.x.cid)+'">'+ICON('i-check')+'Forms sent: mark submitted</button></div>'}).join(''):'<div class="empty">Nothing to send for '+monthName(last)+'.</div>')+'</div>';
-  h+='<div class="h"><h2 style="font-size:20px">Clients this month</h2><small>'+monthName(cur)+'</small></div><div class="list">'+(cls.length?cls.map(function(x){var cid=String(x.cid).toUpperCase(),p=pkgOf(cid),ss=insSessions(cid,cur);
-    return '<button class="row" data-client="'+cid+'"><div class="main"><b>'+esc(x.name)+'</b><span>'+esc(x.insurer)+' · '+(p?esc(p.type.split(' (')[0])+' · '+p.used+' of '+p.total+' used':'No package')+'</span><span>'+ss.length+' session'+(ss.length===1?'':'s')+' so far, claim goes out 1 to 10 '+monthName(nextMonth(cur)).split(' ')[0]+'</span></div></button>'}).join(''):'<div class="empty">No insured clients yet. Open a client and tap “Insurance pays for this client”.</div>')+'</div>';
-  h+='<div class="h"><h2 style="font-size:20px">Waiting for payment</h2><small>'+money(waiting.reduce(function(a,b){return a+(+b.amount||0)},0))+'</small></div><div class="list">'+(waiting.length?waiting.map(function(c){var left=Math.round((new Date(c.expected+'T12:00:00')-new Date(T+'T12:00:00'))/864e5);
-    return '<div class="card" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:10px"><div><b>'+esc(c.name)+'</b><div class="muted" style="font-size:13.5px">'+esc(c.insurer)+' · '+monthName(c.month)+' · '+c.sessions+' sessions<br>Sent '+dayLabel(c.submitted)+' · expected '+dayLabel(c.expected)+'</div></div><div style="text-align:right"><b class="num">'+money(c.amount)+'</b><div><span class="pill '+(left<0?'p-bad':left<=14?'p-warn':'p-mute')+'">'+(left<0?(-left)+' days late':left+' days')+'</span></div></div></div><button class="btn ok sm full" style="margin-top:10px" data-inpaid="'+esc(c.id)+'">'+ICON('i-cash')+'Insurance paid</button></div>'}).join(''):'<div class="empty">No claims waiting.</div>')+'</div>';
-  if(paid.length)h+='<div class="h"><h2 style="font-size:20px">Paid</h2></div><div class="list">'+paid.map(function(c){return '<div class="row" style="min-height:52px"><div class="main"><b>'+esc(c.name)+'</b><span>'+esc(c.insurer)+' · '+monthName(c.month)+' · paid '+dayLabel(c.paidOn)+'</span></div><span class="pill p-good num">'+money(c.paidAmount||c.amount)+'</span></div>'}).join('')+'</div>';
-  return h};
-function bindIns(){
-  $$('[data-insub]').forEach(function(b){b.onclick=function(){var x=insOf(b.dataset.insub),cid=String(x.cid).toUpperCase(),m=prevMonth(ym(T)),ss=insSessions(cid,m),amt=Math.round(ss.length*(+x.rate||27)*100)/100;
-    openSheet('Claim · '+first(x.name),'<div class="kv" style="margin-bottom:12px"><dt>Insurance</dt><dd>'+esc(x.insurer)+'</dd><dt>Month</dt><dd>'+monthName(m)+'</dd><dt>Sessions</dt><dd>'+ss.map(function(s){return dayLabel(s.date)}).join(', ')+'</dd></div>'+
-     '<div class="two"><div class="field"><label for="cln">Sessions</label><input id="cln" type="number" inputmode="numeric" value="'+ss.length+'"></div><div class="field"><label for="cla">Amount claimed ($)</label><input id="cla" type="number" inputmode="decimal" value="'+amt+'"></div></div>'+
-     '<div class="field"><label for="cld">Sent on</label><input id="cld" type="date" value="'+T+'"></div><div class="field"><label for="clno">Claim / reference number (optional)</label><input id="clno" type="text"></div>',
-     '<button class="btn ok full" id="doCl">'+ICON('i-check')+'Mark submitted</button>');
-    $('#doCl').onclick=function(){var d=$('#cld').value||T,a=+$('#cla').value||0,n=+$('#cln').value||0;if(!(a>0)){toast('Enter the amount');return}
-      var exp=ymd(addDays(new Date(d+'T12:00:00'),90));INS.claims.push({id:'tmp',cid:cid,name:x.name,insurer:x.insurer,month:m,sessions:n,amount:a,submitted:d,expected:exp,status:'Submitted'});closeSheet();render();
-      save('app_ins_submit',{cid:cid,name:x.name,insurer:x.insurer,month:m,sessions:n,amount:a,submitted:d,ref:$('#clno').value.trim(),pkgs:uniq(ss.map(function(s){return s.pkg})).join(', ')},'Submitted. Expected around '+dayLabel(exp),true)}}});
-  $$('[data-inpaid]').forEach(function(b){b.onclick=function(){var c=INS.claims.filter(function(y){return y.id===b.dataset.inpaid})[0];
-    openSheet('Insurance paid','<div class="kv" style="margin-bottom:12px"><dt>Client</dt><dd>'+esc(c.name)+'</dd><dt>Claim</dt><dd>'+monthName(c.month)+' · '+money(c.amount)+'</dd></div><div class="field"><label for="ipa">Amount received ($)</label><input id="ipa" type="number" inputmode="decimal" value="'+c.amount+'"></div><div class="field"><label for="ipd">Received on</label><input id="ipd" type="date" value="'+T+'"></div>'+
-     '<p class="muted" style="font-size:13px;margin-top:10px">The money is recorded on '+esc(first(c.name))+'\u2019s packages, oldest first, as paid by '+esc(c.insurer)+'.</p>','<button class="btn ok full" id="doIp">'+ICON('i-check')+'Save</button>');
-    $('#doIp').onclick=function(){var a=+$('#ipa').value||0;if(!(a>0)){toast('Enter the amount');return}c.status='Paid';closeSheet();render();save('app_ins_paid',{id:c.id,amount:a,date:$('#ipd').value||T},money(a)+' from '+c.insurer+' recorded',true)}}});
-}
 VIEWS.more=function(){
-  var items=[['insurance','Insurance','Claims to send and payments to collect'],['leads','Trial leads','Landing page bookings'],['book','Book a session','One-off or new client'],['pos','Product sale','POS'],['expense','Expense','One-time or recurring'],['recurring','Recurring expenses','Rent, bills, subscriptions'],['inventory','Inventory','Stock left']];
+  var items=[['leads','Trial leads','Landing page bookings'],['book','Book a session','One-off or new client'],['pos','Product sale','POS'],['expense','Expense','One-time or recurring'],['recurring','Recurring expenses','Rent, bills, subscriptions'],['inventory','Inventory','Stock left']];
   if(ME.role==='owner'){items.unshift(['payroll','Payroll','Trainer pay this month']);items.unshift(['intake','New physio intake','Assessment, red flags, files']);items.unshift(['desk','Front desk','Romy\'s To do list and today'])}
   return '<div class="h"><h2>More</h2></div><div class="list">'+items.map(function(i){return '<button class="row" data-act="'+i[0]+'"><div class="main"><b>'+i[1]+'</b><span>'+i[2]+'</span></div></button>'}).join('')+'</div>'+
    '<div class="h"><h2>Display</h2></div><div class="seg" role="group" aria-label="Theme">'+['System','Light','Dark'].map(function(t){var cur=(document.documentElement.getAttribute('data-theme')||'system');return '<button data-theme-set="'+t.toLowerCase()+'" aria-pressed="'+(cur===t.toLowerCase())+'">'+t+'</button>'}).join('')+'</div>';
@@ -597,22 +552,23 @@ addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
 var tt;function toast(m,undo){var t=$('#toast');t.innerHTML=esc(m)+(undo?' <button id="undoBtn" style="color:var(--mint);font-weight:800;margin-left:10px;pointer-events:auto">Undo</button>':'');t.style.pointerEvents=undo?'auto':'none';t.classList.add('on');if(undo)$('#undoBtn').onclick=function(){t.classList.remove('on');undo()};clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},undo?5000:2600)}
 
 var REQUESTS=[];
-var REQ_META={'Physio visit':['i-heart','bad'],'Freeze':['i-cal','warn'],'Reschedule':['i-swap','warn'],'Session request':['i-cal','warn'],'Supplement order':['i-cash','warn'],'Supplement request':['i-cash','mute'],'3 month offer':['i-repeat','bad'],'6 month upgrade':['i-repeat','bad'],'Cancelled':['i-alert','mute'],'Joined a spot':['i-users','mute']};
+var REQ_META={'Physio visit':['i-heart','bad'],'Freeze':['i-cal','warn'],'Reschedule':['i-swap','warn'],'Session request':['i-cal','warn'],'Supplement order':['i-cash','warn'],'Supplement request':['i-cash','mute'],'3 month offer':['i-repeat','bad'],'6 month upgrade':['i-repeat','bad'],'Cancelled':['i-alert','mute'],'Running late':['i-alert','warn'],'Joined a spot':['i-users','mute']};
 // client app requests: Romy reads, acts, and marks it handled
 function reqSheet(id){var q=REQUESTS.filter(function(x){return x.id===id})[0];if(!q)return;var c=clientById(q.cid)||{phone:''};
   var acc={'Physio visit':['Accept: sell $40 visit + book it','Majd said yes? This sells "Physio - Single Session" at 20% off ($40) and books it in his room.'],
     'Freeze':['Approve: +7 days','Moves the package end date 7 days later.'],
     '3 month offer':['Accept: create the 3 months','Creates the 3 monthly packages (7% off, one payment), starting when the current one ends.']}[q.type];
-  var info={'6 month upgrade':'Months 4 to 6 are already created in PACKAGES. Collect the payment.','Supplement order':'Hand it over at the session, then log it in Payments > Product sale.','Cancelled':'Already applied on the schedule. Just for your info.','Joined a spot':'Already booked on the schedule. Just for your info.','Reschedule':'Move the session from Change, then mark done.','Session request':'Book it from Next week or the schedule, then mark done.'}[q.type]||'';
+  var info={'6 month upgrade':'Months 4 to 6 are already created in PACKAGES. Collect the payment.','Supplement order':'Hand it over at the session, then log it in Payments > Product sale.','Cancelled':'Already applied on the schedule. Just for your info.','Running late':'Tell the trainer. Nothing to change in the schedule.','Joined a spot':'Already booked on the schedule. Just for your info.','Reschedule':'Move the session from Change, then mark done.','Session request':'Book it from Next week or the schedule, then mark done.'}[q.type]||'';
+  var pd=q.type==='Physio visit'?q.slot.split(' '):null;
   openSheet(q.type,'<div class="card" style="padding:12px 14px"><b>'+esc(q.client)+'</b><div class="muted" style="font-size:14px">'+esc(q.created)+(q.pkg?' · '+esc(q.pkg):'')+'</div>'+(q.slot?'<div style="margin-top:6px;font-weight:700">'+esc(q.slot)+'</div>':'')+'<p style="margin-top:6px">'+esc(q.details)+'</p></div>'+
-   (info?'<div class="note good" style="margin-top:12px">'+ICON('i-check')+'<span>'+info+'</span></div>':'')+(acc?'<div class="note warn" style="margin-top:12px">'+ICON('i-alert')+'<span>'+acc[1]+'</span></div>':''),
+   (info?'<div class="note good" style="margin-top:12px">'+ICON('i-check')+'<span>'+info+'</span></div>':'')+(acc?'<div class="note warn" style="margin-top:12px">'+ICON('i-alert')+'<span>'+acc[1]+'</span></div>':'')+
+   (pd?'<div class="two"><div class="field"><label for="rqD">Day</label><input id="rqD" type="date" value="'+pd[0]+'" min="'+T+'"></div><div class="field"><label for="rqT">Time</label><input id="rqT" type="time" step="1800" value="'+pd[1]+'"></div></div><div class="muted" style="font-size:13px;margin-top:6px">Majd suggested another time? Change it here before accepting.</div>':''),
    (acc?'<button class="btn" style="width:100%" id="rqA">'+acc[0]+'</button>':'')+'<div style="display:flex;gap:8px;margin-top:8px">'+(c.phone?'<a class="btn wa" style="flex:1" target="_blank" href="'+wa(c.phone,'Hi '+first(q.client)+', this is Romy from Wellbe about your request ('+q.type.toLowerCase()+'). ')+'">WhatsApp</a>':'')+'<button class="btn sec" style="flex:1" id="rqD">Mark done</button>'+(acc?'<button class="btn sec" style="flex:1" id="rqX">Decline</button>':'')+'</div>');
-  var go=function(act,msg){REQUESTS=REQUESTS.filter(function(x){return x.id!==id});closeSheet();render();save('app_req_done',{id:id,act:act},msg,act==='accept')};
-  if($('#rqA'))$('#rqA').onclick=function(){go('accept',q.type==='Physio visit'?'Physio booked for '+q.client:'Done for '+q.client)};
+  var go=function(act,msg){var extra={id:id,act:act};if(pd&&act==='accept'){extra.d=$('#rqD').value;extra.t=$('#rqT').value}REQUESTS=REQUESTS.filter(function(x){return x.id!==id});closeSheet();render();save('app_req_done',extra,msg,act==='accept')};
+  if($('#rqA'))$('#rqA').onclick=function(){go('accept',q.type==='Physio visit'?'Physio booked for '+q.client+' on '+dayLabel($('#rqD').value)+' at '+hl($('#rqT').value):'Done for '+q.client)};
   $('#rqD').onclick=function(){go('done','Marked done')};
   if($('#rqX'))$('#rqX').onclick=function(){go('decline','Declined. Message '+first(q.client)+' so they know.')}}
 var ACTIONS={};
-ACTIONS.insurance=function(){closeSheet();VIEW='insurance';render();scrollTo(0,0)};
 ACTIONS.change=function(){
   var up=SESS.filter(function(s){return s.date>=T&&s.status!=='Cancelled'}).sort(function(a,b){return (a.date+a.start)<(b.date+b.start)?-1:1}).slice(0,30);
   openSheet('Change a session','<div class="searchwrap">'+ICON('i-search')+'<input class="search" id="cq" type="search" placeholder="Client name" aria-label="Find a session by client"></div><div class="list" id="clist">'+up.map(function(s){return '<button class="row" data-pick="'+s.id+'"><span class="time" style="font-size:16px;min-width:64px">'+(s.date===T?'Today':dayLabel(s.date).split(' ').slice(0,2).join(' '))+'<br>'+hl(s.start)+'</span><div class="main"><b>'+s.clients.map(function(c){return esc(first(c.name))}).join(', ')+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div></button>'}).join('')+'</div>');
@@ -623,7 +579,7 @@ function changeSession(id){
   var s=SESS.filter(function(x){return x.id===id})[0]; var kind=cancelKind(s);
   var body='<div class="card" style="padding:12px 14px;margin-bottom:14px"><b>'+dayLong(s.date)+' · '+hl(s.start)+'</b><div class="muted" style="font-size:14px">'+s.tab+' with '+esc(s.trainer)+' · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'+
    (s.clients.length>1?'<div class="field"><span class="flabel">Who?</span><div class="seg" id="who">'+s.clients.map(function(c,i){return '<button aria-pressed="'+(i===0)+'" data-i="'+i+'">'+esc(first(c.name))+'</button>'}).join('')+'<button data-i="all" aria-pressed="false">Whole session</button></div></div>':'')+
-   '<div class="field"><span class="flabel">What happened?</span><div class="seg" id="what"><button aria-pressed="true" data-w="move">Reschedule</button><button aria-pressed="false" data-w="cancel">Cancel / No show</button><button aria-pressed="false" data-w="trainer">Change trainer</button></div></div>'+
+   '<div class="field"><span class="flabel">What happened?</span><div id="what" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+[['move','Reschedule'],['Early Cancel','Early cancel'],['Late Cancel','Late cancel'],['No Show','No show'],['trainer','Change trainer']].map(function(x,i){return '<button class="btn sec" style="min-height:52px'+(x[0]==='trainer'?';grid-column:1/-1':'')+'" aria-pressed="'+(i===0)+'" data-w="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div></div>'+
    '<div id="whatBody"></div>';
   openSheet('Change session',body,'<button class="btn full" id="doChange">Save change</button>');
   var who=0, what='move', pick=kind;
@@ -631,18 +587,18 @@ function changeSession(id){
   function paint(){
     var h='';
     if(what==='move'){h='<div class="two"><div class="field"><label for="nd">New day</label><input id="nd" type="date" value="'+s.date+'" min="'+T+'"></div><div class="field"><label for="nt">New time</label><input id="nt" type="time" value="'+s.start+'" step="1800"></div></div><div id="cap"></div><div class="note good">'+ICON('i-check')+'<span>A reschedule never costs a pass.</span></div>'}
-    if(what==='cancel'){h='<div class="field" style="margin-top:0"><span class="flabel">Mark as</span><div class="seg" id="ck">'+[['Early Cancel','Early cancel'],['Late Cancel','Late cancel'],['No Show','No show']].map(function(x){return '<button aria-pressed="'+(x[0]===pick)+'" data-k="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div></div>'+
-      '<div id="ckNote"></div><div class="field" id="excWhy" hidden><label for="why">Reason for the exception (required)</label><input id="why" type="text" placeholder="e.g. sick, urgent at work"></div>'}
+    if(what==='cancel'){h='<div id="ckNote"></div><div class="field" id="excWhy" hidden><label for="why">Reason for the exception (required)</label><input id="why" type="text" placeholder="e.g. sick, urgent at work"></div>'}
     if(what==='trainer'){h='<div class="field"><label for="ntr">New trainer</label><select id="ntr">'+['Joe','Mikel','Melanie','Majd'].map(function(t){return '<option'+(t===s.trainer?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div>';if(['1:1','1:2','1:3'].indexOf(s.tab)<0)h='<div class="note warn">'+ICON('i-alert')+'<span>'+s.tab+' always runs with '+esc(s.trainer)+'.</span></div>'}
     $('#whatBody').innerHTML=h;
     var ckPaint=function(){if(!$('#ckNote'))return;var ex=pick==='Early Cancel'&&kind==='Late Cancel';
       $('#ckNote').innerHTML='<div class="note '+(pick==='Early Cancel'?'good':'bad')+'">'+ICON('i-alert')+'<span>'+(pick==='Early Cancel'?'<b>Early cancel:</b> pass kept.'+(ex?' This is an exception: the rule says late (same day).':''):pick==='Late Cancel'?'<b>Late cancel:</b> cancelled on the day, 1 pass used.':'<b>No show:</b> did not come and did not tell us, 1 pass used.')+'</span></div>';
       $('#excWhy').hidden=!ex};
-    $$('#ck button').forEach(function(b){b.onclick=function(){$$('#ck button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');pick=b.dataset.k;ckPaint()}});ckPaint();
+    ckPaint();
     var check=function(){var nd=$('#nd'),nt=$('#nt');if(!nd)return;var n=joeLoad(nd.value,nt.value)+(s.trainer==='Joe'?1:0);$('#cap').innerHTML=(s.trainer==='Joe'&&n>3)?'<div class="note bad" style="margin-bottom:10px">'+ICON('i-alert')+'<span>Joe would have '+n+' clients at that hour. Max is 3.</span></div>':''};
     if($('#nd')){$('#nd').onchange=check;$('#nt').onchange=check;check()}
   }
-  $$('#what button').forEach(function(b){b.onclick=function(){$$('#what button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');what=b.dataset.w;paint()}});
+  var wPaint=function(){$$('#what button').forEach(function(x){var on=x.getAttribute('aria-pressed')==='true';x.style.background=on?'var(--ink)':'';x.style.color=on?'#fff':''})};
+  $$('#what button').forEach(function(b){b.onclick=function(){$$('#what button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');var w=b.dataset.w;if(/Cancel|Show/.test(w)){what='cancel';pick=w}else what=w;wPaint();paint()}});wPaint();
   paint();
   $('#doChange').onclick=function(){
     var targets=who==='all'?s.clients:[s.clients[who]], msg='';
@@ -668,18 +624,13 @@ ACTIONS.pay=function(){
     return '<div class="card" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:10px"><div><b>'+esc(x.p.name)+'</b><div class="muted" style="font-size:13.5px">'+esc(x.p.type)+' · session '+x.p.used+' of '+x.p.total+'</div></div><b class="num" style="color:var(--bad)">'+money(x.due)+'</b></div><div class="two" style="margin-top:10px"><a class="btn wa sm" href="'+wa(c.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Remind</a><button class="btn sec sm" data-paid="'+x.p.id+'">Record payment</button></div></div>'}).join('')+'</div>':'<div class="empty">Nobody is late.</div>'));
   $$('[data-paid]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.paid)}});
 };
-function paySheet(pid,back){
+function paySheet(pid){
   var p=pkgById(pid),r=lateRule(p)||{due:0};
   openSheet('Record payment','<div class="kv" style="margin-bottom:14px"><dt>Client</dt><dd>'+esc(p.name)+'</dd><dt>Package</dt><dd>'+esc(p.type)+'</dd><dt>Price</dt><dd class="num">'+money(p.price)+'</dd><dt>Paid so far</dt><dd class="num">'+money(p.paid)+'</dd><dt>Still due</dt><dd class="num" style="color:var(--bad)">'+money(r.due)+'</dd></dl>'.replace('</dl>','</div>')+
-    '<div class="field"><label for="amt">Amount received ($)</label><input id="amt" type="number" inputmode="decimal" value="'+(pkgDue(p)||r.due)+'" min="1"></div><div id="extraNote"></div><div class="field"><label for="pnote">Note (optional)</label><input id="pnote" type="text" placeholder="e.g. paid by her husband, rest next week"></div><div class="field"><span class="flabel">Paid by</span><div class="seg" id="meth"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div>',
+    '<div class="field"><label for="amt">Amount received ($)</label><input id="amt" type="number" inputmode="decimal" value="'+r.due+'" min="1"></div><div class="field"><span class="flabel">Paid by</span><div class="seg" id="meth"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div class="field"><label for="pnote">Note <span class="muted" style="font-weight:500">(optional)</span></label><input id="pnote" type="text" placeholder="e.g. paid by her husband, rest next week"></div>',
     '<button class="btn ok full" id="savePay">'+ICON('i-check')+'Save payment</button>');
   $$('#meth button').forEach(function(b){b.onclick=function(){$$('#meth button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')}});
-  var due=pkgDue(p),ex=function(){var a=+$('#amt').value||0,x=Math.round((a-due)*100)/100;
-    $('#extraNote').innerHTML=x>0?'<div class="note good" style="margin-top:10px">'+ICON('i-check')+'<span><b>'+money(x)+' extra</b> on top of the '+money(due)+' needed for this package. It goes to '+esc(first(p.name))+'\u2019s wallet and is used on the next package.</span></div>':''};
-  $('#amt').oninput=ex;ex();
-  $('#savePay').onclick=function(){var a=+$('#amt').value;if(!(a>0)){toast('Enter an amount');return}var m=($('#meth [aria-pressed="true"]')||{}).textContent||'Cash',x=Math.max(0,Math.round((a-due)*100)/100);
-    p.paid=p.paid+Math.min(a,due);if(x){var k=String(p.client).toUpperCase();WALLET[k]=(+WALLET[k]||0)+x}closeSheet();render();
-    var nt=$('#pnote').value.trim();save('app_pay',{pkg:p.id,amount:a,method:m,note:nt},x?money(a-x)+' on the package, '+money(x)+' to '+first(p.name)+'\u2019s wallet':money(a)+' recorded for '+p.name).then(function(){if(back)back()})};
+  $('#savePay').onclick=function(){var a=+$('#amt').value;if(!(a>0)){toast('Enter an amount');return}var m=($('#meth [aria-pressed="true"]')||{}).textContent||'Cash';p.paid=p.paid+a;closeSheet();render();save('app_pay',{pkg:p.id,amount:a,method:m,note:$('#pnote').value.trim()},money(a)+' recorded for '+p.name)};
 }
 ACTIONS.remind=function(){
   var d=ymd(nextWorkday()), list=sessOn(d);
@@ -710,81 +661,29 @@ ACTIONS.week=function(){
 function staffClientTools(c){
   var open=PKGS.filter(function(p){return p.client===c.id&&p.status==='Active'&&(p.total-p.used>0||(p.expiry&&p.expiry>=T))}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1});
   return '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div style="display:flex;gap:10px;align-items:flex-end"><div class="field" style="margin:0;flex:1"><label for="cdisc">Client discount %</label><input id="cdisc" type="number" inputmode="decimal" min="0" max="100" value="'+(c.disc||0)+'"></div><button class="btn sec sm" id="saveDisc" style="min-height:48px">Save</button></div><div class="muted" style="font-size:13px;margin-top:6px">Filled in automatically every time you sell this client a package.</div></div>'+
-   '';
+   (open.length?'<span class="flabel">Freeze (1 week per package)</span><div class="list" style="margin:8px 0 14px">'+open.map(function(p){return '<div class="row" style="min-height:54px"><div class="main"><b>'+esc(p.type.split(' (')[0])+'</b><span>Ends '+(p.expiry?dayLabel(p.expiry):'?')+' · '+(p.total-p.used)+' left</span></div>'+(p.frozen?'<span class="pill p-mute">Freeze used</span>':'<button class="btn sec sm" data-frz="'+p.id+'">'+ICON('i-cal')+'Freeze 1 week</button>')+'</div>'}).join('')+'</div>':'');
 }
 function bindStaffClientTools(c){
   if($('#saveDisc'))$('#saveDisc').onclick=function(){var d=Math.max(0,Math.min(100,+$('#cdisc').value||0));c.disc=d;save('app_disc',{cid:c.id,name:c.name,disc:d},d?first(c.name)+' now gets '+d+'% off':'Discount removed for '+first(c.name));render()};
-  $$('[data-frz]').forEach(function(b){b.onclick=function(){frzSheet(c,pkgById(b.dataset.frz))}});
-}
-function frzSheet(c,p){{
+  $$('[data-frz]').forEach(function(b){b.onclick=function(){var p=pkgById(b.dataset.frz);
     openSheet('Freeze '+first(c.name)+'’s package','<div class="card" style="padding:12px 14px"><b>'+esc(p.type)+'</b><div class="muted" style="font-size:14px">Ends '+(p.expiry?dayLabel(p.expiry):'?')+'</div></div><div class="note good" style="margin-top:12px">'+ICON('i-cal')+'<span>Moves the end date 7 days later. Only once per package.</span></div>'+
      '<div class="two"><div class="field"><label for="fzf">Freeze starts</label><input id="fzf" type="date" value="'+T+'"></div><div class="field"><label for="fzn">Reason</label><input id="fzn" type="text" placeholder="e.g. travel"></div></div>','<button class="btn ok full" id="doFz">'+ICON('i-check')+'Freeze 1 week</button>');
-    $('#doFz').onclick=function(){var from=$('#fzf').value,note=$('#fzn').value.trim();p.frozen=1;closeSheet();save('app_freeze',{pkg:p.id,from:from,note:note},null,true).then(function(j){toast('Frozen: '+first(c.name)+' now ends '+dayLabel(j.end))})}}}
-function insSheet(c){var x=insOf(c.id)||{};
-  openSheet('Insurance · '+first(c.name),'<div class="field"><label for="iin">Insurance company</label><input id="iin" type="text" list="insList" value="'+esc(x.insurer||'')+'" placeholder="e.g. NextCare"><datalist id="insList">'+uniq(INS.clients.map(function(y){return y.insurer})).map(function(n){return '<option value="'+esc(n)+'">'}).join('')+'</datalist></div>'+
-   '<div class="two"><div class="field"><label for="iim">Member / policy number</label><input id="iim" type="text" value="'+esc(x.member||'')+'"></div><div class="field"><label for="iir">Pays per session ($)</label><input id="iir" type="number" inputmode="decimal" value="'+(x.rate||27)+'"></div></div>'+
-   (PKGS.some(function(p){return p.client===c.id&&p.status==='Active'})?'<label style="display:flex;gap:10px;align-items:center;font-weight:600;margin-top:12px"><input type="checkbox" id="iip" checked style="width:22px;height:22px"> Set her active packages to this price per session</label>':'')+'<div class="field"><label for="iino">Notes</label><input id="iino" type="text" value="'+esc(x.notes||'')+'" placeholder="e.g. needs referral each 10 sessions"></div>'+
-   '<p class="muted" style="font-size:13px;margin-top:10px">'+esc(first(c.name))+' will see her packages as covered by the insurance, never as owing. Upload her forms with Add files in her profile.</p>',
-   '<button class="btn ok full" id="doIns">'+ICON('i-check')+'Save</button>'+(x.insurer?'<button class="btn sec full" id="noIns" style="margin-top:8px">Insurance no longer pays</button>':''));
-  var go=function(ins){var rate=+$('#iir').value||27,row={cid:c.id,name:c.name,insurer:ins,member:$('#iim').value.trim(),notes:$('#iino').value.trim(),rate:rate};
-    if(ins&&$('#iip')&&$('#iip').checked)PKGS.filter(function(p){return p.client===c.id&&p.status==='Active'&&Math.abs(perSess(p)-rate)>0.01}).forEach(function(p){var t=Math.round(rate*p.total*100)/100;p.price=t;save('app_pkg_price',{pkg:p.id,price:t})});
-    INS.clients=INS.clients.filter(function(y){return String(y.cid).toUpperCase()!==c.id.toUpperCase()});if(ins)INS.clients.push(row);closeSheet();render();
-    save('app_ins_set',row,ins?first(c.name)+': '+ins+' pays 100%':first(c.name)+' pays herself again').then(function(){clientSheet(c.id)})};
-  $('#doIns').onclick=function(){var n=$('#iin').value.trim();if(!n){toast('Write the insurance name');return}go(n)};
-  if($('#noIns'))$('#noIns').onclick=function(){go('')}}
-function uniq(a){return a.filter(function(x,i){return x&&a.indexOf(x)===i})}
-function insBlock(c){var x=insOf(c.id);
-  return x?'<div class="note good" style="margin-bottom:12px;align-items:center">'+ICON('i-heart')+'<span style="flex:1"><b>Insurance: '+esc(x.insurer)+'</b>'+(x.member?' · member '+esc(x.member):'')+'<br>Pays '+money(+x.rate||27)+'/session. Claim each month by the 10th (latest the 14th), paid about 90 days after.</span><button class="btn sec sm" id="insEdit">Edit</button></div>'
-   :'<button class="btn sec full" id="insEdit" style="margin-bottom:12px">'+ICON('i-heart')+'Insurance pays for this client</button>'}
-function isLive(p){return p.status==='Active'&&(p.total-p.used>0||(p.start&&p.start>T))}
-function activePkgs(cid){var l=PKGS.filter(function(p){return p.client===cid&&isLive(p)}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1}),ins=insOf(cid),staff=ME.role!=='trainer';
-  return '<span class="flabel">Active packages ('+l.length+')</span><div class="list" style="margin:8px 0 14px">'+(l.length?l.map(function(p){var due=pkgDue(p);
-    return '<button class="row" style="min-height:62px;text-align:left" data-pk="'+p.id+'"><div class="main"><b>'+esc(p.type.split(' (')[0])+'</b><span>'+(p.total-p.used)+' of '+p.total+' left · '+(p.start>T?'starts '+dayLabel(p.start):'ends '+(p.expiry?dayLabel(p.expiry):'?'))+(staff?' · '+money(perSess(p))+'/session':'')+'</span></div>'+(staff?'<span class="pill '+(ins?'p-good':due?'p-warn':'p-good')+' num">'+(ins?esc(ins.insurer):due?money(due)+' due':'Paid')+'</span>':'')+'<span style="color:var(--ink-3);font-size:20px;padding-left:4px">›</span></button>'}).join(''):'<div class="empty">No active package.</div>')+'</div>'}
-function pkgSheet(id,cid){var p=pkgById(id),c=clientById(cid),staff=ME.role!=='trainer',due=pkgDue(p),ins=insOf(cid),back=function(){pkgSheet(id,cid)};
-  var ss=SESS.filter(function(s){return s.clients.some(function(x){return x.pkg===id})}).sort(function(a,b){return a.date<b.date?1:-1});
-  openSheet(p.type.split(' (')[0],'<div class="kv" style="margin-bottom:12px"><dt>Client</dt><dd>'+esc(c?c.name:p.name)+'</dd><dt>Package</dt><dd>'+esc(p.type)+'</dd><dt>Status</dt><dd>'+esc(p.status||'')+(p.frozen?' · freeze used':'')+'</dd><dt>Dates</dt><dd>'+(p.start?dayLabel(p.start):'?')+' → '+(p.expiry?dayLabel(p.expiry):'?')+'</dd><dt>Sessions</dt><dd class="num">'+p.used+' used · '+(p.total-p.used)+' left of '+p.total+'</dd>'+
-   (staff?'<dt>Price</dt><dd class="num">'+money(p.price)+(p.total>1?' ('+money(perSess(p))+'/session)':'')+(p.disc?' · '+Math.round(p.disc*100)+'% off':'')+'</dd><dt>Paid</dt><dd class="num">'+money(p.paid)+'</dd><dt>Balance</dt><dd class="num" style="font-weight:700;color:'+(ins||!due?'var(--good)':'var(--bad)')+'">'+(ins?'Covered by '+esc(ins.insurer):due?money(due)+' due':'Paid')+'</dd>':'')+'</div>'+
-   (staff?'<div class="two" style="margin-bottom:8px">'+(due&&!ins?'<button class="btn ok sm" id="pkPay">'+ICON('i-cash')+'Record payment</button>':'')+'<button class="btn sec sm" id="pkPrice">'+ICON('i-edit')+'Change price</button></div>'+
-     (p.status==='Active'&&p.total-p.used>0?(p.frozen?'<div class="note warn" style="margin-bottom:8px">'+ICON('i-cal')+'<span>Freeze already used on this package.</span></div>':'<button class="btn sec sm full" id="pkFrz" style="margin-bottom:8px">'+ICON('i-cal')+'Freeze 1 week</button>'):''):'')+
-   '<span class="flabel">Sessions on this package ('+ss.length+')</span><div class="list" style="margin-top:8px">'+(ss.length?ss.slice(0,20).map(function(s){var me=s.clients.filter(function(x){return x.pkg===id})[0];return '<div class="row" style="min-height:48px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?(/early/i.test(me.att)?'p-mute':'p-bad'):'p-mute')+'">'+(me.att||(s.date>T?'Booked':'Not marked'))+'</span></div>'}).join(''):'<div class="empty">No sessions yet.</div>')+'</div>',
-   '<button class="btn sec full" id="pkBack">‹ Back to '+esc(first(c?c.name:p.name))+'</button>');
-  $('#pkBack').onclick=function(){clientSheet(cid)};
-  if($('#pkPay'))$('#pkPay').onclick=function(){paySheet(id,back)};
-  if($('#pkPrice'))$('#pkPrice').onclick=function(){priceSheet(p,back)};
-  if($('#pkFrz'))$('#pkFrz').onclick=function(){frzSheet(c,p)}}
-function pkgList(cid){var l=PKGS.filter(function(p){return p.client===cid&&!isLive(p)}).sort(function(a,b){return (a.start||'')<(b.start||'')?1:-1});if(!l.length)return '';
-  var ins=insOf(cid);
-  return '<details style="margin-bottom:12px"><summary class="flabel" style="cursor:pointer">Past packages ('+l.length+')</summary><div class="list" style="margin-top:8px">'+l.map(function(p){var due=pkgDue(p),each=p.total?Math.round(p.price/p.total*100)/100:0,act=p.status==='Active';
-    return '<div class="row" style="min-height:58px;align-items:flex-start;padding-top:10px;padding-bottom:10px"><div class="main" data-pk="'+p.id+'" style="cursor:pointer"><b>'+esc(p.type.split(' (')[0])+' ›</b><span>'+(p.start?dayLabel(p.start):'')+(p.expiry?' → '+dayLabel(p.expiry):'')+' · '+p.used+' of '+p.total+' used</span><span>'+money(p.price)+(p.total>1?' ('+money(each)+'/session)':'')+(p.disc?' · '+Math.round(p.disc*100)+'% off':'')+' · paid '+money(p.paid)+'</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+(act&&!ins&&due?'<button class="pill p-warn num" data-duepay="'+p.id+'" style="border:0;cursor:pointer">'+money(due)+' due · pay</button>':'<span class="pill '+(!act?'p-mute':ins?'p-good':'p-good')+' num">'+(!act?esc(p.status||'Ended'):ins?esc(ins.insurer):'Paid')+'</span>')+'<button class="btn sec sm" style="min-height:34px;padding:0 10px;font-size:13px" data-pprice="'+p.id+'">'+ICON('i-edit')+'Price</button></div></div>'}).join('')+'</div></details>'}
-function priceSheet(p,back){var each=perSess(p);
-  openSheet('Change price','<div class="kv" style="margin-bottom:12px"><dt>Client</dt><dd>'+esc(p.name)+'</dd><dt>Package</dt><dd>'+esc(p.type)+'</dd><dt>Now</dt><dd class="num">'+money(p.price)+(p.total>1?' ('+money(each)+'/session)':'')+'</dd><dt>Paid</dt><dd class="num">'+money(p.paid)+'</dd></div>'+
-   '<div class="two"><div class="field"><label for="ppe">Per session ($)</label><input id="ppe" type="number" inputmode="decimal" value="'+each+'"></div><div class="field"><label for="ppt">Total for '+p.total+' ($)</label><input id="ppt" type="number" inputmode="decimal" value="'+p.price+'"></div></div><div id="ppn"></div>',
-   '<button class="btn ok full" id="doPp">'+ICON('i-check')+'Save price</button>');
-  var n=function(){var t=+$('#ppt').value||0,d=Math.round((t-p.paid)*100)/100;$('#ppn').innerHTML='<div class="note '+(d<0?'warn':'good')+'" style="margin-top:10px">'+ICON('i-check')+'<span>'+(d>0?'Still due after the change: <b>'+money(d)+'</b>':d<0?'Already paid '+money(-d)+' more than the new price. Record it in the wallet if needed.':'Fully paid at this price.')+'</span></div>'};
-  $('#ppe').oninput=function(){$('#ppt').value=Math.round((+this.value||0)*p.total*100)/100;n()};$('#ppt').oninput=function(){$('#ppe').value=p.total?Math.round((+this.value||0)/p.total*100)/100:0;n()};n();
-  $('#doPp').onclick=function(){var t=+$('#ppt').value;if(!(t>=0)){toast('Enter a price');return}var old=p.price;p.price=t;closeSheet();save('app_pkg_price',{pkg:p.id,price:t},first(p.name)+': '+money(old)+' → '+money(t),true).then(function(){if(back)back()})}}
+    $('#doFz').onclick=function(){var from=$('#fzf').value,note=$('#fzn').value.trim();p.frozen=1;closeSheet();save('app_freeze',{pkg:p.id,from:from,note:note},null,true).then(function(j){toast('Frozen: '+first(c.name)+' now ends '+dayLabel(j.end))})}}});
+}
 function clientSheet(id){
   var c=clientById(id);if(!c){toast('Client file not found');return}var p=pkgOf(id),r=p&&lateRule(p),hist=SESS.filter(function(s){return s.clients.some(function(x){return x.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).slice(0,6);
-  openSheet(c.name,'<div class="kv" style="margin-bottom:14px">'+(ME.role==='trainer'?'':'<dt>Phone</dt><dd>'+esc(c.phone)+'</dd><dt>Email</dt><dd>'+esc(c.email)+'</dd>')+(ME.role!=='trainer'&&walletOf(id)>0?'<dt>Wallet</dt><dd class="num" style="color:var(--good);font-weight:700">'+money(walletOf(id))+' for the next package</dd>':'')+(ME.role!=='trainer'?'<dt>Balance</dt><dd class="num" style="color:'+(insOf(id)?'var(--good)':clientDue(id)?'var(--bad)':'var(--good)')+';font-weight:700">'+(insOf(id)?'Covered 100% by '+esc(insOf(id).insurer):clientDue(id)?'<button id="balPay" style="color:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px">'+money(clientDue(id))+' due · record payment</button>':'Nothing due')+'</dd>':'')+'</div>'+
-   activePkgs(id)+(ME.role!=='trainer'?insBlock(c)+pkgList(id):'')+
+  openSheet(c.name,'<div class="kv" style="margin-bottom:14px">'+(ME.role==='trainer'?'':'<dt>Phone</dt><dd>'+esc(c.phone)+'</dd><dt>Email</dt><dd>'+esc(c.email)+'</dd>')+'<dt>Package</dt><dd>'+(p?esc(p.type):'None')+'</dd>'+(p?'<dt>Passes left</dt><dd class="num">'+(p.total-p.used)+' of '+p.total+'</dd><dt>Expires</dt><dd>'+(p.expiry?dayLabel(p.expiry):'')+'</dd><dt>Balance</dt><dd class="num" style="color:'+(r&&r.due?'var(--bad)':'var(--good)')+'">'+(r&&r.due?money(r.due)+(melOwes(p)?' due from Melanie':' due'):'Paid')+'</dd>':'')+'</div>'+
    (ME.role!=='trainer'?'<label style="display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:600"><input type="checkbox" id="melFlag" style="width:22px;height:22px"'+(c.mel?' checked':'')+'> Melanie\'s own client <span class="muted" style="font-weight:500;font-size:13px">(Melanie pays the center $4/pass)</span></label>':'')+
    (ME.role!=='trainer'?'<button class="btn sec full" id="editCl" style="margin-bottom:12px">'+ICON('i-edit')+'Edit name, phone, email</button>':'')+
    (ME.role!=='trainer'&&!c.email?'<div class="note warn" style="margin-bottom:12px">'+ICON('i-alert')+'<span>No email: '+esc(first(c.name))+' cannot sign in to the client app yet.</span></div>':'')+
    (ME.role!=='trainer'?staffClientTools(c):'')+
+   (c.goal?'<div class="notebox" style="border-left:4px solid var(--crimson)"><b>Their promise</b>\u201C'+esc(c.goal.promise)+'\u201D'+(c.goal.keys&&c.goal.keys.length?'<br><span class="muted" style="font-size:13px">'+c.goal.keys.map(esc).join(' · ')+'</span>':'')+'</div>':'')+
    (c.notes?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+(c.program?'<div class="notebox"><b>Training program</b>'+esc(c.program)+'</div>':'')+(c.log.length?'<div class="notebox"><b>Session notes</b>'+c.log.slice(0,4).map(function(l){return dayLabel(l.d)+' · '+esc(l.by)+': '+esc(l.t)}).join('<br>')+'</div>':'')+
    (ME.role==='owner'?ownerClientExtras(c):'')+'<span class="flabel">Recent sessions</span><div class="list" style="margin-top:8px">'+hist.map(function(s){var me=s.clients.filter(function(x){return x.cid===id})[0];return '<div class="row" style="min-height:50px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?'p-bad':'p-mute')+'">'+(me.att||'Scheduled')+'</span></div>'}).join('')+'</div>',
    ME.role==='trainer'?'<button class="btn ok full" id="editNotes">'+ICON('i-edit')+'Edit notes and program</button>':'<div class="two"><a class="btn wa" href="'+wa(c.phone,'Hi '+first(c.name)+', ')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'WhatsApp</a><button class="btn sec" id="sellTo">Sell package</button></div>');
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
   if(ME.role==='owner')bindOwnerExtras(c);
   if(ME.role!=='trainer')bindStaffClientTools(c);
-  if($('#insEdit'))$('#insEdit').onclick=function(){insSheet(c)};
-  var dueList=PKGS.filter(function(p){return p.client===id&&p.status==='Active'&&pkgDue(p)>0}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1}),back=function(){clientSheet(c.id)};
-  if($('#balPay'))$('#balPay').onclick=function(){if(dueList.length===1)return paySheet(dueList[0].id,back);
-    openSheet('Which package?','<div class="list">'+dueList.map(function(p){return '<button class="row" data-dp="'+p.id+'"><div class="main"><b>'+esc(p.type.split(' (')[0])+'</b><span>'+(p.start?dayLabel(p.start):'')+' · paid '+money(p.paid)+' of '+money(p.price)+'</span></div><span class="pill p-warn num">'+money(pkgDue(p))+'</span></button>'}).join('')+'</div>');
-    $$('[data-dp]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.dp,back)}})};
-  $$('[data-pk]').forEach(function(b){b.onclick=function(){pkgSheet(b.dataset.pk,c.id)}});
-  $$('[data-duepay]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.duepay,back)}});
-  $$('[data-pprice]').forEach(function(b){b.onclick=function(){priceSheet(pkgById(b.dataset.pprice),function(){clientSheet(c.id)})}});
   if($('#editCl'))$('#editCl').onclick=function(){
     openSheet('Edit '+first(c.name),'<div class="field"><label for="ecn">Full name</label><input id="ecn" type="text" value="'+esc(c.name)+'" autocomplete="off"></div><div class="field"><label for="ecp">Phone</label><input id="ecp" type="tel" inputmode="tel" value="'+esc(c.phone)+'"></div><div class="field"><label for="ece">Email <span class="muted" style="font-weight:500">(used to sign in to the client app)</span></label><input id="ece" type="email" inputmode="email" autocomplete="off" value="'+esc(c.email)+'"></div><p class="muted" style="font-size:13px;margin-top:10px">Parents: put the parent\u2019s email on the child\u2019s profile, they will see it from their own sign in.</p>',
      '<button class="btn ok full" id="doEc">'+ICON('i-check')+'Save</button>');
@@ -794,15 +693,14 @@ function clientSheet(id){
   if($('#melFlag'))$('#melFlag').onchange=function(){c.mel=this.checked;save('app_flag',{cid:c.id,name:c.name,mel:c.mel},c.mel?first(c.name)+' is now Melanie\'s client':first(c.name)+' is a center client again');render()};
   if($('#editNotes'))$('#editNotes').onclick=function(){var s=SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).filter(function(x){return x.date<=T})[0]||SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})})[0];noteSheet(s.id,s.clients.findIndex(function(y){return y.cid===id}))};
 }
-var USEW=true;
 ACTIONS.sell=function(cid){
-  var months=1;USEW=true;
+  var months=1;
   openSheet('Sell a package','<div class="field"><label for="sc">Client</label><select id="sc">'+CLIENTS.slice().sort(function(a,b){return a.name<b.name?-1:1}).map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.name)+'</option>'}).join('')+'</select></div>'+
    '<div class="field"><label for="st">Package</label><select id="st">'+PKG_TYPES.map(function(t,i){return '<option value="'+i+'">'+esc(t.t)+'</option>'}).join('')+'</select></div>'+
    '<div class="field" id="smf"><span class="flabel">Length</span><div class="seg" id="smo"><button aria-pressed="true" data-m="1">1 month</button><button aria-pressed="false" data-m="3">3 months · 7% off</button><button aria-pressed="false" data-m="6">6 months · 15% off</button></div></div>'+
    '<div class="two"><div class="field"><label for="sd">Discount %</label><input id="sd" type="number" inputmode="decimal" value="0" min="0" max="100"></div><div class="field"><label for="sp">Paid now ($)</label><input id="sp" type="number" inputmode="decimal" value="0" min="0"></div></div>'+
    '<div class="field"><label for="sday">Starts</label><input id="sday" type="date" value="'+T+'"></div>'+
-   '<div class="field"><span class="flabel">Paid by</span><div class="seg" id="sm"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div id="swal"></div><div id="sumP" class="note good"></div>',
+   '<div class="field"><span class="flabel">Paid by</span><div class="seg" id="sm"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div id="sumP" class="note good"></div>',
    '<button class="btn ok full" id="doSell">'+ICON('i-check')+'Create package</button>');
   $$('#sm button').forEach(function(b){b.onclick=function(){$$('#sm button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')}});
   var clientDisc=function(){var c=clientById($('#sc').value);return c&&c.disc||0};
@@ -811,15 +709,13 @@ ACTIONS.sell=function(cid){
     var t=PKG_TYPES[+$('#st').value],tot=Math.round(t.p*months*(1-(+$('#sd').value||0)/100));$('#sp').value=months===6?Math.round(tot/2):months===3?tot:0;sum()}});
   var sum=function(){var t=PKG_TYPES[+$('#st').value],mel=isMel($('#sc').value),mad=/madero/i.test(t.t),monthly=/x\/month/.test(t.t);
     $('#smf').hidden=!monthly;if(!monthly&&months!==1){months=1;$$('#smo button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.m==='1'?'true':'false')});setDisc()}
-    var wal=walletOf($('#sc').value);$('#swal').innerHTML=wal>0?'<label class="note warn" style="margin:12px 0 0;cursor:pointer;align-items:center"><input type="checkbox" id="useW" style="width:22px;height:22px;flex:none"><span><b>Use wallet: '+money(wal)+'</b> from extra paid before. Comes off what is left to pay.</span></label>':'';
-    if($('#useW')){$('#useW').checked=USEW!==false;$('#useW').onchange=function(){USEW=this.checked;sum()}}
-    var d=+$('#sd').value||0,total=Math.round(t.p*months*(1-d/100)),rawPaid=+$('#sp').value||0,wUse=wal>0&&USEW!==false?Math.min(wal,Math.max(0,total-rawPaid)):0,over=Math.max(0,rawPaid-total),paid=Math.min(total,rawPaid+wUse),st=$('#sday').value||T,each=Math.round(total/months*100)/100;
+    var d=+$('#sd').value||0,total=Math.round(t.p*months*(1-d/100)),paid=Math.min(total,+$('#sp').value||0),st=$('#sday').value||T,each=Math.round(total/months*100)/100;
     var lines=months>1?'<br>'+[].concat.apply([],Array(months).fill(0).map(function(x,k){return [k]})).map(function(k){var dd=ymd(addDays(new Date(st+'T12:00:00'),30*k));return 'Month '+(k+1)+': '+dayLabel(dd)+' · '+t.n+' sessions · '+money(k<months-1?each:total-each*(months-1))}).join('<br>'):'';
-    $('#sumP').innerHTML=ICON('i-check')+'<span>'+(months>1?'<b>'+months+' packages, one per month.</b> ':'')+t.n+' passes'+(months>1?' each':'')+' · total '+money(total)+(months>1?' instead of '+money(t.p*months):'')+(wUse?' · '+money(wUse)+' from wallet':'')+' · '+money(Math.max(0,total-paid))+' left to pay'+(over?' · <b>'+money(over)+' extra goes to the wallet</b>':'')+(months===6?' (2nd half due on day 1 of month 3)':'')+'.'+
-      (months===1?' Valid '+(t.n===1&&!mad?'10 days':mad?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+'.':'')+lines+(mad?'<br>Madero: 100% Melanie, Romy collects from the client as usual.':mel?'<br>Melanie\'s client: Romy collects from the client, Melanie pays the center $4/pass upfront.':'')+'</span>'};
+    $('#sumP').innerHTML=ICON('i-check')+'<span>'+(months>1?'<b>'+months+' packages, one per month.</b> ':'')+t.n+' passes'+(months>1?' each':'')+' · total '+money(total)+(months>1?' instead of '+money(t.p*months):'')+' · '+money(Math.max(0,total-paid))+' left to pay'+(months===6?' (2nd half due on day 1 of month 3)':'')+'.'+
+      (months===1?' Valid '+(mad?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+'.':'')+lines+(mad?'<br>Madero: 100% Melanie, Romy collects from the client as usual.':mel?'<br>Melanie\'s client: Romy collects from the client, Melanie pays the center $4/pass upfront.':'')+'</span>'};
   ['st','sd','sp','sday'].forEach(function(i){$('#'+i).oninput=sum});$('#st').onchange=sum;$('#sc').onchange=function(){setDisc();sum()};setDisc();sum();
   $('#doSell').onclick=function(){var t=PKG_TYPES[+$('#st').value],c=clientById($('#sc').value),m=($('#sm [aria-pressed="true"]')||{}).textContent||'Cash';closeSheet();
-    save('app_sell',{cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,paid:+$('#sp').value||0,method:m,start:$('#sday').value||T,useWallet:walletOf(c.id)>0&&USEW!==false},null,true).then(function(j){toast((j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name)})};
+    save('app_sell',{cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,paid:+$('#sp').value||0,method:m,start:$('#sday').value||T},null,true).then(function(j){toast((j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name)})};
 };
 ACTIONS.desk=function(){VIEW='home';render();scrollTo(0,0)};
 ACTIONS.home=ACTIONS.desk;
@@ -831,7 +727,7 @@ ACTIONS.newClient=function(){
 };
 ACTIONS.leads=function(){
   openSheet('Trial leads','<div class="list">'+LEADS.map(function(l){return '<div class="card" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(l.name)+'</b><span class="pill '+(l.status==='Confirmed'?'p-good':l.status==='Pending'?'p-warn':'p-bad')+'">'+l.status+'</span></div><div class="muted" style="font-size:14px">'+(l.date?dayLabel(l.date)+' · '+l.time+' · '+l.type:'No time picked')+' · Injuries: '+esc(l.injuries)+'</div>'+
-    (l.status!=='Confirmed'?'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px"><button class="btn ok sm" data-confirm="'+l.id+'"'+(l.date?'':' disabled')+'>Confirm</button><a class="btn wa sm" href="'+wa(l.phone,otherTimeMsg(l))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'New time</a><button class="btn sec sm" data-lcancel="'+l.id+'">Cancel</button></div>':'')+'</div>'}).join('')+'</div>'+
+    (l.status!=='Confirmed'?'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px"><button class="btn ok sm" data-confirm="'+l.id+'">Confirm</button><a class="btn wa sm" href="'+wa(l.phone,otherTimeMsg(l))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'New time</a><button class="btn sec sm" data-lcancel="'+l.id+'">Cancel</button></div>':'')+'</div>'}).join('')+'</div>'+
     '<p class="muted" style="font-size:13px;margin-top:12px">Confirm creates the client, the free trial package and the 1:3 session, then opens WhatsApp with her confirmation message.</p>');
   $$('[data-confirm]').forEach(function(b){b.onclick=function(){confirmLead(b.dataset.confirm)}});
   $$('[data-lcancel]').forEach(function(b){b.onclick=function(){cancelLead(b.dataset.lcancel)}});
@@ -895,17 +791,26 @@ function noteSheet(sid,i){
 /* ---------- confirm a trial lead: what she receives ---------- */
 function confirmLead(id){
   var l=LEADS.filter(function(x){return x.id===id})[0];
-  if(!l.date){window.open(wa(l.phone,'Hi '+first(l.name)+', this is Romy from Wellbe Health Center. Thank you for your interest in a free session! Which morning suits you best this week?'),'_blank');return}
-  var msg='Hi '+first(l.name)+', this is Romy from Wellbe Health Center. Your free session is confirmed for '+dayLong(l.date)+' at '+l.time+'.\n\n'+
+  var h0=l.time?(function(){var m=/^(\d{1,2})(?::\d{2})?\s*([ap])/i.exec(l.time);if(!m)return 9;var h=+m[1];if(/p/i.test(m[2])&&h<12)h+=12;if(/a/i.test(m[2])&&h===12)h=0;return h})():9;
+  var d0=l.date||ymd(nextWorkday());
+  var msgFor=function(d,h){return 'Hi '+first(l.name)+', this is Romy from Wellbe Health Center. Your free session is confirmed for '+dayLong(d)+' at '+hl(pad(h)+':00')+'.\n\n'+
     'Bring: comfortable clothes, training shoes, a water bottle and a towel (at least 30 x 50 cm).\n'+
-    'Location: https://maps.google.com/?q=Wellbe+Health+Center+Bsalim\n\nSee you there! Reply here if anything changes.';
+    'Location: https://maps.google.com/?q=Wellbe+Health+Center+Bsalim\n\nSee you there! Reply here if anything changes.'};
   openSheet('Confirm '+first(l.name),
    '<div class="note good" style="margin-bottom:12px">'+ICON('i-check')+'<span>Confirming creates her client file, the free trial package and her spot in the 1:3 session.</span></div>'+
-   '<p class="muted" style="margin-bottom:8px">She receives this on WhatsApp when you press send:</p><div class="card" style="padding:12px 14px;font-size:15px;white-space:pre-line">'+esc(msg)+'</div>',
-   '<a class="btn wa full" id="cfSend" href="'+wa(l.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Confirm and send on WhatsApp</a><button class="btn sec full" id="cfOnly">Confirm without message</button><div class="two" style="margin-top:8px"><a class="btn sec" href="'+wa(l.phone,otherTimeMsg(l))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Ask for another time</a><button class="btn sec" id="cfCancel">Cancel trial</button></div>');
+   '<div class="muted" style="font-size:14px">'+(l.date?'She picked '+dayLabel(l.date)+' at '+esc(l.time)+'. Change it here if you agreed on another time.':'She did not pick a time. Set the one you agreed on.')+'</div>'+
+   '<div class="two"><div class="field"><label for="cfD">Day</label><input id="cfD" type="date" value="'+d0+'" min="'+T+'"></div><div class="field"><label for="cfH">Time</label><select id="cfH">'+[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(h){return '<option value="'+h+'"'+(h===h0?' selected':'')+'>'+hl(pad(h)+':00')+'</option>'}).join('')+'</select></div></div><div id="cfCap"></div>'+
+   '<p class="muted" style="margin:12px 0 8px">She receives this on WhatsApp when you press send:</p><div class="card" id="cfMsg" style="padding:12px 14px;font-size:15px;white-space:pre-line"></div>',
+   '<a class="btn wa full" id="cfSend" target="_blank" rel="noopener">'+ICON('i-wa')+'Confirm and send on WhatsApp</a><button class="btn sec full" id="cfOnly">Confirm without message</button><div class="two" style="margin-top:8px"><a class="btn sec" href="'+wa(l.phone,otherTimeMsg(l))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Ask for another time</a><button class="btn sec" id="cfCancel">Cancel trial</button></div>');
+  var cur=function(){return {d:$('#cfD').value,h:+$('#cfH').value}};
+  var paint=function(){var c=cur(),m=msgFor(c.d,c.h);$('#cfMsg').textContent=m;$('#cfSend').href=wa(l.phone,m);var n=joeLoad(c.d,pad(c.h)+':00');
+    $('#cfCap').innerHTML=(c.d&&n>=3?'<div class="note bad">'+ICON('i-alert')+'<span>Joe already has '+n+' clients at that hour. Pick another time.</span></div>':'')+(c.d&&c.d!==l.date||c.h!==h0&&l.date?'<div class="note warn" style="margin-top:8px">'+ICON('i-swap')+'<span>Moved: the trial will be booked on '+dayLabel(c.d)+' at '+hl(pad(c.h)+':00')+'.</span></div>':'')};
+  $('#cfD').onchange=paint;$('#cfH').onchange=paint;paint();
   $('#cfCancel').onclick=function(){cancelLead(id)};
-  var done=function(){l.status='Confirmed';closeSheet();render();save('app_lead',{row:l.row,id:l.id},null,true).then(function(){toast(l.name+' confirmed: client, trial package and session created')})};
-  $('#cfSend').addEventListener('click',function(){setTimeout(done,200)});$('#cfOnly').onclick=done;
+  var done=function(e){var c=cur();if(!c.d){if(e)e.preventDefault();toast('Pick the day');return false}if(joeLoad(c.d,pad(c.h)+':00')>=3){if(e)e.preventDefault();toast('Joe is full at that hour');return false}
+    l.status='Confirmed';l.date=c.d;l.time=hl(pad(c.h)+':00');closeSheet();render();
+    save('app_lead',{row:l.row,id:l.id,date:c.d,time:hl(pad(c.h)+':00')},null,true).then(function(){toast(l.name+' confirmed for '+dayLabel(c.d)+' at '+l.time)});return true};
+  $('#cfSend').addEventListener('click',function(e){if(done(e)===false)return});$('#cfOnly').onclick=function(){done()};
 }
 
 /* ---------- + menu ---------- */
@@ -933,23 +838,24 @@ ACTIONS.book=function(){
   var pick=function(id){st.cid=id;var c=clientById(id),p=pkgOf(id),r=p&&lateRule(p);$('#bq').value=c.name;$('#bpick').innerHTML='';
     $('#binfo').innerHTML=(c.notes?'<div class="note warn" style="margin-bottom:8px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+
       (c.program?'<div class="notebox"><b>Program</b>'+esc(c.program)+'</div>':'')+
-      (usablePkgs(id).length>1?'<span class="flabel">Use which package?</span><div class="list" id="bpk" style="margin-bottom:10px">'+usablePkgs(id).map(function(x){var rr=lateRule(x);return '<button class="row" style="min-height:52px;text-align:left" data-bpk="'+x.id+'" aria-pressed="'+(x.id===p.id)+'"><span class="radio"></span><div class="main"><b>'+esc(x.type)+'</b><span>'+money(perSess(x))+'/session · '+(x.total-x.used)+' of '+x.total+' left · '+(x.start>T?'starts '+dayLabel(x.start):'ends '+(x.expiry?dayLabel(x.expiry):'?'))+(rr&&rr.due?' · owes '+money(rr.due):'')+'</span></div></button>'}).join('')+'</div>':
-     p?'<div class="notebox"><b>Package</b>'+esc(p.type)+' · '+money(perSess(p))+'/session · '+(p.total-p.used)+' of '+p.total+' left'+(r?' · <span style="color:var(--bad);font-weight:700">'+(r.late?'payment late: ':'owes ')+money(r.due)+'</span>':'')+'</div>':'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No active package. Sell one first or book as a trial.</span></div>');
-    st.pkg=p?p.id:null;
-    var setKind=function(x){var k=x&&x.kind;if(k&&['1:3','1:2','1:1','Madero','Prehab','Physio','Osteo'].indexOf(k)>-1)$('#bty').value=k;fixTr()};
-    var fixTr=function(){var f={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[$('#bty').value],sel=$('#btr');if(f){sel.value=f;sel.disabled=true}else{sel.disabled=false;if(sel.value==='Jad')sel.value='Joe'}cap()};
-    $('#bty').onchange=fixTr;setKind(p);
-    $$('[data-bpk]').forEach(function(b){b.onclick=function(){$$('[data-bpk]').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');st.pkg=b.dataset.bpk;setKind(pkgById(st.pkg))}});
+      (p?'<div class="notebox"><b>Package</b>'+esc(p.type)+' · '+(p.total-p.used)+' of '+p.total+' left'+(r?' · <span style="color:var(--bad);font-weight:700">'+(r.late?'payment late: ':'owes ')+money(r.due)+'</span>':'')+'</div>':'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No active package. Sell one first or book as a trial.</span></div>');
+    if(p){var k=p.kind;if(['1:3','1:2','1:1','Madero','Prehab','Physio','Osteo'].indexOf(k)>-1){$('#bty').value=k;var f0={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[k];if(f0)$('#btr').value=f0}}
     $('#bform').hidden=false;var b=$('#doBook');b.disabled=false;b.textContent='Book '+first(c.name);cap()};
   var cap=function(){var n=joeLoad($('#bd').value,$('#bt').value);$('#bcap').innerHTML=$('#btr').value==='Joe'&&n>=3?'<div class="note bad">'+ICON('i-alert')+'<span>Joe already has 3 clients at that hour.</span></div>':''};
-  $('#bq').oninput=list;['bd','bt','btr'].forEach(function(i){$('#'+i).onchange=cap});
-  $('#doBook').onclick=function(){var d=$('#bd').value,t=$('#bt').value,tr=$('#btr').value,ty=$('#bty').value,c=clientById(st.cid),p=(st.pkg&&pkgById(st.pkg))||pkgOf(st.cid);
+  $('#bq').oninput=list;['bd','bt'].forEach(function(i){$('#'+i).onchange=cap});
+  var FIX={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'};
+  $('#bty').onchange=function(){var f=FIX[this.value];if(f)$('#btr').value=f;cap()};
+  $('#btr').onchange=function(){if(this.value==='Jad')$('#bty').value='Osteo';else if($('#bty').value==='Osteo')$('#bty').value='1:3';cap()};
+  $('#doBook').onclick=function(){var d=$('#bd').value,t=$('#bt').value,tr=$('#btr').value,ty=$('#bty').value,c=clientById(st.cid);
+    var mine=PKGS.filter(function(x){return x.client===st.cid&&x.status==='Active'&&x.total-x.used>0&&(x.kind===ty||(ty==='1:3'&&/trial/i.test(x.type)))}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1}),p=mine[0];
     if(tr==='Joe'&&joeLoad(d,t)>=3){toast('Joe is full at that hour');return}
-    if(!p||p.status!=='Active'){toast('No active package: sell one first');return}if(!d||!t){toast('Pick a day and time');return}
+    var single={Osteo:'Osteo - Single Session ($150)',Physio:'Physio - Single Session ($50)'}[ty];
+    if(!p&&single){var bb=this;if(bb.dataset.sure!=='1'){bb.dataset.sure='1';bb.textContent='Sell 1 '+ty+' session and book';toast('No '+ty+' session left: tap again to sell one and book');return}
+      closeSheet();save('app_sell',{cid:c.id,type:single,months:1,discount:0,paid:0,start:d}).then(function(j){return save('app_book',{cid:c.id,pkg:j.id,name:c.name,date:d,time:t,trainer:{Osteo:'Jad',Physio:'Majd'}[ty],type:ty},first(c.name)+' booked with '+({Osteo:'Jad',Physio:'Majd'}[ty])+' on '+dayLabel(d)+' at '+hl(t),true)});return}
+    if(!p){toast('No active '+ty+' package for '+first(c.name)+': sell one first');return}if(!d||!t){toast('Pick a day and time');return}
     var fixedTr={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[ty];if(fixedTr)tr=fixedTr;
     var ex=SESS.filter(function(x){return x.date===d&&x.start===t&&x.trainer===tr&&x.tab===ty&&x.status!=='Cancelled'})[0];
     save('app_book',{cid:c.id,pkg:p.id,name:c.name,date:d,time:t,trainer:tr,type:ty},null,true);
-    if(usablePkgs(c.id).length>1)toast('Booked on '+p.type.split(' (')[0]);
     var msg='Hi '+first(c.name)+', you are booked on '+dayLabel(d)+' at '+hl(t)+' with '+tr+' at Wellbe. See you then!';
     openSheet('Booked','<div class="note good" style="margin-bottom:12px">'+ICON('i-check')+'<span>'+esc(c.name)+' '+(ex?'joined the '+ty+' at ':'booked at ')+hl(t)+' on '+dayLabel(d)+'. Calendar invite goes out automatically.</span></div><div class="card" style="padding:12px 14px">'+esc(msg)+'</div>',
       '<a class="btn wa full" href="'+wa(c.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Send on WhatsApp</a><button class="btn sec full" id="bDone">Done</button>');
