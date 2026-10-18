@@ -279,12 +279,20 @@ var REM={}; try{REM=JSON.parse(localStorage.getItem('wb_rem')||'{}')}catch(e){RE
 function saveRem(){try{localStorage.setItem('wb_rem',JSON.stringify(REM))}catch(e){}}
 var monday=addDays(TODAY,-((TODAY.getDay()+6)%7));
 // current package: the oldest Active one with passes left, else the latest one
-function pkgOf(cid){var l=PKGS.filter(function(p){return p.client===cid});if(!l.length)return null;var a=l.filter(function(p){return p.status==='Active'&&p.total-p.used>0});
+function pkgOf(cid){var l=PKGS.filter(function(p){return p.client===cid});if(!l.length)return null;var a=l.filter(function(p){return !/cancel/i.test(p.status)&&avail(p)>0});
   var srt=function(x){return x.slice().sort(function(m,n){return (m.start||'')<(n.start||'')?-1:1})};return a.length?srt(a)[0]:srt(l)[l.length-1]}
+// passes already booked (scheduled, not marked yet) count against the package, so "left" = what can still be booked
+function pend(p){var n=0,seen={};(SESS||[]).forEach(function(s){if(s.status!=='Scheduled'||seen[s.ref+s.id])return;seen[s.ref+s.id]=1;s.clients.forEach(function(x){if(x.pkg===p.id&&!x.att&&x.flag!=='Y'&&x.flag!=='N')n++})});return n}
+function avail(p){return Math.max(0,p.total-p.used-pend(p))}
+// which package a new booking should use: the oldest one with a free pass, so clients always finish their sessions (its end date moves if needed).
+// Skipped only if a newer package of the same kind is already in use, or it ended more than 45 days ago.
+function bookPkg(cid,ty,d){var ok=function(x){return x.client===cid&&!/cancel/i.test(x.status)&&(x.kind===ty||(ty==='1:3'&&/trial/i.test(x.type)))};
+  var l=PKGS.filter(ok).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1});
+  var old=ymd(addDays(new Date(d+'T12:00:00'),-45));return l.filter(function(x){if(avail(x)<=0||(x.expiry&&x.expiry<old))return false;return !l.some(function(y){return y!==x&&(y.start||'')>(x.start||'')&&(y.used>0||pend(y)>0)})})[0]||null}
 // renewal: monthly training packages not already on 3+ months get the 3 / 6 month offer
 function offerOf(p){var m=/(\d+)x\/month \(\$(\d+)/.exec(p.type);if(!m||(p.months||1)>=3)return null;var mo=+m[2];
  var t3=mo*3,p3=Math.round(t3*0.93),t6=mo*6,p6=Math.round(t6*0.85);return {mo:mo,t3:t3,p3:p3,t6:t6,p6:p6,half:Math.round(p6/2)}}
-function renewMsg(p){var left=p.total-p.used,o=offerOf(p),pk=p.type.split(' (')[0];
+function renewMsg(p){var left=avail(p),o=offerOf(p),pk=p.type.split(' (')[0];
  var head='Hi '+first(p.name)+', this is Romy from Wellbe. You '+(left===0?'just finished':'have 1 session left on')+' your '+pk+' package.';
  if(!o)return head+' Want me to renew it so you keep your spot?';
  return head+' Before you renew, two ways to save:\n\n3 months: $'+o.p3+' instead of $'+o.t3+' (7% off), one payment.\n6 months: $'+o.p6+' instead of $'+o.t6+' (15% off), paid in 2: $'+o.half+' now and $'+(o.p6-o.half)+' on day 1 of month 3.\n\nSame spot, same coach. Which one works for you?'}
@@ -379,7 +387,7 @@ function pkgById(id){return PKGS.filter(function(p){return p.id===id})[0]}
 function sessOn(date,trainer){return SESS.filter(function(s){return s.date===date&&(!trainer||s.trainer===trainer)}).sort(function(a,b){return a.start<b.start?-1:1})}
 function clientBadges(c,showMoney){
   var p=pkgById(c.pkg)||pkgOf(c.cid), out='';
-  if(p){var left=p.total-p.used; out+='<span class="pill '+(left<=1?'p-warn':'p-mute')+'">'+left+' of '+p.total+' left</span>';
+  if(p){var left=avail(p); out+='<span class="pill '+(left<=1?'p-warn':'p-mute')+'">'+left+' of '+p.total+' left</span>';
     var r=lateRule(p); if(r) out+='<span class="pill '+(r.late?'p-bad':'p-warn')+'">'+ICON('i-cash')+(r.late?'Payment due '+money(r.due):'Pays '+money(r.due)+' by session '+r.limit)+'</span>'}
   var cl=clientById(c.cid); if(cl&&cl.notes) out+='<span class="pill p-warn" title="'+esc(cl.notes)+'">'+ICON('i-heart')+esc(cl.notes)+'</span>'; if(c.note) out+='<span class="pill p-mute">'+ICON('i-edit')+esc(c.note)+'</span>';
   return out;
@@ -421,7 +429,7 @@ function todoItems(){
   overdue().forEach(function(x){var m=melOwes(x.p);items.push({id:'pay-'+x.p.id,level:'bad',icon:'i-cash',title:m?'Melanie owes '+money(x.due)+' · '+esc(x.p.name):esc(x.p.name)+' owes '+money(x.due),sub:m?'Center share $4 x '+x.p.total+' passes, paid upfront':'Session '+x.p.used+' of '+x.p.total+' · late',btn:m?'Record':'Remind',act:(m?'paid|':'pay|')+x.p.id})});
   var tomorrowS=sessOn(ymd(nextWorkday())).reduce(function(n,s){return n+s.clients.filter(function(c){return !c.reminded}).length},0);
   if(tomorrowS) items.push({id:'rem-'+ymd(nextWorkday())+'-'+tomorrowS,level:'warn',icon:'i-bell',title:'Send '+tomorrowS+' session reminders',sub:'For '+dayLabel(ymd(nextWorkday())),btn:'Start',act:'remind'});
-  PKGS.forEach(function(p){var left=p.total-p.used;if(p.price>0&&p.total>1&&left<=1&&left>=0){items.push({id:'ren-'+p.id,level:'mute',icon:'i-repeat',title:esc(p.name)+(left===0?' finished the package':' has 1 session left'),sub:esc(p.type)+(offerOf(p)?' · offer 3 or 6 months':''),btn:'Offer renewal',act:'renew|'+p.id})}});
+  PKGS.forEach(function(p){if(/cancel/i.test(p.status)||PKGS.some(function(y){return y!==p&&y.client===p.client&&y.kind===p.kind&&(y.start||'')>(p.start||'')}))return;var left=avail(p);if(p.price>0&&p.total>1&&left<=1&&left>=0){items.push({id:'ren-'+p.id,level:'mute',icon:'i-repeat',title:esc(p.name)+(left===0?' finished the package':' has 1 session left'),sub:esc(p.type)+(offerOf(p)?' · offer 3 or 6 months':''),btn:'Offer renewal',act:'renew|'+p.id})}});
   RECURRING.forEach(function(e,i){var nx=nextDue(e);if(e.last&&e.last>=nx)return;if(e.end&&nx>e.end)return;var days=(new Date(nx+'T12:00:00')-TODAY)/864e5;if(days<=5)items.push({id:'exp-'+i+'-'+nx,level:'mute',icon:'i-repeat',title:esc(e.what)+' '+money(e.amt)+' due '+(days<1?'today':dayLabel(nx)),sub:e.every+' expense',btn:'Log it',act:'logexp|'+i})});
   return items.filter(function(x){return !DONE_TODO[x.id]});
 }
@@ -847,18 +855,23 @@ ACTIONS.book=function(){
   $('#bty').onchange=function(){var f=FIX[this.value];if(f)$('#btr').value=f;cap()};
   $('#btr').onchange=function(){if(this.value==='Jad')$('#bty').value='Osteo';else if($('#bty').value==='Osteo')$('#bty').value='1:3';cap()};
   $('#doBook').onclick=function(){var d=$('#bd').value,t=$('#bt').value,tr=$('#btr').value,ty=$('#bty').value,c=clientById(st.cid);
-    var mine=PKGS.filter(function(x){return x.client===st.cid&&x.status==='Active'&&x.total-x.used>0&&(x.kind===ty||(ty==='1:3'&&/trial/i.test(x.type)))}).sort(function(a,b){return (a.start||'')<(b.start||'')?-1:1}),p=mine[0];
+    var p=bookPkg(st.cid,ty,d);
     if(tr==='Joe'&&joeLoad(d,t)>=3){toast('Joe is full at that hour');return}
     var single={Osteo:'Osteo - Single Session ($150)',Physio:'Physio - Single Session ($50)'}[ty];
     if(!p&&single){var bb=this;if(bb.dataset.sure!=='1'){bb.dataset.sure='1';bb.textContent='Sell 1 '+ty+' session and book';toast('No '+ty+' session left: tap again to sell one and book');return}
       closeSheet();save('app_sell',{cid:c.id,type:single,months:1,discount:0,paid:0,start:d}).then(function(j){return save('app_book',{cid:c.id,pkg:j.id,name:c.name,date:d,time:t,trainer:{Osteo:'Jad',Physio:'Majd'}[ty],type:ty},first(c.name)+' booked with '+({Osteo:'Jad',Physio:'Majd'}[ty])+' on '+dayLabel(d)+' at '+hl(t),true)});return}
-    if(!p){toast('No active '+ty+' package for '+first(c.name)+': sell one first');return}if(!d||!t){toast('Pick a day and time');return}
+    if(!p){var all=PKGS.filter(function(x){return x.client===st.cid&&!/cancel/i.test(x.status)});toast(all.length?'No free '+ty+' pass for '+first(c.name)+' ('+all.map(function(x){return x.type.split(' (')[0]+': '+avail(x)+' free'}).join(', ')+'). Sell the next package.':'No package for '+first(c.name)+': sell one first');return}if(!d||!t){toast('Pick a day and time');return}
     var fixedTr={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[ty];if(fixedTr)tr=fixedTr;
     var ex=SESS.filter(function(x){return x.date===d&&x.start===t&&x.trainer===tr&&x.tab===ty&&x.status!=='Cancelled'})[0];
-    save('app_book',{cid:c.id,pkg:p.id,name:c.name,date:d,time:t,trainer:tr,type:ty},null,true);
+    var restart=p.months>=3&&p.used===0&&pend(p)===0&&p.start!==d,leftAfter=avail(p)-1,extend=!restart&&p.expiry&&p.expiry<d;
+    save('app_book',{cid:c.id,pkg:p.id,name:c.name,date:d,time:t,trainer:tr,type:ty,restart:restart?1:0},null,true);
     var msg='Hi '+first(c.name)+', you are booked on '+dayLabel(d)+' at '+hl(t)+' with '+tr+' at Wellbe. See you then!';
-    openSheet('Booked','<div class="note good" style="margin-bottom:12px">'+ICON('i-check')+'<span>'+esc(c.name)+' '+(ex?'joined the '+ty+' at ':'booked at ')+hl(t)+' on '+dayLabel(d)+'. Calendar invite goes out automatically.</span></div><div class="card" style="padding:12px 14px">'+esc(msg)+'</div>',
-      '<a class="btn wa full" href="'+wa(c.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Send on WhatsApp</a><button class="btn sec full" id="bDone">Done</button>');
+    openSheet('Booked','<div class="note good" style="margin-bottom:12px">'+ICON('i-check')+'<span>'+esc(c.name)+' '+(ex?'joined the '+ty+' at ':'booked at ')+hl(t)+' on '+dayLabel(d)+'. Calendar invite goes out automatically.</span></div>'+(restart?'<div class="note good" style="margin-bottom:12px">'+ICON('i-cal')+'<span>'+esc(p.type.split(' (')[0])+' starts on '+dayLabel(d)+' (its first session) and ends 30 days later.</span></div>':'')+
+      (extend?'<div class="note good" style="margin-bottom:12px">'+ICON('i-cal')+'<span>The package ended on '+dayLabel(p.expiry)+'. Its end date moves to '+dayLabel(d)+' so '+esc(first(c.name))+' can finish every pass.</span></div>':'')+
+      (leftAfter<=0?'<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span><b>That was '+esc(first(c.name))+'\u2019s last pass.</b> The package is finished once this session is done. Sell the next one before the next booking.</span></div>':leftAfter===1?'<div class="note warn" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Only 1 pass left after this booking.</span></div>':'')+
+      '<div class="card" style="padding:12px 14px">'+esc(msg)+'</div>',
+      '<a class="btn wa full" href="'+wa(c.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Send on WhatsApp</a>'+(leftAfter<=0&&ME.role!=='trainer'?'<button class="btn full" id="bSell" style="margin-top:8px">Sell the next package</button><a class="btn sec full" style="margin-top:8px" href="'+wa(c.phone,renewMsg(p))+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Send renewal offer</a>':'')+'<button class="btn sec full" id="bDone">Done</button>');
+    if($('#bSell'))$('#bSell').onclick=function(){ACTIONS.sell(c.id)};
     $('#bDone').onclick=function(){closeSheet();render()}};
 };
 
