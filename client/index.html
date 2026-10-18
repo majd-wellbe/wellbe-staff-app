@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Wellbe</title>
 <meta name="description" content="Your Wellbe Health Center app: sessions, packages, physio and supplements.">
-<meta name="theme-color" content="#1f6e5b">
+<meta name="theme-color" content="#0a0e0f">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="../icon-192.png">
 <link rel="apple-touch-icon" href="../icon-192.png">
@@ -350,6 +350,77 @@ textarea.inp{min-height:84px;resize:vertical}
 .physio .tag,.madero .tag{font-size:11px}
 .physio .deco,.madero .deco{width:90px;height:90px;right:-24px;bottom:-24px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ================= PREMIUM DARK (Wellbe green + crimson + gold) ================= */
+:root[data-theme="dark"]{
+  --bg:#0a0e0f; --card:#13191b; --card2:#182023; --ink:#f3f5f4; --ink-2:#c5ccca; --ink-3:#8c9794; --line:rgba(255,255,255,.08);
+  --mint:#5cc4a8; --mint-deep:#3fae8f; --mint-soft:rgba(63,174,143,.14); --mint-ink:#d8f3ea; --brand:#1f6e5b;
+  --crimson:#e04a68; --crimson-soft:rgba(224,74,104,.14); --amber:#e3b55a; --amber-soft:rgba(227,181,90,.14);
+  --gold:#d6ad55; --gold-soft:rgba(214,173,85,.14); --wa:#35c06f; --track:rgba(255,255,255,.08);
+  --pink:#d23a58; --pink-2:#e0607a; --pink-soft:rgba(210,58,88,.15); --accent:#d23a58;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px rgba(0,0,0,.35); --r:20px; color-scheme:dark}
+:root[data-theme="dark"][data-accent="mint"]{--accent:#3fae8f}:root[data-theme="dark"][data-accent="ocean"]{--accent:#3d8fd1}:root[data-theme="dark"][data-accent="sunset"]{--accent:#e2793a}:root[data-theme="dark"][data-accent="plum"]{--accent:#a865c4}
+:root[data-theme="dark"] body{background:radial-gradient(120% 60% at 100% -10%,rgba(31,110,91,.22),transparent 60%),radial-gradient(90% 50% at -10% 0%,rgba(163,38,63,.14),transparent 55%),var(--bg);background-attachment:fixed}
+:root[data-theme="dark"] .top{background:rgba(10,14,15,.72);background-image:none;border-bottom:1px solid var(--line)}
+:root[data-theme="dark"] .brand{color:#fff;letter-spacing:.32em;font-size:21px}
+:root[data-theme="dark"] .brand::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-left:6px;vertical-align:middle}
+:root[data-theme="dark"] .help{background:var(--card2);box-shadow:inset 0 0 0 1px var(--line)}
+:root[data-theme="dark"] .me{background:linear-gradient(140deg,var(--brand),#2b8f75);box-shadow:0 0 0 2px var(--gold-soft),0 0 0 3px rgba(214,173,85,.45)}
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .item,:root[data-theme="dark"] .empty,:root[data-theme="dark"] .spot,:root[data-theme="dark"] .prod,:root[data-theme="dark"] .book,:root[data-theme="dark"] .review,:root[data-theme="dark"] .pc{background:linear-gradient(180deg,var(--card2),var(--card));box-shadow:inset 0 0 0 1px var(--line),0 12px 30px rgba(0,0,0,.28)}
+:root[data-theme="dark"] .hello{margin:10px 0 18px}
+:root[data-theme="dark"] .hello h1{font-size:40px;text-transform:uppercase;letter-spacing:.01em}
+:root[data-theme="dark"] .hello p{font-size:12.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+:root[data-theme="dark"] .sec h2{font-size:21px;text-transform:uppercase;letter-spacing:.06em}
+:root[data-theme="dark"] .sec h2::before{width:4px;height:18px;background:linear-gradient(var(--accent),var(--gold))}
+:root[data-theme="dark"] .btn{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 30%,transparent)}
+:root[data-theme="dark"] .btn.sec2{background:var(--mint-soft);color:var(--mint);box-shadow:inset 0 0 0 1px rgba(63,174,143,.3)}
+:root[data-theme="dark"] .btn.ghost{background:transparent;color:var(--ink-2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+:root[data-theme="dark"] .btn.wa{background:var(--wa);box-shadow:none}
+:root[data-theme="dark"] .link{color:var(--gold)}
+:root[data-theme="dark"] .acc{background:var(--card2);box-shadow:inset 0 0 0 1px var(--line)}
+:root[data-theme="dark"] .acc[aria-pressed="true"]{background:var(--brand);color:#fff}
+:root[data-theme="dark"] .subnav button{background:var(--card2);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-2)}
+:root[data-theme="dark"] .subnav button[aria-current="page"]{background:#fff;color:#0a0e0f;box-shadow:none}
+:root[data-theme="dark"] .tabs{background:rgba(12,16,18,.86);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border-top:1px solid var(--line)}
+:root[data-theme="dark"] .tabs button{color:#7d8885}
+:root[data-theme="dark"] .tabs button[aria-current="page"]{color:#fff}
+:root[data-theme="dark"] .tabs button[aria-current="page"] .icon{color:var(--gold)}
+:root[data-theme="dark"] .tabs button[aria-current="page"]::before{background:var(--gold);width:28px}
+:root[data-theme="dark"] .datebox{background:var(--pink-soft);color:#ff8aa1}
+:root[data-theme="dark"] .fuel{background:linear-gradient(180deg,var(--card2),var(--card));color:var(--ink);border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.28)}
+:root[data-theme="dark"] .fuel b,:root[data-theme="dark"] .fuel .fp{color:var(--ink)}
+:root[data-theme="dark"] .fuel .fi{background:#f1f4f3;border-radius:12px}
+:root[data-theme="dark"] .fuel .fadd{background:#fff;color:#0a0e0f}
+:root[data-theme="dark"] .prod .img{background:linear-gradient(180deg,#f4f6f5,#e4ebe8);margin:8px;border-radius:14px}
+:root[data-theme="dark"] .review{border:1px solid rgba(214,173,85,.35)}
+:root[data-theme="dark"] .promise{box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 14px 34px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .offer{background:linear-gradient(160deg,#16211f,#0f1715);box-shadow:inset 0 0 0 1px rgba(63,174,143,.25)}
+:root[data-theme="dark"] .invite{background:linear-gradient(150deg,rgba(31,110,91,.35),var(--card));box-shadow:inset 0 0 0 1px var(--line)}
+:root[data-theme="dark"] .pick{background:transparent;color:var(--ink)}
+:root[data-theme="dark"] .note{background:var(--mint-soft);color:var(--mint-ink)}
+:root[data-theme="dark"] .toast{background:#fff;color:#0a0e0f}
+:root[data-theme="dark"] .sheet{background:#12181a;box-shadow:0 -1px 0 var(--line)}
+:root[data-theme="dark"] .prof .av{background:linear-gradient(140deg,var(--brand),#2b8f75);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--gold)}
+:root[data-theme="dark"] .soon .lockbig{background:var(--card2);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(214,173,85,.3)}
+:root[data-theme="dark"] .pstats b{color:#fff}
+/* the next session is the first thing you see */
+.nexthero{position:relative;overflow:hidden;border-radius:26px;padding:20px 20px 18px;color:#fff;margin-bottom:14px;
+  background:radial-gradient(110% 90% at 100% 0%,rgba(214,173,85,.26),transparent 55%),linear-gradient(155deg,#16503f 0%,#103a30 50%,#0b201b 100%);
+  box-shadow:inset 0 0 0 1px rgba(214,173,85,.28),0 18px 40px rgba(0,0,0,.45)}
+.nexthero .tag{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#e9c77a}
+.nexthero .tag i{width:8px;height:8px;border-radius:50%;background:#e9c77a;box-shadow:0 0 0 4px rgba(233,199,122,.18)}
+.nexthero .when{display:flex;align-items:flex-end;gap:14px;margin:12px 0 4px}
+.nexthero .when b{font:800 54px/.9 var(--display);letter-spacing:.01em}
+.nexthero .when span{font:700 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.75);padding-bottom:4px}
+.nexthero p{color:rgba(255,255,255,.8);font-size:15px}
+.nexthero .acts{margin-top:16px}.nexthero .acts .btn{background:#fff;color:#103a30;box-shadow:none}.nexthero .acts .btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.nexthero .more{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);font-size:14px;color:rgba(255,255,255,.75)}
+.nexthero .more button{color:#e9c77a;font-weight:800}
+.nexthero .ring2{position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(233,199,122,.18)}
+.nexthero.none{background:radial-gradient(110% 90% at 100% 0%,rgba(210,58,88,.3),transparent 55%),linear-gradient(155deg,#2a1219,#170c10);box-shadow:inset 0 0 0 1px rgba(224,74,104,.3),0 18px 40px rgba(0,0,0,.45)}
+.nexthero.none h3{font:800 34px/1 var(--display);text-transform:uppercase;margin:10px 0 6px}
+.nexthero.none .tag{color:#ff9ab0}.nexthero.none .tag i{background:#ff9ab0;box-shadow:0 0 0 4px rgba(255,154,176,.18)}
+.nexthero.none .acts .btn{color:#a3263f}
 </style>
 </head>
 <body>
@@ -671,15 +742,20 @@ function bindOnb(a){var st=ONB;
 
 /* ---------- views ---------- */
 var VIEWS={};
+function dayShortX(d){var r0=rel(d);return r0.length<10?r0:dOf(d).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}
+function nextHero(a,nx){var n=a.upcoming.filter(function(s){return s.at>Date.now()}).length;
+  if(!nx)return '<div class="nexthero none"><span class="ring2"></span><div class="tag"><i></i>No session booked</div><h3>Book your next session</h3><p>Pick a day and time. Romy confirms it with you.</p><div class="acts"><button class="btn block" data-act="session">'+ICON('i-plus','width:18px;height:18px')+'Book a session</button></div></div>';
+  return '<div class="nexthero"><span class="ring2"></span><div class="tag"><i></i>Next session</div><div class="when"><b class="num">'+hl(nx.start)+'</b><span>'+esc(dayShortX(nx.date))+'</span></div><p>'+tabName(nx.tab)+' with '+esc(nx.trainer)+(nx.tab==='1:3'&&nx.group>1?' · '+nx.group+' in the group':'')+'</p>'+
+   '<div class="acts"><button class="btn sm" data-resch="'+nx.id+'">'+ICON('i-swap','width:18px;height:18px')+'Reschedule</button><button class="btn sm ghost" data-cancel="'+nx.id+'">Cancel</button></div>'+
+   '<div class="more"><span>'+(n>1?n+' sessions booked':'1 session booked')+'</span><button data-act="session">+ Book another</button></div></div>'}
 VIEWS.home=function(){var a=ACC(),p=currentPkg(a),nx=a.upcoming.filter(function(s){return s.at>Date.now()})[0];
-  var h='<div class="hello"><h1>Hi <em>'+esc(a.first)+'</em></h1><p>'+dayLong(D.today)+'</p></div>';
+  var h='<div class="hello"><p>'+dayLong(D.today)+'</p><h1>Hi <em>'+esc(a.first)+'</em></h1></div>';
   var td=a.upcoming.filter(function(s){return s.date===D.today})[0];
-  if(td)h+=todayCard(td);
-  h+=promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
   if(td&&td===nx)nx=a.upcoming.filter(function(s){return s!==td&&s.at>Date.now()})[0];
-  h+='<div class="sec"><h2>'+(td?'After today':'Next session')+'</h2>'+(a.upcoming.length>1?'<button class="link" data-nav="sessions">All '+a.upcoming.length+'</button>':'')+'</div>';
-  h+=nx?'<div class="card"><div class="next"><div class="datebox"><small>'+(rel(nx.date).length<10?rel(nx.date):dOf(nx.date).toLocaleDateString('en-GB',{weekday:'short'}))+'</small><b class="num">'+dOf(nx.date).getDate()+'</b></div><div class="grow"><h3>'+hl(nx.start)+'</h3><p>'+tabName(nx.tab)+' with '+esc(nx.trainer)+'</p></div></div><div class="acts"><button class="btn sec2 sm" data-resch="'+nx.id+'">'+ICON('i-swap','width:18px;height:18px')+'Reschedule</button><button class="btn ghost sm" data-cancel="'+nx.id+'">Cancel</button></div></div>'
-     :'<div class="card row"><div class="grow"><b>'+(td?'Nothing else booked yet':'Nothing booked yet')+'</b><div class="muted" style="font-size:14px">Tell Romy when you want to train.</div></div><button class="btn sm" data-act="session">Request</button></div>';
+  // first thing on screen: today's session, or the next one, or a big book button
+  h+=td?todayCard(td):nextHero(a,nx);
+  if(td)h+=nx?'<div class="card row" style="margin-top:-2px"><div class="grow"><div class="muted" style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">After today</div><b>'+dayShortX(nx.date)+' · '+hl(nx.start)+'</b><div class="muted" style="font-size:14px">'+tabName(nx.tab)+' with '+esc(nx.trainer)+'</div></div><button class="btn sm sec2" data-act="session">Book</button></div>':'<div class="card row" style="margin-top:-2px"><div class="grow"><b>Nothing booked after today</b><div class="muted" style="font-size:14px">Lock in your next session now.</div></div><button class="btn sm" data-act="session">Book</button></div>';
+  h+='<div style="margin-top:14px">'+promiseCard(a)+'</div><div style="margin-top:14px">'+quoteCard()+'</div>';
   if(p)h+='<div class="sec"><h2>My package</h2><button class="link" data-nav="plan">Details</button></div>'+pkgCard(p,true);
   var off=offerCards(a);if(off)h+='<div style="margin-top:14px">'+off+'</div>';
   if(a.physio&&a.physio.show)h+='<div style="margin-top:14px">'+physioCard(a)+'</div>';
@@ -724,9 +800,9 @@ var RUN_IMG='https://d2ol7oe51mr4n9.cloudfront.net/user_3FXl8unlEq04htattdPxfwi7
 function runBest(){var b=+(store('cr_best')||0);return b||0}
 VIEWS.play=function(){var b=runBest();
   var h='<div class="playhero"><div class="t">WELLBE PLAY</div><div class="ppl"><img alt="" src="'+RUN_IMG+'29d62ee4-0fab-4f8b-b082-9db1d3a8ac71.webp"><img alt="" src="'+RUN_IMG+'68ddfed1-5224-4e37-acbb-962a7f39f1df.webp"><img alt="" src="'+RUN_IMG+'619911df-97ac-4ab8-8b8c-95848d115cbf.webp"></div>'+
-   '<h2>Corniche Run</h2><p>Walking lunges along Beirut’s sea. Dodge, refuel, and outrun the pacer. How far can you go?</p><button class="go" data-act="run">'+(b?'Beat my record':'Play now')+'</button></div>';
+   '<h2>Corniche Run</h2><p>Run along Beirut’s sea with your coach on your heels. Dodge, refuel, and don’t get caught. How far can you go?</p><button class="go" data-act="run">'+(b?'Beat my record':'Play now')+'</button></div>';
   h+='<div class="pstats"><div class="card"><b class="num">'+(b?b+' m':'—')+'</b><span>My best</span></div><div class="card"><b>8</b><span>Athletes to pick</span></div></div>';
-  h+='<div class="sec"><h2>How it works</h2></div><div class="card"><ul class="rules" style="margin:0;padding-left:18px"><li>Tap <b>Left</b>, <b>Right</b> in rhythm. Each tap is one lunge.</li><li>Swipe <b>up</b> to jump puddles and grab drinks. Swipe <b>down</b> to slide under bars.</li><li>3 hearts. Hitting an obstacle or getting caught by the pacer costs one.</li><li>Dumbbells come at 2 km. Heavier ones at 5 km.</li></ul></div>';
+  h+='<div class="sec"><h2>How it works</h2></div><div class="card"><ul class="rules" style="margin:0;padding-left:18px"><li>Tap <b>Left</b>, <b>Right</b> fast. The faster you tap, the faster you run.</li><li>Swipe <b>up</b> to jump puddles and grab drinks. Swipe <b>down</b> to slide under bars.</li><li>Run through water and bananas to refuel. Jump to grab drinks in the air.</li><li>3 hearts. Hitting an obstacle or getting caught by your coach costs one.</li><li>Dumbbells come at 2 km. Heavier ones at 5 km.</li></ul></div>';
   return h};
 addEventListener('message',function(e){if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play')render()}});
 // Workouts: locked until launch
