@@ -853,7 +853,7 @@ VIEWS.play=function(){var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNE
     ['linear-gradient(135deg,#2fb6a0,#1f6e5b)','<path d="M3 16h14l4-3-2-3-5 1-3-4H6z"/><path d="M3 19h18"/>','Shoes','Jump higher'],
     ['linear-gradient(135deg,#f2c46b,#d99400)','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>','Life','Every 1,000 m']
    ].map(function(p){return '<div class="pu"><div class="o" style="background:'+p[0]+'">'+SVGI(p[1])+'</div><div><b>'+p[2]+'</b><span>'+p[3]+'</span></div></div>'}).join('')+'</div>';
-  h+='<div class="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Every 30 seconds your points multiply.</p></div>';
+  h+='<div class="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Your points multiply up to x5 the longer you last.</p></div>';
   return h};
 addEventListener('message',function(e){if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play')render()}});
 // Workouts: locked until launch
