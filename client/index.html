@@ -294,6 +294,34 @@ main{max-width:640px;margin:0 auto;padding:4px 16px calc(96px + env(safe-area-in
 .chase{display:flex;gap:14px;align-items:center;margin-top:8px;border-radius:18px;padding:14px;background:var(--card);box-shadow:var(--shadow)}
 .chase .o{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;background:#2a1418;color:#ff7a93}.chase .o svg{width:22px;height:22px}
 .chase p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}.chase p b{color:var(--ink)}
+.boost{display:flex;gap:10px;align-items:center;margin-top:14px;padding:12px 14px;border-radius:16px;background:linear-gradient(120deg,rgba(242,196,107,.22),rgba(242,196,107,.06));box-shadow:inset 0 0 0 1px rgba(242,196,107,.35);font-weight:700;font-size:14px;color:#f2c46b}
+.boost.off{background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--ink-2);font-weight:600}
+.boost b{font:800 20px var(--display)}.boost svg{width:24px;height:24px;flex:none}
+.rcard{border-radius:18px;background:var(--card);box-shadow:var(--shadow);padding:6px 14px}
+.mis{display:flex;gap:12px;align-items:center;padding:11px 0}.mis+.mis{border-top:1px solid var(--line)}
+.mis .ck{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.18);color:transparent}.mis.done .ck{background:#2fb7a0;box-shadow:none;color:#fff}.mis .ck svg{width:16px;height:16px}
+.mis .t{font-weight:700;font-size:14.5px;line-height:1.3}.mis .bar{height:5px;border-radius:9px;background:rgba(255,255,255,.1);margin-top:7px;overflow:hidden}.mis .bar i{display:block;height:100%;background:#f2c46b;border-radius:9px}
+.mis .rw{font:800 15px var(--display);color:#f2c46b;white-space:nowrap}.mis.done .t{color:var(--ink-3);text-decoration:line-through}
+.tabs3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06);margin-bottom:6px}
+.tabs3 button{padding:9px 0;border-radius:10px;font:800 13px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}.tabs3 button.on{background:#a3263f;color:#fff}
+.lb{display:flex;align-items:center;gap:12px;padding:10px 4px}.lb+.lb{border-top:1px solid var(--line)}
+.lb .n{width:28px;font:800 18px var(--display);color:var(--ink-3);text-align:center}.lb.top .n{color:#f2c46b}.lb .nm{flex:1;font-weight:700}.lb .sc{font:800 18px var(--display);font-variant-numeric:tabular-nums}
+.lb.mine{background:rgba(224,69,122,.12);border-radius:12px;margin:2px -6px;padding:10px}.lb.mine .nm:after{content:" · you";color:#ff7a93;font-weight:800}
+.lbe{padding:16px 4px;color:var(--ink-3);font-size:14px}
+.prize{border-radius:18px;padding:16px;background:linear-gradient(135deg,#2a1418,#16090c);box-shadow:inset 0 0 0 1px rgba(255,122,147,.25)}
+.prize b{display:block;font:800 22px var(--display)}.prize p{margin:4px 0 0;color:var(--ink-2);font-size:13.5px}
+.prize .bar{height:8px;border-radius:9px;background:rgba(255,255,255,.1);margin:12px 0 6px;overflow:hidden}.prize .bar i{display:block;height:100%;background:linear-gradient(90deg,#f2c46b,#ff7a93);border-radius:9px}
+.prize small{color:var(--ink-3);font-weight:700}.prize .btn{margin-top:12px}
+.upg{display:flex;gap:12px;align-items:center;border-radius:18px;background:var(--card);box-shadow:var(--shadow);padding:12px}.upg+.upg{margin-top:8px}
+.upg .o{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none;color:#fff}.upg .o svg{width:22px;height:22px}
+.upg b{display:block;font:800 17px/1 var(--display);letter-spacing:.04em}.upg span{display:block;margin-top:4px;font-size:12px;color:var(--ink-3);font-weight:600}
+.upg .dots{display:flex;gap:4px;margin-top:6px}.upg .dots i{width:14px;height:5px;border-radius:3px;background:rgba(255,255,255,.14)}.upg .dots i.on{background:#f2c46b}
+.upg button{margin-left:auto;padding:9px 12px;border-radius:12px;background:rgba(242,196,107,.15);color:#f2c46b;font:800 14px var(--display);letter-spacing:.06em;white-space:nowrap}.upg button:disabled{opacity:.45}
+.bdg{display:flex;flex-wrap:wrap;gap:6px}.bdg span{padding:7px 11px;border-radius:99px;font-size:12.5px;font-weight:800;background:rgba(255,255,255,.05);color:var(--ink-3)}.bdg span.on{background:rgba(242,196,107,.16);color:#f2c46b}
+.skel2{padding:18px;text-align:center;color:var(--ink-3);font-weight:700}
+.wh{display:flex;gap:6px;align-items:center;justify-content:center;padding:14px 0 6px}.wh i{width:36px;height:42px;border-radius:11px;display:grid;place-items:center;font:800 24px var(--display);font-style:normal;background:rgba(255,255,255,.06);color:var(--ink-3)}
+.wh i.on{background:rgba(242,196,107,.18);color:#f2c46b;box-shadow:inset 0 0 0 1px rgba(242,196,107,.4)}.wh img{width:44px;height:44px;margin-left:4px;opacity:.25;filter:grayscale(1)}.wh img.on{opacity:1;filter:none}
+.whp{margin:2px 0 12px;text-align:center;font-size:13px;color:var(--ink-3);font-weight:600}
 .soon{text-align:center;padding:46px 18px 20px}.soon .lockbig{width:84px;height:84px;border-radius:50%;margin:0 auto 18px;display:grid;place-items:center;background:var(--card);box-shadow:var(--shadow);color:var(--accent)}.soon .lockbig .icon{width:36px;height:36px}
 .soon h1{font-size:32px;margin:0 0 8px}.soon p{color:var(--ink-3);font-size:16px;max-width:340px;margin:0 auto}
 .soonlist{margin-top:22px;text-align:left}.soonlist .item{opacity:.75}
@@ -836,23 +864,38 @@ function runBest(){var b=+(store('cr_best')||0);return b||0}
 var RUNNERS=[['Runner','29d62ee4-0fab-4f8b-b082-9db1d3a8ac71','39bc2f6e-1dea-469d-8415-7db209e70589'],['All rounder','e59d7954-b2eb-4b33-a08a-1e6ed7e8e8a9','4464468f-0096-4732-a9b1-726423e7db55'],['Power legs','328f010c-8bfe-4264-811e-423940c58df0','af069ca3-4bfb-4c0c-87da-f61725d5dd07'],['Steady pacer','619911df-97ac-4ab8-8b8c-95848d115cbf','c37ff8b9-7e97-4296-bef1-0ee38d0f2a8e'],['Sprinter','1a6e4965-75a6-4c50-81e0-f8bbe6594a25','5dce9a6b-0992-41b2-aca2-c1a81a370d72'],['Powerlifter','68ddfed1-5224-4e37-acbb-962a7f39f1df','9af39ad1-016a-4b06-9bc8-9bc299a94c5c'],['Balanced','4333c723-77f0-4852-84d7-40b96a19b209','6f62310a-e756-4c77-847e-74e98d0cc7bd'],['The rock','34c1619a-c138-4384-b61b-c76e49f5506c','5d571d4a-0e0d-4496-ad3e-46120aae58ea']];
 function SVGI(d,f){return '<svg viewBox="0 0 24 24" fill="'+(f?'currentColor':'none')+'" stroke="'+(f?'none':'currentColor')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'}
 var SKY='<svg class="sky" viewBox="0 0 400 180" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="skg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a31"/><stop offset="1" stop-color="#0a1013"/></linearGradient></defs><path fill="url(#skg)" d="M0 120h18v-26h10v-14h14v40h8v-58h22v58h10v-30h16v-22h8v52h12v-70h6v-10h8v10h6v70h14v-36h20v36h10v-48h24v48h8v-28h14v-34h12v62h10v-44h18v44h12v-22h20v-30h10v52h16v-40h18v40h20v-60h8v-12h6v12h8v60h22v60H0z"/><path d="M332 120c0-24 2-40 4-52m-14 8c6-6 12-8 14-8 2 0 9 2 15 8m-25-4c4-8 8-10 10-10s7 2 11 10" stroke="#1b2a31" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M0 132q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.10)" stroke-width="1.5" fill="none"/><path d="M0 148q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.07)" stroke-width="1.5" fill="none"/><path d="M0 164q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.05)" stroke-width="1.5" fill="none"/></svg>';
-VIEWS.play=function(){var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNERS[+raw])?RUNNERS[+raw]:null,score=+(store('cr_best2')||0),coins=+(store('cr_coins')||0),dist=runBest();
+var RUNST=null,RUNLD=0,RUNTAB='week';
+function runLoad(){if(RUNLD||!ACC())return;RUNLD=1;api('app_cl_run',{op:'get',cid:ACC().cid}).then(function(j){RUNST=j;RUNLD=0;if(SEC==='play')render()}).catch(function(){RUNLD=0})}
+var BADGES_ALL=[['first','First run'],['km1','1 km in one run'],['km5','5 km in one run'],['km10','10 km in one run'],['runs10','10 runs'],['runs50','50 runs'],['runs100','100 runs'],['day1','#1 of the day'],['week10','Top 10 of the week'],['week1','#1 of the week'],['all3','All time top 3'],['all1','All time #1'],['rich','10,000 coins earned'],['boost','Trained and ran the same day']];
+VIEWS.play=function(){var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNERS[+raw])?RUNNERS[+raw]:null,RS=RUNST,score=RS?RS.best:+(store('cr_best2')||0),coins=RS?RS.coins:+(store('cr_coins')||0),dist=RS?Math.max(RS.bestM,runBest()):runBest();if(!RS)runLoad();
   var h='<section class="lobby">'+SKY+'<div class="bar1"><span><img src="logo-mark.webp" alt="">WELLBE PLAY</span><i>SEASON 01</i></div>'+
-   '<div class="stage"><div class="hero"><img alt="" src="'+RUN_IMG+(mine||RUNNERS[0])[2]+'.png"></div>'+
+   '<div class="stage"><div class="hero"><img alt="" src="'+(store('cr_avimg')||RUN_IMG+(mine||RUNNERS[0])[2]+'.png')+'"></div>'+
    '<h1 class="ttl"><span>Corniche</span><span>Run</span></h1>'+
    '<p class="tag">Three lanes along Beirut’s sea. Your coach is right behind you.</p></div>'+
    '<div class="stats"><div><b>'+(score?score.toLocaleString():'0')+'</b><small>Best</small></div><div><b class="gold">'+coins.toLocaleString()+'</b><small>Coins</small></div><div><b>'+(dist?dist.toLocaleString()+' m':'0 m')+'</b><small>Farthest</small></div></div>'+
    '<button class="play" data-act="run">'+SVGI('<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>',1)+(score?'Beat your best':'Start running')+'</button>'+
-   '<button class="alt" data-act="runpick">'+(mine?esc(mine[0])+' · Change runner':'Choose your runner')+'</button></section>';
+   '<button class="alt" data-act="runpick">'+(store('cr_av')?'Edit your runner':'Build your runner')+'</button></section>';
+  if(!RS)h+='<div class="skel2">Loading your missions and leaderboard…</div>';
+  else{
+    h+=RS.boost?'<div class="boost">'+SVGI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',1)+'<div><b>Training boost on</b><br>You trained, so your coins count double today.</div></div>':'<div class="boost off">'+SVGI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>')+'<div>Train at Wellbe today and your coins count <b style="color:#f2c46b;font-size:15px">double</b>.</div></div>';
+    h+='<div class="gh"><h2>Today’s missions</h2><small>All 3: +'+RS.allBonus+'</small></div><div class="rcard">'+RS.missions.map(function(m){return '<div class="mis'+(m.done?' done':'')+'"><div class="ck">'+SVGI('<path d="M5 12l5 5 9-10"/>')+'</div><div style="flex:1"><div class="t">'+esc(m.t)+'</div><div class="bar"><i style="width:'+Math.round(m.p/m.n*100)+'%"></i></div></div><div class="rw">+'+m.r+'</div></div>'}).join('')+'</div>';
+    if(RS.word!=null){var wn=Math.min(7,RS.word);h+='<div class="gh"><h2>WELLBE hunt</h2><small>All 7 today: +'+(RS.wordBonus||1000).toLocaleString()+'</small></div><div class="rcard"><div class="wh">'+'WELLBE'.split('').map(function(c,i){return '<i class="'+(i<wn?'on':'')+'">'+c+'</i>'}).join('')+'<img src="logo-mark.webp" class="'+(wn>=7?'on':'')+'" alt="Wellbe sign"></div><p class="whp">'+(wn>=7?'Done for today. New hunt tomorrow.':'Find the letters on the Corniche, then the golden Wellbe sign. Up to 2 per run.')+'</p></div>'}
+    var L=(RS.boards||{})[RUNTAB]||[],rk=(RS.rank||{})[RUNTAB];
+    h+='<div class="gh"><h2>Leaderboard</h2><small>'+(rk?'You are #'+rk:'Not ranked yet')+'</small></div><div class="rcard"><div class="tabs3" style="margin-top:8px">'+[['day','Today'],['week','Week'],['all','All time']].map(function(t){return '<button data-act="rtab|'+t[0]+'" class="'+(RUNTAB===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('')+'</div>'+
+      (L.length?L.map(function(r){return '<div class="lb'+(r.i<=3?' top':'')+(r.me?' mine':'')+'"><div class="n">'+(r.i===1?'🥇':r.i===2?'🥈':r.i===3?'🥉':r.i)+'</div><div class="nm">'+esc(r.n)+'</div><div class="sc">'+r.s.toLocaleString()+'</div></div>'}).join(''):'<div class="lbe">No runs yet. Be the first on the board.</div>')+
+      (rk>10?'<div class="lb mine"><div class="n">'+rk+'</div><div class="nm">Your best</div><div class="sc">'+(RUNTAB==='all'?RS.best:'').toLocaleString()+'</div></div>':'')+'</div>';
+    var pct=Math.min(100,Math.round(RS.coins/RS.rewardCoins*100));
+    h+='<div class="gh"><h2>Your reward</h2></div><div class="prize"><b>$10 off your next package</b><p>Collect '+RS.rewardCoins.toLocaleString()+' coins and use them when you renew.</p><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+RS.coins.toLocaleString()+' / '+RS.rewardCoins.toLocaleString()+' coins</small>'+(RS.coins>=RS.rewardCoins?'<button class="btn block" data-act="rredeem">Claim $10 off</button>':'')+'</div>';
+    var UP=[['magnet','linear-gradient(135deg,#e0457a,#a3263f)','<path d="M6 4v8a6 6 0 0 0 12 0V4"/><path d="M6 8h4M14 8h4"/>','Magnet',function(l){return 'Lasts '+(8+2*l)+' s'}],
+      ['jet','linear-gradient(135deg,#ff9a3d,#d9531e)','<path d="M12 3c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10z"/><path d="M10 19l2 2 2-2"/><circle cx="12" cy="10" r="1.6"/>','Jetpack',function(l){return 'Flies '+(6+l)+' s'}],
+      ['shoes','linear-gradient(135deg,#2fb6a0,#1f6e5b)','<path d="M3 16h14l4-3-2-3-5 1-3-4H6z"/><path d="M3 19h18"/>','Super shoes',function(l){return 'Lasts '+(10+2*l)+' s'}]];
+    h+='<div class="gh"><h2>Upgrades</h2><small>Spend coins</small></div>'+UP.map(function(u){var l=RS.up[u[0]]||0,c=RS.upCost[l];return '<div class="upg"><div class="o" style="background:'+u[1]+'">'+SVGI(u[2])+'</div><div><b>'+u[3]+'</b><span>'+u[4](l)+'</span><div class="dots">'+[0,1,2,3,4].map(function(k){return '<i class="'+(k<l?'on':'')+'"></i>'}).join('')+'</div></div><button data-act="rbuy|'+u[0]+'"'+(c==null||RS.coins<c?' disabled':'')+'>'+(c==null?'MAX':c.toLocaleString())+'</button></div>'}).join('');
+    var mineB={};(RS.badges||[]).forEach(function(b){mineB[b.id]=1});
+    h+='<div class="gh"><h2>Badges</h2><small>'+Object.keys(mineB).length+' of '+BADGES_ALL.length+'</small></div><div class="bdg">'+BADGES_ALL.map(function(b){return '<span class="'+(mineB[b[0]]?'on':'')+'">'+(mineB[b[0]]?'★ ':'')+b[1]+'</span>'}).join('')+'</div>';
+  }
   h+='<div class="gh"><h2>Controls</h2><small>Swipe anywhere</small></div><div class="moves">'+[
     ['<path d="M15 6l-6 6 6 6"/>','Left','Lane'],['<path d="M9 6l6 6-6 6"/>','Right','Lane'],['<path d="M6 15l6-6 6 6"/>','Up','Jump'],['<path d="M6 9l6 6 6-6"/>','Down','Slide']
    ].map(function(m){return '<div class="mv"><div class="o">'+SVGI(m[0])+'</div><b>'+m[1]+'</b><span>'+m[2]+'</span></div>'}).join('')+'</div>';
-  h+='<div class="gh"><h2>Power ups</h2></div><div class="pups">'+[
-    ['linear-gradient(135deg,#e0457a,#a3263f)','<path d="M6 4v8a6 6 0 0 0 12 0V4"/><path d="M6 8h4M14 8h4"/>','Magnet','Pulls in coins'],
-    ['linear-gradient(135deg,#ff9a3d,#d9531e)','<path d="M12 3c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10z"/><path d="M10 19l2 2 2-2"/><circle cx="12" cy="10" r="1.6"/>','Jetpack','Fly over it all'],
-    ['linear-gradient(135deg,#2fb6a0,#1f6e5b)','<path d="M3 16h14l4-3-2-3-5 1-3-4H6z"/><path d="M3 19h18"/>','Shoes','Jump higher'],
-    ['linear-gradient(135deg,#f2c46b,#d99400)','<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>','Life','Every 1,000 m']
-   ].map(function(p){return '<div class="pu"><div class="o" style="background:'+p[0]+'">'+SVGI(p[1])+'</div><div><b>'+p[2]+'</b><span>'+p[3]+'</span></div></div>'}).join('')+'</div>';
   h+='<div class="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Your points multiply up to x5 the longer you last.</p></div>';
   return h};
 addEventListener('message',function(e){if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play')render()}});
@@ -967,6 +1010,12 @@ var ACT={};
 ACT.run=function(){var f=$('#gameFrame');if(!f){f=document.createElement('iframe');f.id='gameFrame';f.title='Corniche Run';f.allow='autoplay; fullscreen';document.body.appendChild(f)}
   f.src='run.html?in=app'+(arguments[0]===1?'&pick=1':'')+'&v='+Date.now();f.classList.add('on');document.documentElement.style.overflow='hidden'};
 ACT.runpick=function(){ACT.run(1)};
+ACT.rtab=function(k){RUNTAB=k;render()};
+ACT.rbuy=function(k){api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){RUNST=j;toast('Upgraded!');render()}).catch(function(e){toast(e.message)})};
+ACT.rredeem=function(){if(!confirm('Use '+RUNST.rewardCoins.toLocaleString()+' coins for $10 off your next package? Romy will apply it when you renew.'))return;api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){RUNST=j;render();success('$10 off is yours','Romy will take it off your next package when you renew.')}).catch(function(e){toast(e.message)})};
+addEventListener('message',function(e){var d=e.data;if(!d||d.wb!=='api')return;var f=$('#gameFrame'),reply=function(o){try{f&&f.contentWindow.postMessage(o,'*')}catch(x){}};
+  var body=d.body||{};if(!ACC()){reply({wb:'api-res',id:d.id,ok:false,err:'signin'});return}body.cid=ACC().cid;
+  api('app_cl_run',body).then(function(j){RUNST=j;reply({wb:'api-res',id:d.id,ok:true,res:j})}).catch(function(err){reply({wb:'api-res',id:d.id,ok:false,err:String(err&&err.message||err)})})});
 ACT.goal=function(){ONB={step:'write',text:ACC().goal?ACC().goal.promise:''};render();scrollTo(0,0)};
 ACT.out=function(){signOut(false)};
 // friend invite: pick a contact (Android) or type it (iPhone), sent to Romy who invites them
