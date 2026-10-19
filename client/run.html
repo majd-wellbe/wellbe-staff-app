@@ -582,9 +582,9 @@ function run(me,pc){var S={agi:1,stb:1},r=renderer(),TH=THREE;
   var id=Math.random();G={id:id};raf=requestAnimationFrame(frame);
   $('#count').style.display='grid';var cnt=3;var cdHtml=function(n){return '<div><small>Your coach is right behind you.<br>Swipe to dodge. Don’t get caught!</small>'+n+'</div>'};$('#count').innerHTML=cdHtml(3);
   var cd=setInterval(function(){cnt--;if(cnt>0)$('#count').innerHTML=cdHtml(cnt);else if(cnt===0)$('#count').textContent='RUN!';else{clearInterval(cd);$('#count').style.display='none';t0=performance.now();spd=4;musicStart()}},800);
-  function revCost(){return 300*(revN+1)}
-  function end(why){if(over)return;if(PROF&&revN<2&&PROF.coins-spent>=revCost()){offerRev(why);return}fin(why)}
-  function offerRev(why){over=true;musicStop();var c=revCost(),left=5;$('#rvp').textContent='You have '+(PROF.coins-spent).toLocaleString()+' coins';$('#rvy').textContent='Use '+c+' coins';$('#rvt').style.width='100%';$('#rv').className='rv on';
+  function revCost(){return revN<2?300*(revN+1):Math.max(1500,Math.ceil(coins*.5))}function revHave(){return (PROF?PROF.coins:0)-spent+(revN<2?0:coins)}
+  function end(why){if(over)return;if(PROF&&revN<3&&revHave()>=revCost()){offerRev(why);return}fin(why)}
+  function offerRev(why){over=true;musicStop();var c=revCost(),left=5;$('#rvp').textContent='You have '+revHave().toLocaleString()+' coins'+(revN<2?'':' · last chance: half this run\'s coins, min 1,500');$('#rvy').textContent='Use '+c+' coins';$('#rvt').style.width='100%';$('#rv').className='rv on';
     var tm=setInterval(function(){left--;$('#rvt').style.width=(left/5*100)+'%';if(left<=0)no()},1000);
     var no=function(){clearInterval(tm);$('#rv').className='rv';over=false;fin(why)};
     $('#rvn').onclick=no;$('#rvy').onclick=function(){clearInterval(tm);$('#rv').className='rv';spent+=c;revN++;spr=0;rec=0;sprHud();over=false;crashed=false;overT=0;invT=3;gap=Math.max(gap,5);spd=Math.max(spd,7);lives=0;showL();

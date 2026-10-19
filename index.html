@@ -220,10 +220,36 @@ button.row:hover{border-color:var(--ink-3)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 @media (min-width:700px){ .tiles{grid-template-columns:repeat(4,1fr)} .kpis{grid-template-columns:repeat(3,1fr)} .kpi.hero{grid-column:span 3} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.woh{display:flex;align-items:center;gap:10px;margin:0 0 14px}.woh h2{font-size:26px;font-weight:800;text-transform:uppercase;margin:0}.woh small{color:var(--ink-3);font-size:13px}.woh .main{flex:1;min-width:0}
+.woask{background:var(--bad-soft);border-radius:var(--r);padding:14px;margin-bottom:12px;display:grid;gap:6px}.woask b{color:var(--bad);font-size:16px}.woask span{font-size:14px;color:var(--ink-2)}.woask .two{margin-top:6px}
+.wops{display:grid;gap:2px;padding:10px 0;border-top:1px solid var(--line)}.wops:first-of-type{border-top:0;padding-top:0}.wops span{font-size:13px;color:var(--ink-3)}.wops.on b{color:var(--good)}
+.wop{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin-bottom:12px}
+.woph{display:flex;align-items:center;gap:8px;margin-bottom:4px}.won{flex:none;width:30px;height:30px;border-radius:9px;background:var(--ink);color:var(--card);display:grid;place-items:center;font-weight:800;font-size:14px}.won.w{background:var(--mint-soft);color:var(--mint-deep);width:38px}
+.wop input,.wop select{min-height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);padding:0 10px;width:100%;font-size:15px}
+.woph input.pn,.wowb>input.pn{flex:1;font-weight:700}
+.wof{display:flex;gap:6px;align-items:center;margin-top:6px}.wof .s{flex:0 0 62px}.wof .r{flex:0 0 86px}.wof .d{flex:1;min-width:0}.wof select{flex:0 0 104px}.wodt{font-size:13px;color:var(--ink-3)}
+input.wonote{margin-top:6px}
+.woctl{display:flex;gap:4px;flex:none}.woctl button,.wox{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);font-weight:800;color:var(--ink-2);flex:none}
+.wox{margin-top:4px}
+.wow{border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden}.wowh{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;text-align:left;background:var(--bg)}.wowh b{flex:1;min-width:0}.wowh small{color:var(--ink-3);white-space:nowrap}.chev{color:var(--ink-3)}
+.wowb{padding:10px 12px}.wowb>input.pn{margin-bottom:4px}
+.wosec{margin-top:14px}.wosech b{font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+.womv{display:flex;gap:6px;align-items:flex-start;margin-top:8px}.worow{flex:1;min-width:0}
+.woex{width:100%;min-height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);text-align:left;padding:0 12px;font-weight:700}.woex.empty{color:var(--crimson);border-style:dashed}
+.wolet{flex:none;width:20px;height:42px;display:grid;place-items:center;font-weight:800;color:var(--crimson)}
+.woblk{border-left:3px solid var(--mint);padding:4px 0 6px 10px;margin-top:10px}.woblkh{display:flex;justify-content:space-between;align-items:center;gap:6px}.woblkh .seg{gap:4px}.woblkh .seg button{min-height:34px;padding:0 9px;font-size:13px}
+.woadd{margin-top:8px;min-height:38px;padding:0 12px;border-radius:10px;border:1.5px dashed var(--line);color:var(--ink-2);font-weight:700;font-size:14px;background:transparent}.woadd.big{width:100%;margin-top:12px;min-height:46px}
+.wowa{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}.wowa .btn{min-height:40px;font-size:14px;padding:0 12px}
+.wosave{position:sticky;bottom:calc(var(--tabh) + 10px);margin-top:16px;z-index:5}.wosave .btn{box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.wogrp{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px}
+.wol{margin:6px 0 14px;padding-left:18px}.wol li{margin:6px 0}.wolast{display:block;color:var(--good);font-weight:700;font-size:12.5px}.wolb{margin-bottom:6px}.wolt{font-size:13px;color:var(--crimson);text-transform:uppercase}
+.wolog{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;display:grid;gap:6px}.wolog small{color:var(--ink-3)}
+.woset{display:grid;grid-template-columns:22px 1fr 1fr;gap:6px;align-items:center}.woset span{font-weight:800;color:var(--ink-3)}.woset input{min-height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);padding:0 10px;width:100%}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-dumb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></symbol>
  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
  <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
  <symbol id="i-cash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/></symbol>
@@ -357,7 +383,7 @@ var ME=null, VIEW='home', DAY=T, UI={week:'next', q:'', month:0};
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 var NAV={
  assistant:[['home','Today','i-home'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['money','Money','i-cash'],['more','More','i-more']],
- trainer:[['home','Today','i-home'],['week','My week','i-cal'],['myclients','Clients','i-users'],['me','Me','i-user']],
+ trainer:[['home','Today','i-home'],['week','My week','i-cal'],['myclients','Clients','i-users'],['wo','Workouts','i-dumb'],['me','Me','i-user']],
  owner:[['mine','My day','i-user'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['numbers','Numbers','i-chart'],['more','More','i-more']]};
 function badgeFor(v){ if(v==='home'&&ME.role!=='trainer'){var n=overdue().length;return n?n:''} return '' }
 
@@ -372,7 +398,7 @@ function render(){
   $('#refreshBtn').onclick=function(){HIST=null;if(SESS)SESS=SESS.filter(function(x){return x.date>=ymd(addDays(TODAY,-70))});boot(true);toast('Refreshing')};paintBusy();
   if($('#fab')) $('#fab').onclick=ACTIONS.newMenu;
   $$('[data-nav]').forEach(function(b){b.onclick=function(){closeSheet();VIEW=b.dataset.nav;render();scrollTo(0,0)}});
-  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='numbers')bindNumbers();
+  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='numbers')bindNumbers();if(VIEW==='wo')woBind();
 }
 function loginView(){
   return '<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div><h1>Wellbe Team</h1><p>Open the private link Majd sent you on WhatsApp. It signs you in on this phone, once.</p>'+
@@ -463,7 +489,7 @@ VIEWS.money=function(){
 };
 function payRow(x){var p=x.p;return '<button class="row" data-paycl="'+p.id+'"><div class="main"><b>'+esc(p.name)+'</b><span>'+esc(p.type)+' · session '+p.used+' of '+p.total+'</span></div><span class="pill '+(x.late?'p-bad':'p-warn')+' num">'+money(x.due)+'</span></button>'}
 VIEWS.more=function(){
-  var items=[['leads','Trial leads','Landing page bookings'],['book','Book a session','One-off or new client'],['pos','Product sale','POS'],['expense','Expense','One-time or recurring'],['recurring','Recurring expenses','Rent, bills, subscriptions'],['inventory','Inventory','Stock left']];
+  var items=[['wo','Workouts','Client programs and weights'],['leads','Trial leads','Landing page bookings'],['book','Book a session','One-off or new client'],['pos','Product sale','POS'],['expense','Expense','One-time or recurring'],['recurring','Recurring expenses','Rent, bills, subscriptions'],['inventory','Inventory','Stock left']];
   if(ME.role==='owner'){items.unshift(['payroll','Payroll','Trainer pay this month']);items.unshift(['intake','New physio intake','Assessment, red flags, files']);items.unshift(['desk','Front desk','Romy\'s To do list and today'])}
   return '<div class="h"><h2>More</h2></div><div class="list">'+items.map(function(i){return '<button class="row" data-act="'+i[0]+'"><div class="main"><b>'+i[1]+'</b><span>'+i[2]+'</span></div></button>'}).join('')+'</div>'+
    '<div class="h"><h2>Display</h2></div><div class="seg" role="group" aria-label="Theme">'+['System','Light','Dark'].map(function(t){var cur=(document.documentElement.getAttribute('data-theme')||'system');return '<button data-theme-set="'+t.toLowerCase()+'" aria-pressed="'+(cur===t.toLowerCase())+'">'+t+'</button>'}).join('')+'</div>';
@@ -687,9 +713,10 @@ function clientSheet(id){
    (ME.role!=='trainer'?staffClientTools(c):'')+
    (c.goal?'<div class="notebox" style="border-left:4px solid var(--crimson)"><b>Their promise</b>\u201C'+esc(c.goal.promise)+'\u201D'+(c.goal.keys&&c.goal.keys.length?'<br><span class="muted" style="font-size:13px">'+c.goal.keys.map(esc).join(' · ')+'</span>':'')+'</div>':'')+
    (c.notes?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+(c.program?'<div class="notebox"><b>Training program</b>'+esc(c.program)+'</div>':'')+(c.log.length?'<div class="notebox"><b>Session notes</b>'+c.log.slice(0,4).map(function(l){return dayLabel(l.d)+' · '+esc(l.by)+': '+esc(l.t)}).join('<br>')+'</div>':'')+
-   (ME.role==='owner'?ownerClientExtras(c):'')+'<span class="flabel">Recent sessions</span><div class="list" style="margin-top:8px">'+hist.map(function(s){var me=s.clients.filter(function(x){return x.cid===id})[0];return '<div class="row" style="min-height:50px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?'p-bad':'p-mute')+'">'+(me.att||'Scheduled')+'</span></div>'}).join('')+'</div>',
+   (ME.role==='owner'?ownerClientExtras(c):'')+'<button class="btn sec full" id="woOpen" style="margin-bottom:14px">'+ICON('i-dumb')+'Workout program</button><span class="flabel">Recent sessions</span><div class="list" style="margin-top:8px">'+hist.map(function(s){var me=s.clients.filter(function(x){return x.cid===id})[0];return '<div class="row" style="min-height:50px"><div class="main"><b>'+dayLabel(s.date)+' · '+hl(s.start)+'</b><span>'+s.tab+' · '+esc(s.trainer)+'</span></div><span class="pill '+(me.att==='Present'?'p-good':me.att?'p-bad':'p-mute')+'">'+(me.att||'Scheduled')+'</span></div>'}).join('')+'</div>',
    ME.role==='trainer'?'<button class="btn ok full" id="editNotes">'+ICON('i-edit')+'Edit notes and program</button>':'<div class="two"><a class="btn wa" href="'+wa(c.phone,'Hi '+first(c.name)+', ')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'WhatsApp</a><button class="btn sec" id="sellTo">Sell package</button></div>');
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
+  if($('#woOpen'))$('#woOpen').onclick=function(){closeSheet();woOpenClient(id)};
   if(ME.role==='owner')bindOwnerExtras(c);
   if(ME.role!=='trainer')bindStaffClientTools(c);
   if($('#editCl'))$('#editCl').onclick=function(){
@@ -1113,8 +1140,182 @@ var hk=/[#&]k=([a-f0-9]{16,64})/i.exec(location.hash);if(hk){KEY=hk[1];store('wb
 if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
 render();if(KEY)boot(LOADED);
 // fresh data when the app comes back to the front, and every 3 minutes while open
-document.addEventListener('visibilitychange',function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on'))boot(true)});
-setInterval(function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on'))boot(true)},180000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on')&&!(VIEW==='wo'&&WOV==='edit'))boot(true)});
+setInterval(function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on')&&!(VIEW==='wo'&&WOV==='edit'))boot(true)},180000);
+/* ---------------- workouts: programs per client ---------------- */
+var WOL=null,WOLD=0,WOC=null,WOE=null,WOV='list',WOQ='',WOLIB=null,WOOPEN={},WODIRTY=false;
+var WO_SEC={warm:'Warm up',main:'Workout',abs:'Abs',stretch:'Stretching'};
+var WO_TYPES=[['single','1 move'],['superset','Superset'],['circuit','Circuit']];
+function woClone(o){return JSON.parse(JSON.stringify(o))}
+function woGet(o,path){if(!path)return o;return path.split('.').reduce(function(a,k){return a==null?a:a[k]},o)}
+function woSet(o,path,v){var ks=path.split('.'),last=ks.pop(),t=woGet(o,ks.join('.'));if(t!=null)t[last]=v}
+function woAddLen(ymd0,n,u){var d=new Date(ymd0+'T12:00:00Z');if(u==='m')d.setUTCMonth(d.getUTCMonth()+n);else d.setUTCDate(d.getUTCDate()+n*(u==='w'?7:1));return d.toISOString().slice(0,10)}
+function woShift(ymd0,n){var d=new Date(ymd0+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+function woDates(p){var s=p.start,out=[];(p.phases||[]).forEach(function(ph){var e=woAddLen(s,Math.max(1,+ph.len||1),ph.unit);out.push({start:s,end:woShift(e,-1)});s=e});return out}
+function woNewMove(sec){return sec==='warm'?{ex:'',reps:'',det:''}:sec==='stretch'?{ex:'',det:''}:{ex:'',sets:'3',reps:'10',det:''}}
+function woNewW(n){return {name:'Workout '+n,warm:[woNewMove('warm')],main:[{type:'single',rounds:'',rest:'',moves:[woNewMove('main')]}],abs:[],stretch:[]}}
+function woNewPhase(n){return {name:'Phase '+n,len:2,unit:'w',note:'',workouts:[woNewW(1)]}}
+function woUnit(u,n){return (u==='d'?'day':u==='m'?'month':'week')+(+n===1?'':'s')}
+function woLoad(force){if(WOLD)return;if(force)WOL=null;WOLD=1;api('app_wo_list').then(function(j){WOL=j;WOLIB=j.lib;WOLD=0;if(VIEW==='wo')render()}).catch(function(e){WOLD=0;WOL={err:e.message};if(VIEW==='wo')render()})}
+function woOpenClient(cid){VIEW='wo';WOV='client';WOC={cid:cid,loading:1,name:(clientById(cid)||{}).name||cid};render();scrollTo(0,0);
+  api('app_wo_get',{cid:cid}).then(function(j){WOC=j;if(VIEW==='wo'&&WOV==='client')render()}).catch(function(e){WOC={cid:cid,name:WOC.name,err:e.message};render()});
+  if(!WOLIB)woLoad()}
+
+VIEWS.wo=function(){
+  if(WOV==='edit'&&WOE)return woEditView();
+  if(WOV==='client'&&WOC)return woClientView();
+  if(!WOL){woLoad();return '<div class="h"><h2>Workouts</h2></div><div class="empty">Loading your clients…</div>'}
+  if(WOL.err)return '<div class="h"><h2>Workouts</h2></div><div class="note bad">'+ICON('i-alert')+'<span>'+esc(WOL.err)+'</span></div><button class="btn sec full" style="margin-top:12px" data-wob="reload">Try again</button>';
+  var L=WOL.clients,asks=L.filter(function(c){return c.asks}),none=L.filter(function(c){return !c.has}).length;
+  var row=function(c){var sub=c.has?(c.ended?'Program ended':(c.phase||'Not started'))+(c.next?' · next '+dayLabel(c.next.date)+' '+hl(c.next.start).replace(':00','')+': '+c.next.name:''):'No program yet: '+esc(first(c.name))+' sees nothing';
+    return '<button class="row" data-woc="'+c.cid+'" data-name="'+esc(c.name.toLowerCase())+'"><div class="main"><b>'+esc(c.name)+'</b><span>'+esc(sub)+(c.trainers&&c.trainers.length>1?' · with '+c.trainers.map(esc).join(', '):'')+'</span></div><span class="pill '+(c.asks?'p-bad':!c.has?'p-warn':c.ended?'p-mute':'p-good')+'">'+(c.asks?'Answer':!c.has?'Build':c.ended?'Ended':'Active')+'</span></button>'};
+  return '<div class="h"><h2>Workouts</h2><small>'+L.length+' clients'+(none?' · '+none+' without a program':'')+'</small></div>'+
+    (asks.length?'<span class="flabel">Needs your answer</span><div class="list" style="margin:8px 0 18px">'+asks.map(row).join('')+'</div>':'')+
+    '<div class="searchwrap" style="margin-bottom:10px">'+ICON('i-search')+'<input class="search" id="woQ" placeholder="Search a client" value="'+esc(WOQ)+'"></div>'+
+    '<div class="list" id="woList">'+(L.length?L.filter(function(c){return !c.asks}).map(row).join(''):'<div class="empty">No clients yet. Clients you trained in the last 60 days, or have booked, show here.</div>')+'</div>';
+};
+
+function woClientView(){
+  var c=WOC,head='<div class="woh"><button class="iconbtn" data-wob="back" aria-label="Back">'+ICON('i-x')+'</button><div class="main"><h2>'+esc(c.name||c.cid)+'</h2><small>Workout program</small></div></div>';
+  if(c.loading)return head+'<div class="empty">Loading…</div>';
+  if(c.err)return head+'<div class="note bad">'+ICON('i-alert')+'<span>'+esc(c.err)+'</span></div>';
+  var body=c.body||{},bm=c.bmr,h=head;
+  if(!c.prog){
+    h+='<div class="empty" style="margin-bottom:12px">No program yet. '+esc(first(c.name))+' sees no workout in the app until one is built.</div><button class="btn full" data-wob="new">'+ICON('i-plus')+'Build a program</button><button class="btn sec full" style="margin-top:8px" data-wob="copy">'+ICON('i-repeat')+'Copy from another client</button>';
+  } else {
+    (c.asks||[]).forEach(function(a){h+='<div class="woask"><b>'+esc(first(c.name))+' missed '+esc(a.missed.name)+'</b><span>on '+dayLabel(a.missed.date)+'. Next session, '+dayLabel(a.date)+' at '+hl(a.start)+', is planned as '+esc(a.now.name)+'.</span><div class="two"><button class="btn sec" data-wodec="'+esc(a.sid)+'|catch|'+esc(a.missed.name)+'">Do '+esc(a.missed.name)+'</button><button class="btn" data-wodec="'+esc(a.sid)+'|keep|'+esc(a.missed.name)+'">Keep the plan</button></div></div>'});
+    var up=(c.items||[]).filter(function(x){return x.date>=T}).slice(0,8),past=(c.items||[]).filter(function(x){return x.date<T}).reverse().slice(0,10);
+    var it=function(x){var k=c.items.indexOf(x);return '<button class="row" data-woi="'+k+'" style="min-height:54px"><div class="main"><b>'+dayLabel(x.date)+' · '+hl(x.start)+'</b><span>W'+(x.w+1)+' '+esc(x.name)+(x.catchUp?' (catch up)':'')+' · '+esc(x.trainer)+'</span></div><span class="pill '+(x.state==='missed'?'p-bad':x.state==='done'?'p-good':x.state==='today'?'p-warn':'p-mute')+'">'+({missed:'Missed',done:'Done',today:'Today',planned:'Planned'}[x.state])+'</span></button>'};
+    h+='<div class="h"><h2>Next</h2><small>Follows the booked sessions</small></div><div class="list">'+(up.length?up.map(it).join(''):'<div class="empty">No training session booked.</div>')+'</div>';
+    var dd=woDates(c.prog);
+    h+='<div class="h"><h2>Program</h2><small>'+(c.by?'by '+esc(c.by)+' · '+esc(c.updated):'')+'</small></div><div class="card" style="padding:14px">'+(c.prog.goal?'<p style="margin:0 0 10px;font-weight:600">'+esc(c.prog.goal)+'</p>':'')+
+      c.prog.phases.map(function(p,i){var on=T>=dd[i].start&&T<=dd[i].end;return '<div class="wops'+(on?' on':'')+'"><b>'+esc(p.name)+(on?' <span class="pill p-good">Now</span>':'')+'</b><span>'+dayLabel(dd[i].start)+' to '+dayLabel(dd[i].end)+' · '+p.len+' '+woUnit(p.unit,p.len)+'</span><span>'+p.workouts.map(function(w,j){return 'W'+(j+1)+' '+esc(w.name)}).join(' · ')+'</span></div>'}).join('')+
+      '</div><div class="two" style="margin-top:10px"><button class="btn" data-wob="edit">'+ICON('i-edit')+'Edit program</button><button class="btn sec" data-wob="copy">'+ICON('i-repeat')+'Replace by copy</button></div>';
+    if(past.length)h+='<div class="h"><h2>Done lately</h2><small>Tap to log or fix weights</small></div><div class="list">'+past.map(it).join('')+'</div>';
+  }
+  var ex=Object.keys(c.logs||{});
+  if(ex.length)h+='<div class="h"><h2>Progress</h2><small>Heaviest set per session</small></div><div class="list">'+ex.slice(0,30).map(function(k){var l=c.logs[k],tops=l.history.slice(0,6).reverse().map(function(x){return x.top});return '<div class="row" style="min-height:54px"><div class="main"><b>'+esc(k)+'</b><span>Last: '+esc(l.last)+' · '+dayLabel(l.date)+'</span></div><span class="num" style="font-weight:800;white-space:nowrap">'+tops.join(' → ')+' kg</span></div>'}).join('')+'</div>';
+  h+='<div class="h"><h2>Body</h2><small>Entered by the client</small></div><div class="card kv" style="padding:14px"><dt>Weight</dt><dd>'+(body.weight?body.weight+' kg':'Not entered')+'</dd><dt>Height</dt><dd>'+(body.height?body.height+' cm':'Not entered')+'</dd>'+(bm?'<dt>BMR</dt><dd class="num">'+bm.bmr+' kcal</dd><dt>Daily estimate</dt><dd class="num">'+bm.daily+' kcal ('+bm.perWeek+' sessions a week)</dd>':'<dt>BMR</dt><dd>Needs weight, height, birth year and sex</dd>')+'</div>';
+  if(c.prog)h+='<button class="btn sec full" style="margin-top:22px;color:var(--bad)" data-wob="delprog">Delete this program</button>';
+  return h;
+}
+
+function woEditView(){
+  var p=WOE,dd=woDates(p),inp=function(path,val,ph,cls,type){return '<input class="'+(cls||'')+'" data-f="'+path+'" value="'+esc(val==null?'':val)+'" placeholder="'+esc(ph||'')+'"'+(type?' type="'+type+'"':'')+'>'};
+  var mv=function(path,m,sec){return '<div class="worow"><button class="woex'+(m.ex?'':' empty')+'" data-wox="'+path+'">'+(m.ex?esc(m.ex):'Pick exercise')+'</button>'+
+      '<div class="wof">'+(sec==='stretch'?'':(sec==='warm'?'':inp(path+'.sets',m.sets,'Sets','s'))+inp(path+'.reps',m.reps,sec==='warm'?'Reps / time':'Reps','r'))+inp(path+'.det',m.det,'Details','d')+'</div></div>'};
+  var ctl=function(path,k,n){return '<span class="woctl">'+(k>0?'<button data-wob="up|'+path+'|'+k+'" aria-label="Move up">↑</button>':'')+(k<n-1?'<button data-wob="down|'+path+'|'+k+'" aria-label="Move down">↓</button>':'')+'<button data-wob="del|'+path+'|'+k+'" aria-label="Remove">✕</button></span>'};
+  var sec=function(base,w,s){var arr=w[s]||[],path=base+'.'+s,h='<div class="wosec"><div class="wosech"><b>'+WO_SEC[s]+'</b></div>';
+    if(s==='main')h+=arr.map(function(b,k){var bp=path+'.'+k,max=b.type==='single'?1:b.type==='superset'?3:10;
+      return '<div class="woblk"><div class="woblkh"><div class="seg">'+WO_TYPES.map(function(t){return '<button data-wob="type|'+bp+'|'+t[0]+'" aria-pressed="'+(b.type===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>'+ctl(path,k,arr.length)+'</div>'+
+        (b.type==='circuit'?'<div class="wof" style="margin-bottom:8px">'+inp(bp+'.rounds',b.rounds,'Rounds','s')+inp(bp+'.rest',b.rest,'Rest between rounds','d')+'</div>':'')+
+        b.moves.map(function(m,q){return '<div class="womv">'+(b.type!=='single'?'<span class="wolet">'+String.fromCharCode(65+q)+'</span>':'')+mv(bp+'.moves.'+q,m,'main')+(b.moves.length>(b.type==='single'?1:2)?'<button class="wox" data-wob="del|'+bp+'.moves|'+q+'" aria-label="Remove move">✕</button>':'')+'</div>'}).join('')+
+        (b.moves.length<max&&b.type!=='single'?'<button class="woadd" data-wob="add|'+bp+'.moves|main">+ Move</button>':'')+'</div>'}).join('')+'<button class="woadd" data-wob="add|'+path+'|block">+ Block</button>';
+    else h+=arr.map(function(m,k){return '<div class="womv">'+mv(path+'.'+k,m,s)+'<button class="wox" data-wob="del|'+path+'|'+k+'" aria-label="Remove">✕</button></div>'}).join('')+'<button class="woadd" data-wob="add|'+path+'|'+s+'">+ '+(s==='stretch'?'Stretch':'Exercise')+'</button>';
+    return h+'</div>'};
+  var h='<div class="woh"><button class="iconbtn" data-wob="cancel" aria-label="Close">'+ICON('i-x')+'</button><div class="main"><h2>'+esc(first(WOC.name||''))+'’s program</h2><small>Only '+esc(first(WOC.name||''))+' sees it, one workout at a time</small></div></div>'+
+    '<div class="field"><label>Starts on</label>'+inp('start',p.start,'','', 'date')+'</div><div class="field"><label>Goal of the program</label>'+inp('goal',p.goal,'e.g. Lose 6 kg and squat without knee pain')+'</div>';
+  p.phases.forEach(function(ph,i){var pp='phases.'+i;
+    h+='<div class="wop"><div class="woph"><span class="won">'+(i+1)+'</span>'+inp(pp+'.name',ph.name,'Phase name','pn')+ctl('phases',i,p.phases.length)+'</div>'+
+      '<div class="wof"><input class="s" type="number" min="1" data-f="'+pp+'.len" value="'+esc(ph.len)+'" aria-label="Length"><select data-f="'+pp+'.unit">'+[['d','Days'],['w','Weeks'],['m','Months']].map(function(u){return '<option value="'+u[0]+'"'+(ph.unit===u[0]?' selected':'')+'>'+u[1]+'</option>'}).join('')+'</select><span class="wodt" data-pdates="'+i+'">'+dayLabel(dd[i].start)+' to '+dayLabel(dd[i].end)+'</span></div>'+
+      inp(pp+'.note',ph.note,'Phase note (optional): e.g. 3 times a week, slow tempo','wonote');
+    ph.workouts.forEach(function(w,j){var wp=pp+'.workouts.'+j,open=WOOPEN[i+'|'+j],n=(w.main||[]).reduce(function(a,b){return a+b.moves.length},0);
+      h+='<div class="wow'+(open?' open':'')+'"><button class="wowh" data-wob="tog|'+i+'|'+j+'"><span class="won w">W'+(j+1)+'</span><b>'+esc(w.name||'Workout')+'</b><small>'+n+' moves</small><span class="chev">'+(open?'▴':'▾')+'</span></button>';
+      if(open)h+='<div class="wowb">'+inp(wp+'.name',w.name,'Workout name, e.g. Anterior chain','pn')+['warm','main','abs','stretch'].map(function(s){return sec(wp,w,s)}).join('')+
+        '<div class="wowa"><button class="btn sec" data-wob="dupW|'+i+'|'+j+'">Duplicate</button>'+(j>0?'<button class="btn sec" data-wob="up|'+pp+'.workouts|'+j+'">Move up</button>':'')+'<button class="btn sec" style="color:var(--bad)" data-wob="del|'+pp+'.workouts|'+j+'">Delete</button></div></div>';
+      h+='</div>'});
+    h+='<button class="woadd big" data-wob="addW|'+i+'">+ Workout in '+esc(ph.name||'this phase')+'</button></div>'});
+  h+='<button class="btn sec full" data-wob="addPhase" style="margin-top:6px">'+ICON('i-plus')+'Add a phase</button><div class="wosave"><button class="btn full" data-wob="save">Save program</button></div>';
+  return h;
+}
+
+function woWorkoutHtml(w,logs){
+  if(!w)return '<div class="empty">Workout not found.</div>';
+  var L=function(ex){var l=(logs||{})[ex];return l?'<small class="wolast">Last: '+esc(l.last)+'</small>':''};
+  var li=function(m,sets){return '<li><b>'+esc(m.ex)+'</b>'+(sets&&m.sets?' '+esc(m.sets)+' x ':' ')+esc(m.reps||'')+(m.det?'<br><span class="muted">'+esc(m.det)+'</span>':'')+L(m.ex)+'</li>'};
+  var h='';
+  if(w.warm&&w.warm.length)h+='<span class="flabel">Warm up</span><ul class="wol">'+w.warm.map(function(m){return li(m)}).join('')+'</ul>';
+  if(w.main&&w.main.length)h+='<span class="flabel">Workout</span>'+w.main.map(function(b){return '<div class="wolb">'+(b.type!=='single'?'<b class="wolt">'+(b.type==='superset'?'Superset':'Circuit'+(b.rounds?' · '+esc(b.rounds)+' rounds':''))+(b.rest?' · rest '+esc(b.rest):'')+'</b>':'')+'<ul class="wol">'+b.moves.map(function(m){return li(m,1)}).join('')+'</ul></div>'}).join('');
+  if(w.abs&&w.abs.length)h+='<span class="flabel">Abs</span><ul class="wol">'+w.abs.map(function(m){return li(m,1)}).join('')+'</ul>';
+  if(w.stretch&&w.stretch.length)h+='<span class="flabel">Stretching</span><ul class="wol">'+w.stretch.map(function(m){return li(m)}).join('')+'</ul>';
+  return h;
+}
+// one session: the workout, and the trainer logs or fixes the weights
+function woItemSheet(k){
+  var c=WOC,x=c.items[k],ph=c.prog.phases[x.phase],w=ph&&ph.workouts[x.w];if(!w){toast('This workout was removed from the program');return}
+  var exs=[];(w.main||[]).forEach(function(b){b.moves.forEach(function(m){exs.push(m)})});(w.abs||[]).forEach(function(m){exs.push(m)});var canLog=x.date<=T&&x.state!=='missed'&&exs.length>0;
+  var body='<p class="muted" style="margin:0 0 12px">'+dayLabel(x.date)+' · '+hl(x.start)+' · '+esc(x.trainer)+(x.catchUp?' · catch up':'')+'</p>';
+  if(!canLog)body+=woWorkoutHtml(w,c.logs);
+  else body+='<div class="note good" style="margin-bottom:12px">'+ICON('i-check')+'<span>Type the weight and reps of each set. Empty sets are skipped.</span></div>'+exs.map(function(m,q){var last=((c.logs||{})[m.ex]||{}).last||'',n=Math.max(1,parseInt(m.sets,10)||3),pre=last?last.split(',').map(function(s){var a=s.trim().split('x');return {kg:a[0],reps:a[1]}}):[];
+      var rows='';for(var i=0;i<Math.max(n,pre.length);i++)rows+='<div class="woset"><span>'+(i+1)+'</span><input inputmode="decimal" placeholder="kg" data-lk="'+q+'"><input inputmode="numeric" placeholder="reps" data-lr="'+q+'"></div>';
+      return '<div class="wolog" data-q="'+q+'"><b>'+esc(m.ex)+'</b><small>'+esc((m.sets||'')+' x '+(m.reps||''))+(last?' · last: '+esc(last):'')+'</small>'+rows+'<div class="two"><button class="btn sec" data-same="'+q+'"'+(last?'':' disabled')+'>Same as last time</button><button class="btn sec" data-addset="'+q+'">+ Set</button></div></div>'}).join('');
+  openSheet('W'+(x.w+1)+' '+x.name,body,canLog?'<button class="btn full" id="woLogSave">Save weights</button>':'');
+  if(!canLog)return;
+  $$('[data-same]').forEach(function(b){b.onclick=function(){var q=b.dataset.same,last=((c.logs||{})[exs[q].ex]||{}).last||'',sets=last.split(','),ks=$$('[data-lk="'+q+'"]'),rs=$$('[data-lr="'+q+'"]');sets.forEach(function(s,i){var a=s.trim().split('x');if(ks[i]){ks[i].value=a[0];rs[i].value=a[1]}})}});
+  $$('[data-addset]').forEach(function(b){b.onclick=function(){var q=b.dataset.addset,box=$('.wolog[data-q="'+q+'"]'),n=$$('.woset',box).length,d=document.createElement('div');d.className='woset';d.innerHTML='<span>'+(n+1)+'</span><input inputmode="decimal" placeholder="kg" data-lk="'+q+'"><input inputmode="numeric" placeholder="reps" data-lr="'+q+'">';b.parentNode.parentNode.insertBefore(d,b.parentNode)}});
+  $('#woLogSave').onclick=function(){var entries=exs.map(function(m,q){var ks=$$('[data-lk="'+q+'"]'),rs=$$('[data-lr="'+q+'"]'),sets=[];ks.forEach(function(k2,i){var kg=parseFloat(k2.value),r=parseInt(rs[i].value,10);if(kg>=0&&r>0)sets.push({kg:kg,reps:r})});return {ex:m.ex,sets:sets}}).filter(function(e){return e.sets.length});
+    if(!entries.length){toast('Type at least one set');return}
+    var btn=this;btn.disabled=true;btn.textContent='Saving…';
+    api('app_wo_log',{cid:c.cid,name:c.name,sid:x.sid,date:x.date,wname:x.name,entries:entries}).then(function(j){c.logs=j.logs;closeSheet();toast(entries.length===1?'1 exercise saved':entries.length+' exercises saved');render()}).catch(function(e){btn.disabled=false;btn.textContent='Save weights';toast('Not saved: '+e.message)})};
+}
+// exercise picker from the library, with search and "add a new exercise"
+function woPick(path){
+  var lib=WOLIB||{},groups=Object.keys(lib),g0=groups[0],q='';
+  var paint=function(){var ql=q.toLowerCase(),hits=[];groups.forEach(function(g){lib[g].forEach(function(e){if(ql?e.toLowerCase().indexOf(ql)>-1:g===g0)hits.push([g,e])})});
+    $('#woPickList').innerHTML=hits.slice(0,80).map(function(h){return '<button class="row" style="min-height:48px" data-pk="'+esc(h[1])+'"><div class="main"><b>'+esc(h[1])+'</b>'+(ql?'<span>'+esc(h[0])+'</span>':'')+'</div></button>'}).join('')+
+      (q&&!hits.some(function(h){return h[1].toLowerCase()===ql})?'<div class="card" style="padding:12px;border-style:dashed"><b>Add “'+esc(q)+'” as a new exercise</b><p class="muted" style="margin:4px 0 8px;font-size:13px">Every trainer will see it. Pick its group:</p><div class="seg">'+groups.map(function(g){return '<button data-pknew="'+esc(g)+'">'+esc(g)+'</button>'}).join('')+'</div></div>':'')+(hits.length||q?'':'<div class="empty">Nothing here.</div>');
+    $$('.wogrp button').forEach(function(b){b.setAttribute('aria-pressed',String(!q&&b.dataset.g===g0))});
+    $$('[data-pk]').forEach(function(b){b.onclick=function(){pick(b.dataset.pk)}});
+    $$('[data-pknew]').forEach(function(b){b.onclick=function(){var name=q.replace(/\s+/g,' ').trim();api('app_wo_ex',{group:b.dataset.pknew,name:name}).then(function(j){WOLIB=j.lib}).catch(function(){});(lib[b.dataset.pknew]=lib[b.dataset.pknew]||[]).push(name);pick(name)}})};
+  var pick=function(name){woSet(WOE,path+'.ex',name);WODIRTY=true;closeSheet();var y=scrollY;render();scrollTo(0,y)};
+  openSheet('Pick an exercise','<div class="searchwrap" style="margin-bottom:10px">'+ICON('i-search')+'<input class="search" id="woPickQ" placeholder="Search, or type a new exercise"></div><div class="wogrp">'+groups.map(function(g){return '<button class="chip" data-g="'+esc(g)+'">'+esc(g)+'</button>'}).join('')+'</div><div class="list" id="woPickList"></div>');
+  $('#woPickQ').oninput=function(){q=this.value.trim();paint()};
+  $$('.wogrp button').forEach(function(b){b.onclick=function(){g0=b.dataset.g;q='';$('#woPickQ').value='';paint()}});
+  paint();
+}
+function woCopyPick(){
+  var go=function(){var L=(WOL.clients||[]).filter(function(x){return x.has&&x.cid!==WOC.cid});
+    openSheet('Copy a program from',L.length?'<p class="muted" style="margin:0 0 12px">'+esc(first(WOC.name||''))+' gets a separate copy. Changing one never changes the other.</p><div class="list">'+L.map(function(x){return '<button class="row" data-cp="'+x.cid+'"><div class="main"><b>'+esc(x.name)+'</b><span>'+esc(x.phase||'')+'</span></div></button>'}).join('')+'</div>':'<div class="empty">None of your clients has a program yet. Build the first one, then copy it.</div>');
+    $$('[data-cp]').forEach(function(b){b.onclick=function(){b.disabled=true;api('app_wo_get',{cid:b.dataset.cp,copy:1}).then(function(j){if(!j.prog){toast('No program there');return}WOE=woClone(j.prog);WOE.start=T;WODIRTY=true;WOOPEN={'0|0':1};WOV='edit';closeSheet();render();scrollTo(0,0);toast('Copied from '+first(j.name)+'. Adjust it, then save.')}).catch(function(e){toast(e.message)})}})};
+  if(WOL&&WOL.clients)go();else{toast('Loading clients…');api('app_wo_list').then(function(j){WOL=j;WOLIB=j.lib;go()})}
+}
+function woBind(){
+  if($('#woQ'))$('#woQ').oninput=function(){WOQ=this.value;var q=WOQ.toLowerCase().trim();$$('#woList [data-name]').forEach(function(r){r.style.display=!q||r.dataset.name.indexOf(q)>-1?'':'none'})};
+  $$('[data-woc]').forEach(function(b){b.onclick=function(){woOpenClient(b.dataset.woc)}});
+  $$('[data-woi]').forEach(function(b){b.onclick=function(){woItemSheet(+b.dataset.woi)}});
+  $$('[data-wodec]').forEach(function(b){b.onclick=function(){var x=b.dataset.wodec.split('|');b.disabled=true;
+    api('app_wo_decide',{cid:WOC.cid,sid:x[0],choice:x[1],missed:x[2]}).then(function(){toast(x[1]==='catch'?'Next session does '+x[2]:'Plan kept, '+x[2]+' marked missed');WOL=null;woOpenClient(WOC.cid)}).catch(function(e){b.disabled=false;toast(e.message)})}});
+  $$('[data-f]').forEach(function(el){var fn=function(){var path=el.dataset.f,v=el.value;if(/\.len$/.test(path))v=Math.max(1,parseInt(v,10)||1);woSet(WOE,path,v);WODIRTY=true;
+    if(/\.(len|unit)$|^start$/.test(path)){var dd=woDates(WOE);$$('[data-pdates]').forEach(function(s){var d=dd[+s.dataset.pdates];if(d)s.textContent=dayLabel(d.start)+' to '+dayLabel(d.end)})}};el.addEventListener('input',fn);el.addEventListener('change',fn)});
+  $$('[data-wox]').forEach(function(b){b.onclick=function(){if(!WOLIB){toast('Loading the exercise list…');woLoad();return}woPick(b.dataset.wox)}});
+  $$('[data-wob]').forEach(function(b){b.onclick=function(){woAct(b.dataset.wob.split('|'))}});
+}
+function woAct(a){
+  var k=a[0],y=scrollY,re=function(keep){render();if(keep)scrollTo(0,y);else scrollTo(0,0)};
+  if(k==='reload'){woLoad(true);re();return}
+  if(k==='back'){WOV='list';WOC=null;if(!WOL)woLoad();re();return}
+  if(k==='cancel'){if(WODIRTY&&!confirm('Leave without saving your changes?'))return;WOE=null;WODIRTY=false;WOV='client';re();return}
+  if(k==='new'){WOE={start:T,goal:'',phases:[woNewPhase(1)]};WOOPEN={'0|0':1};WODIRTY=true;WOV='edit';re();return}
+  if(k==='edit'){WOE=woClone(WOC.prog);WOOPEN={};WODIRTY=false;WOV='edit';re();return}
+  if(k==='copy'){woCopyPick();return}
+  if(k==='delprog'){if(!confirm('Delete '+first(WOC.name)+'’s program? They will see no workout until a new one is built.'))return;
+    api('app_wo_save',{cid:WOC.cid,remove:1,ver:WOC.ver}).then(function(){toast('Program deleted');WOL=null;woOpenClient(WOC.cid)}).catch(function(e){toast(e.message)});return}
+  if(k==='save'){var bad=WOE.phases.filter(function(p){return !p.workouts.length}).length;if(!WOE.start){toast('Pick the start date');return}if(bad){toast('Every phase needs at least one workout');return}
+    var btn=$('[data-wob="save"]');btn.disabled=true;btn.textContent='Saving…';
+    api('app_wo_save',{cid:WOC.cid,prog:WOE,ver:WOC.ver||0}).then(function(j){WODIRTY=false;WOE=null;WOL=null;toast('Program saved. '+first(WOC.name)+' sees it now.');woOpenClient(WOC.cid)}).catch(function(e){btn.disabled=false;btn.textContent='Save program';toast(e.message)});return}
+  WODIRTY=true;
+  if(k==='tog'){var key=a[1]+'|'+a[2];WOOPEN[key]=!WOOPEN[key];re(1);return}
+  if(k==='addPhase'){WOE.phases.push(woNewPhase(WOE.phases.length+1));re(1);return}
+  if(k==='addW'){var ws=WOE.phases[+a[1]].workouts;ws.push(woNewW(ws.length+1));WOOPEN[a[1]+'|'+(ws.length-1)]=1;re(1);return}
+  if(k==='dupW'){var ws2=WOE.phases[+a[1]].workouts,cp=woClone(ws2[+a[2]]);cp.name=cp.name+' (copy)';ws2.splice(+a[2]+1,0,cp);WOOPEN[a[1]+'|'+(+a[2]+1)]=1;re(1);return}
+  var arr=woGet(WOE,a[1]);if(!arr)return;
+  if(k==='add'){arr.push(a[2]==='block'?{type:'single',rounds:'',rest:'',moves:[woNewMove('main')]}:woNewMove(a[2]));re(1);return}
+  if(k==='del'){if(/workouts$|^phases$/.test(a[1])&&!confirm('Delete it?'))return;arr.splice(+a[2],1);if(a[1]==='phases'&&!arr.length)arr.push(woNewPhase(1));re(1);return}
+  if(k==='up'||k==='down'){var i=+a[2],j=k==='up'?i-1:i+1;if(j<0||j>=arr.length)return;var t=arr[i];arr[i]=arr[j];arr[j]=t;re(1);return}
+  if(k==='type'){var bl=arr,mx=a[2]==='single'?1:a[2]==='superset'?3:10;bl.type=a[2];bl.moves=bl.moves.slice(0,mx);while(bl.moves.length<(a[2]==='single'?1:2))bl.moves.push(woNewMove('main'));re(1);return}
+}
+ACTIONS.wo=function(){closeSheet();VIEW='wo';WOV='list';render();scrollTo(0,0)};
+
 })();
 </script>
 </body>
