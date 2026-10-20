@@ -310,7 +310,8 @@ main{max-width:640px;margin:0 auto;padding:4px 16px calc(96px + env(safe-area-in
 .lbe{padding:16px 4px;color:var(--ink-3);font-size:14px}
 .prize{border-radius:18px;padding:16px;background:linear-gradient(135deg,#2a1418,#16090c);box-shadow:inset 0 0 0 1px rgba(255,122,147,.25)}
 .prize b{display:block;font:800 22px var(--display)}.prize p{margin:4px 0 0;color:var(--ink-2);font-size:13.5px}
-.prize .bar{height:8px;border-radius:9px;background:rgba(255,255,255,.1);margin:12px 0 6px;overflow:hidden}.prize .bar i{display:block;height:100%;background:linear-gradient(90deg,#f2c46b,#ff7a93);border-radius:9px}
+.prize .bar{height:8px;border-radius:9px;background:rgba(255,255,255,.1);margin:12px 0 6px;overflow:hidden}.cashc{background:linear-gradient(135deg,#0f2a22,#08140f);box-shadow:inset 0 0 0 1px rgba(126,240,200,.28)}.cashc b{color:#7ef0c8}.cashc .bar i{background:linear-gradient(90deg,#7ef0c8,#2fbf8f)!important}.cnote{margin-top:10px;font-size:13px;color:var(--ink-2)}.cnote.ok{color:#7ef0c8;font-weight:700}
+.prize .bar i{display:block;height:100%;background:linear-gradient(90deg,#f2c46b,#ff7a93);border-radius:9px}
 .prize small{color:var(--ink-3);font-weight:700}.prize .btn{margin-top:12px}
 .upg{display:flex;gap:12px;align-items:center;border-radius:18px;background:var(--card);box-shadow:var(--shadow);padding:12px}.upg+.upg{margin-top:8px}
 .upg .o{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:none;color:#fff}.upg .o svg{width:22px;height:22px}
@@ -638,12 +639,13 @@ function api(action,data){data=data||{};data.action=action;if(TOKEN)data.token=T
 function cacheKey(){return 'wbc_d_'+String(TOKEN||'').slice(-10)}
 function boot(silent){
   if(!TOKEN){render();return}
-  if(!D){try{var c=JSON.parse(store(cacheKey())||'null');if(c){D=c;render()}}catch(e){}}
+  if(!D){try{var c=JSON.parse(store(cacheKey())||'null');if(c){D=c;render();warm()}}catch(e){}}
   if(!D)render();
-  return api('app_cl_boot').then(function(d){D=d;if(A>=D.accounts.length)A=0;store(cacheKey(),JSON.stringify(d));render()})
+  return api('app_cl_boot').then(function(d){D=d;if(A>=D.accounts.length)A=0;store(cacheKey(),JSON.stringify(d));render();warm()})
    .catch(function(e){if(e.code==='signin'){signOut(true);return}if(!D){$('#app').innerHTML=errorView(e.message)}else if(!silent)toast('Could not refresh. Check your connection.')})}
+var WARMT=0;function warm(){if(!D||!ACC()||Date.now()-WARMT<60000)return;WARMT=Date.now();woLoad(ACC(),1);runLoad()}
 function send(action,data){data=data||{};data.cid=ACC().cid;return api(action,data).then(function(j){boot(true);return j})}
-function signOut(expired){store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:'email',email:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
+function signOut(expired){try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(wo|run)_/.test(k))localStorage.removeItem(k)})}catch(e){}store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:'email',email:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
 
 /* ---------- render ---------- */
 function render(){
@@ -880,14 +882,16 @@ var RUNNERS=[['Runner','29d62ee4-0fab-4f8b-b082-9db1d3a8ac71','39bc2f6e-1dea-469
 function SVGI(d,f){return '<svg viewBox="0 0 24 24" fill="'+(f?'currentColor':'none')+'" stroke="'+(f?'none':'currentColor')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>'}
 var SKY='<svg class="sky" viewBox="0 0 400 180" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="skg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a31"/><stop offset="1" stop-color="#0a1013"/></linearGradient></defs><path fill="url(#skg)" d="M0 120h18v-26h10v-14h14v40h8v-58h22v58h10v-30h16v-22h8v52h12v-70h6v-10h8v10h6v70h14v-36h20v36h10v-48h24v48h8v-28h14v-34h12v62h10v-44h18v44h12v-22h20v-30h10v52h16v-40h18v40h20v-60h8v-12h6v12h8v60h22v60H0z"/><path d="M332 120c0-24 2-40 4-52m-14 8c6-6 12-8 14-8 2 0 9 2 15 8m-25-4c4-8 8-10 10-10s7 2 11 10" stroke="#1b2a31" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M0 132q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.10)" stroke-width="1.5" fill="none"/><path d="M0 148q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.07)" stroke-width="1.5" fill="none"/><path d="M0 164q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.05)" stroke-width="1.5" fill="none"/></svg>';
 var RUNST=null,RUNLD=0,RUNTAB='week';
-function runLoad(){if(RUNLD||!ACC())return;RUNLD=1;api('app_cl_run',{op:'get',cid:ACC().cid}).then(function(j){RUNST=j;RUNLD=0;if(SEC==='play')render()}).catch(function(){RUNLD=0})}
+function runLoad(){if(RUNLD||!ACC())return;var cid=ACC().cid,k='wbc_run_'+cid;if(!RUNST||RUNC!==cid){RUNST=null;try{RUNST=JSON.parse(store(k)||'null')}catch(e){}RUNC=cid}RUNLD=1;
+  api('app_cl_run',{op:'get',cid:cid}).then(function(j){RUNLD=0;if(RUNC!==cid)return;var ch=JSON.stringify(j)!==JSON.stringify(RUNST);RUNST=j;store(k,JSON.stringify(j));if(SEC==='play'&&ch){var y=scrollY;render();scrollTo(0,y)}}).catch(function(){RUNLD=0})}
+var RUNC='';
 var BADGES_ALL=[['first','First run'],['km1','1 km in one run'],['km5','5 km in one run'],['km10','10 km in one run'],['runs10','10 runs'],['runs50','50 runs'],['runs100','100 runs'],['day1','#1 of the day'],['week10','Top 10 of the week'],['week1','#1 of the week'],['all3','All time top 3'],['all1','All time #1'],['rich','10,000 coins earned'],['boost','Trained and ran the same day']];
-VIEWS.play=function(){var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNERS[+raw])?RUNNERS[+raw]:null,RS=RUNST,score=RS?RS.best:+(store('cr_best2')||0),coins=RS?RS.coins:+(store('cr_coins')||0),dist=RS?Math.max(RS.bestM,runBest()):runBest();if(!RS)runLoad();
+VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNERS[+raw])?RUNNERS[+raw]:null,RS=RUNST,score=RS?RS.best:+(store('cr_best2')||0),coins=RS?RS.coins:+(store('cr_coins')||0),dist=RS?Math.max(RS.bestM,runBest()):runBest();if(!RS)runLoad();
   var h='<section class="lobby">'+SKY+'<div class="bar1"><span><img src="logo-mark.webp" alt="">WELLBE PLAY</span><i>SEASON 01</i></div>'+
    '<div class="stage"><div class="hero"><img alt="" src="'+(store('cr_avimg')||RUN_IMG+(mine||RUNNERS[0])[2]+'.png')+'"></div>'+
    '<h1 class="ttl"><span>Corniche</span><span>Run</span></h1>'+
    '<p class="tag">Three lanes along Beirut’s sea. Your coach is right behind you.</p></div>'+
-   '<div class="stats"><div><b>'+(score?score.toLocaleString():'0')+'</b><small>Best</small></div><div><b class="gold">'+coins.toLocaleString()+'</b><small>Coins</small></div><div><b>'+(dist?dist.toLocaleString()+' m':'0 m')+'</b><small>Farthest</small></div></div>'+
+   '<div class="stats"><div><b>'+(score?score.toLocaleString():'0')+'</b><small>Best</small></div><div><b class="gold">'+coins.toLocaleString()+'</b><small>🪙 Coins</small></div><div><b>'+(dist?dist.toLocaleString()+' m':'0 m')+'</b><small>Farthest</small></div></div>'+
    '<button class="play" data-act="run">'+SVGI('<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>',1)+(score?'Beat your best':'Start running')+'</button>'+
    '<button class="alt" data-act="runpick">'+(store('cr_av')?'Edit your runner':'Build your runner')+'</button></section>';
   if(!RS)h+='<div class="skel2">Loading your missions and leaderboard…</div>';
@@ -899,12 +903,16 @@ VIEWS.play=function(){var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNE
     h+='<div class="gh"><h2>Leaderboard</h2><small>'+(rk?'You are #'+rk:'Not ranked yet')+'</small></div><div class="rcard"><div class="tabs3" style="margin-top:8px">'+[['day','Today'],['week','Week'],['all','All time']].map(function(t){return '<button data-act="rtab|'+t[0]+'" class="'+(RUNTAB===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('')+'</div>'+
       (L.length?L.map(function(r){return '<div class="lb'+(r.i<=3?' top':'')+(r.me?' mine':'')+'"><div class="n">'+(r.i===1?'🥇':r.i===2?'🥈':r.i===3?'🥉':r.i)+'</div><div class="nm">'+esc(r.n)+'</div><div class="sc">'+r.s.toLocaleString()+'</div></div>'}).join(''):'<div class="lbe">No runs yet. Be the first on the board.</div>')+
       (rk>10?'<div class="lb mine"><div class="n">'+rk+'</div><div class="nm">Your best</div><div class="sc">'+(RUNTAB==='all'?RS.best:'').toLocaleString()+'</div></div>':'')+'</div>';
-    var pct=Math.min(100,Math.round(RS.coins/RS.rewardCoins*100));
-    h+='<div class="gh"><h2>Your reward</h2></div><div class="prize"><b>$10 off your next package</b><p>Collect '+RS.rewardCoins.toLocaleString()+' coins and use them when you renew.</p><div class="bar"><i style="width:'+pct+'%"></i></div><small>'+RS.coins.toLocaleString()+' / '+RS.rewardCoins.toLocaleString()+' coins</small>'+(RS.coins>=RS.rewardCoins?'<button class="btn block" data-act="rredeem">Claim $10 off</button>':'')+'</div>';
+    var C=RS.cash||{bal:0,today:0,mToday:0,dayMax:50,perM:2000,cents:10,min:100,max:1000,trained:false,pending:0},usd=function(x){return '$'+(x/100).toFixed(2)},cp=Math.min(100,Math.round(C.today/C.dayMax*100)),use=Math.min(C.bal,C.max);
+    h+='<div class="gh"><h2>💵 Your Cash</h2><small>Real money off your renewal</small></div><div class="prize cashc"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' for every '+(C.perM/1000)+' km you run, up to '+usd(C.dayMax)+' a day. Only in weeks you train at Wellbe.</p>'+
+      '<div class="bar"><i style="width:'+cp+'%"></i></div><small>Today '+usd(C.today)+' of '+usd(C.dayMax)+(C.today<C.dayMax&&C.trained?' · '+(C.perM-(C.mToday%C.perM)).toLocaleString()+' m to the next '+usd(C.cents):'')+'</small>'+
+      (C.trained?'':'<div class="cnote">Train at Wellbe this week to start earning Cash.</div>')+
+      (C.pending?'<div class="cnote ok">'+usd(C.pending)+' is waiting for your next renewal.</div>':C.bal>=C.min?'<button class="btn block" data-act="rredeem">Use '+usd(use)+' at my next renewal</button>':'<div class="cnote">You can use Cash from '+usd(C.min)+'. Max '+usd(C.max)+' per renewal.</div>')+'</div>';
     var UP=[['magnet','linear-gradient(135deg,#e0457a,#a3263f)','<path d="M6 4v8a6 6 0 0 0 12 0V4"/><path d="M6 8h4M14 8h4"/>','Magnet',function(l){return 'Lasts '+(8+2*l)+' s'}],
       ['jet','linear-gradient(135deg,#ff9a3d,#d9531e)','<path d="M12 3c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10z"/><path d="M10 19l2 2 2-2"/><circle cx="12" cy="10" r="1.6"/>','Jetpack',function(l){return 'Flies '+(6+l)+' s'}],
       ['shoes','linear-gradient(135deg,#2fb6a0,#1f6e5b)','<path d="M3 16h14l4-3-2-3-5 1-3-4H6z"/><path d="M3 19h18"/>','Super shoes',function(l){return 'Lasts '+(10+2*l)+' s'}]];
-    h+='<div class="gh"><h2>Upgrades</h2><small>Spend coins</small></div>'+UP.map(function(u){var l=RS.up[u[0]]||0,c=RS.upCost[l];return '<div class="upg"><div class="o" style="background:'+u[1]+'">'+SVGI(u[2])+'</div><div><b>'+u[3]+'</b><span>'+u[4](l)+'</span><div class="dots">'+[0,1,2,3,4].map(function(k){return '<i class="'+(k<l?'on':'')+'"></i>'}).join('')+'</div></div><button data-act="rbuy|'+u[0]+'"'+(c==null||RS.coins<c?' disabled':'')+'>'+(c==null?'MAX':c.toLocaleString())+'</button></div>'}).join('');
+    h+='<div class="gh"><h2>🪙 Coin shop</h2><small>Coins stay in the game</small></div>'+UP.map(function(u){var l=RS.up[u[0]]||0,c=RS.upCost[l];return '<div class="upg"><div class="o" style="background:'+u[1]+'">'+SVGI(u[2])+'</div><div><b>'+u[3]+'</b><span>'+u[4](l)+'</span><div class="dots">'+[0,1,2,3,4].map(function(k){return '<i class="'+(k<l?'on':'')+'"></i>'}).join('')+'</div></div><button data-act="rbuy|'+u[0]+'"'+(c==null||RS.coins<c?' disabled':'')+'>'+(c==null?'MAX':c.toLocaleString())+'</button></div>'}).join('')+
+      (function(){var n=RS.up.life||0,c=RS.lifeCost||1000,mx=RS.lifeMax||3;return '<div class="upg"><div class="o" style="background:linear-gradient(135deg,#ff7a93,#c2263f)">'+SVGI('<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/>')+'</div><div><b>Extra life</b><span>Start your next run with 2 lives · you have '+n+'</span><div class="dots">'+[0,1,2].map(function(k){return '<i class="'+(k<n?'on':'')+'"></i>'}).join('')+'</div></div><button data-act="rbuy|life"'+(n>=mx||RS.coins<c?' disabled':'')+'>'+(n>=mx?'MAX':c.toLocaleString())+'</button></div>'})();
     var mineB={};(RS.badges||[]).forEach(function(b){mineB[b.id]=1});
     h+='<div class="gh"><h2>Badges</h2><small>'+Object.keys(mineB).length+' of '+BADGES_ALL.length+'</small></div><div class="bdg">'+BADGES_ALL.map(function(b){return '<span class="'+(mineB[b[0]]?'on':'')+'">'+(mineB[b[0]]?'★ ':'')+b[1]+'</span>'}).join('')+'</div>';
   }
@@ -1021,8 +1029,10 @@ var ACT={};
 var w$=function(s,r){return (r||document).querySelector(s)},w$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 // Workouts: the program the client's coaches built. Nothing shows until a coach builds one.
 var WOS={},WOLD={},WODR={};
-function woLoad(a,force){var k=a.cid;if(WOLD[k]||(WOS[k]&&!force))return;WOLD[k]=1;
-  api('app_cl_wo',{op:'get',cid:k}).then(function(j){WOS[k]=j;WOLD[k]=0;if(SEC==='work')render()}).catch(function(e){WOLD[k]=0;WOS[k]={err:e.message};if(SEC==='work')render()})}
+function woLoad(a,force){var k=a.cid;if(!WOS[k]){try{var c=JSON.parse(store('wbc_wo_'+k)||'null');if(c){WOS[k]=c;force=1}}catch(e){}}if(WOLD[k]||(WOS[k]&&!force))return;WOLD[k]=1;
+  api('app_cl_wo',{op:'get',cid:k}).then(function(j){var ch=JSON.stringify(j)!==JSON.stringify(WOS[k]);WOS[k]=j;WOLD[k]=0;store('wbc_wo_'+k,JSON.stringify(j));if(SEC==='work'&&ch&&!woTyping()){var y=scrollY;render();scrollTo(0,y)}})
+   .catch(function(e){WOLD[k]=0;if(!WOS[k]||WOS[k].err){WOS[k]={err:e.message};if(SEC==='work')render()}})}
+function woTyping(){var el=document.activeElement;return !!(el&&/INPUT|TEXTAREA|SELECT/.test(el.tagName))}
 function woDay(d){return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}
 function woHour(t){var h=+t.split(':')[0],m=t.split(':')[1];return (h%12||12)+(m==='00'?'':':'+m)+(h<12?' AM':' PM')}
 function woExs(w){var out=[];(w.main||[]).forEach(function(b){b.moves.forEach(function(m){out.push(m)})});(w.abs||[]).forEach(function(m){out.push(m)});return out}
@@ -1046,7 +1056,8 @@ function woBody(w,d,sid,canLog){
   if(w.stretch&&w.stretch.length)h+='<div class="gh"><h2>Stretching</h2></div><div class="wcard">'+w.stretch.map(function(m){return woExHtml(m,-1,d,sid,false)}).join('')+'</div>';
   return h}
 VIEWS.work=function(){var a=ACC(),d=WOS[a.cid];
-  if(!d){woLoad(a);return '<div class="skel2">Loading your workout…</div>'}
+  if(!d){woLoad(a);d=WOS[a.cid]}
+  if(!d){return '<div class="skel2">Loading your workout…</div>'}
   if(d.err)return '<div class="soon"><h1>Could not load</h1><p>'+esc(d.err)+'</p><button class="btn" data-act="woreload">Try again</button></div>';
   var h='';
   if(!d.has)h+='<div class="soon"><div class="lockbig">'+ICON('i-dumbbell')+'</div><h1>No workout yet</h1><p>When your coach builds your program, your workout for each session shows here.</p></div>';
@@ -1099,8 +1110,8 @@ ACT.run=function(){var f=$('#gameFrame');if(!f){f=document.createElement('iframe
   f.src='run.html?in=app'+(arguments[0]===1?'&pick=1':'')+'&v='+Date.now();f.classList.add('on');document.documentElement.style.overflow='hidden'};
 ACT.runpick=function(){ACT.run(1)};
 ACT.rtab=function(k){RUNTAB=k;render()};
-ACT.rbuy=function(k){api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){RUNST=j;toast('Upgraded!');render()}).catch(function(e){toast(e.message)})};
-ACT.rredeem=function(){if(!confirm('Use '+RUNST.rewardCoins.toLocaleString()+' coins for $10 off your next package? Romy will apply it when you renew.'))return;api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){RUNST=j;render();success('$10 off is yours','Romy will take it off your next package when you renew.')}).catch(function(e){toast(e.message)})};
+ACT.rbuy=function(k){api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){RUNST=j;toast(k==='life'?'Extra life ready for your next run ❤️':'Upgraded!');render()}).catch(function(e){toast(e.message)})};
+ACT.rredeem=function(){var C=RUNST.cash,u='$'+(Math.min(C.bal,C.max)/100).toFixed(2);if(!confirm('Use '+u+' Cash on your next package? Romy will take it off when you renew.'))return;api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){RUNST=j;render();success(u+' off is yours','Romy will take it off your next package when you renew.')}).catch(function(e){toast(e.message)})};
 addEventListener('message',function(e){var d=e.data;if(!d||d.wb!=='api')return;var f=$('#gameFrame'),reply=function(o){try{f&&f.contentWindow.postMessage(o,'*')}catch(x){}};
   var body=d.body||{};if(!ACC()){reply({wb:'api-res',id:d.id,ok:false,err:'signin'});return}body.cid=ACC().cid;
   api('app_cl_run',body).then(function(j){RUNST=j;reply({wb:'api-res',id:d.id,ok:true,res:j})}).catch(function(err){reply({wb:'api-res',id:d.id,ok:false,err:String(err&&err.message||err)})})});

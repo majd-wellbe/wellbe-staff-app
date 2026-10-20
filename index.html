@@ -342,14 +342,19 @@ function applyBoot(d){
     var keepView=ME&&ME.id===d.me.id; ME=d.me; if(!keepView)VIEW=ME.role==='owner'?'mine':'home';
     PKG_TYPES=d.types;CLIENTS=d.clients;PKGS=d.pkgs;LEADS=d.leads;RECURRING=d.recurring;EXPENSES=d.expenses;POS=d.pos;INVENTORY=d.inventory;
     SESS=d.sessions.concat(HIST||[]);SESS.forEach(function(s){s.clients.forEach(function(c){c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
-    INTAKES=d.intakes||[];FILES=d.files||[];REQUESTS=d.requests||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';}
+    INTAKES=d.intakes||[];FILES=d.files||[];REQUESTS=d.requests||[];PATTERNS=buildPatterns();LOADED=true;LOAD_ERR='';if(!keepView)navRestore();}
+// remember the page this phone is on, so a reload opens the same page
+function navSave(){try{sessionStorage.setItem('wb_nav',JSON.stringify({me:ME&&ME.id,v:VIEW,wv:WOV,cid:WOC&&WOC.cid,name:WOC&&WOC.name,e:WOV==='edit'&&WODIRTY?WOE:null,open:WOOPEN}))}catch(e){}}
+function navRestore(){var n=null;try{n=JSON.parse(sessionStorage.getItem('wb_nav')||'null')}catch(e){}
+  if(!n||n.me!==ME.id||!VIEWS[n.v])return;VIEW=n.v;
+  if(n.v==='wo'&&n.cid&&(n.wv==='client'||n.wv==='edit')){woOpenClient(n.cid,n.name,1);if(n.wv==='edit'&&n.e){WOE=n.e;WODIRTY=true;WOOPEN=n.open||{};WOV='edit'}}}
 // older sessions (more than 70 days back) only load when the owner opens the numbers
 function loadHistory(){if(HIST||HIST_LOADING||!ME||ME.role!=='owner')return;HIST_LOADING=true;
   api('app_history').then(function(h){HIST=h.sessions||[];SESS=SESS.concat(HIST);HIST_LOADING=false;render()}).catch(function(){HIST_LOADING=false})}
 function boot(silent){
   if(!silent){LOADED=false;LOAD_ERR='';render()}
   return api('app_boot').then(function(d){
-    applyBoot(d);render();
+    applyBoot(d);render();if(Date.now()-WOT>60000)woLoad();
     try{CACHE_KEY='wb_cache_'+String(KEY).slice(0,8);localStorage.setItem(CACHE_KEY,JSON.stringify(d))}catch(e){}
   }).catch(function(e){if(e.message==='auth'){try{localStorage.removeItem(CACHE_KEY)}catch(x){}KEY=null;store('wb_key','');LOADED=false}LOAD_ERR=e.message;if(!LOADED||e.message==='auth')render();else toast('Could not refresh: '+e.message)})}
 // weekly pattern from the last 60 days: a slot that ran in 3+ different weeks, with the clients who came at least half the time
@@ -384,7 +389,7 @@ function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localSto
 var NAV={
  assistant:[['home','Today','i-home'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['money','Money','i-cash'],['more','More','i-more']],
  trainer:[['home','Today','i-home'],['week','My week','i-cal'],['myclients','Clients','i-users'],['wo','Workouts','i-dumb'],['me','Me','i-user']],
- owner:[['mine','My day','i-user'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['numbers','Numbers','i-chart'],['more','More','i-more']]};
+ owner:[['mine','My day','i-user'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['wo','Workouts','i-dumb'],['numbers','Numbers','i-chart'],['more','More','i-more']]};
 function badgeFor(v){ if(v==='home'&&ME.role!=='trainer'){var n=overdue().length;return n?n:''} return '' }
 
 function render(){
@@ -393,12 +398,12 @@ function render(){
   if(!LOADED){app.innerHTML='<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div>'+(LOAD_ERR?'<h1>Could not load</h1><p>'+esc(LOAD_ERR)+'</p><button class="btn" id="retry">Try again</button>':'<h1>Loading</h1><p>Reading the schedule from the sheets.</p>')+'</div>';if($('#retry'))$('#retry').onclick=function(){boot()};return}
   var roleName={owner:'Owner',assistant:'Assistant',trainer:'Trainer'}[ME.role];
   app.innerHTML='<header class="top"><div class="in"><div class="logo">W</div><div class="who"><b>'+esc(ME.name)+'</b><span>Wellbe Health Center</span></div><span class="rolechip">'+roleName+'</span>'+
-    '<span class="busy" id="busy" hidden title="Saving">Saving</span><button class="iconbtn" id="refreshBtn" aria-label="Refresh from the sheets" title="Refresh">'+ICON('i-repeat')+'</button></div></header>'+
+    '<span class="busy" id="busy" hidden title="Saving">Saving</span></div></header>'+
     (ME.role!=='trainer'?'<button class="fab" id="fab" aria-label="New">'+ICON('i-plus')+'</button>':'')+'<main id="main"></main><nav class="tabs" aria-label="Main"><div class="in">'+NAV[ME.role].map(function(n){var b=badgeFor(n[0]);return '<button class="tab" data-nav="'+n[0]+'" '+(VIEW===n[0]?'aria-current="page"':'')+'>'+ICON(n[2])+n[1]+(b?'<span class="badge">'+b+'</span>':'')+'</button>'}).join('')+'</div></nav>';
-  $('#refreshBtn').onclick=function(){HIST=null;if(SESS)SESS=SESS.filter(function(x){return x.date>=ymd(addDays(TODAY,-70))});boot(true);toast('Refreshing')};paintBusy();
+  paintBusy();
   if($('#fab')) $('#fab').onclick=ACTIONS.newMenu;
-  $$('[data-nav]').forEach(function(b){b.onclick=function(){closeSheet();VIEW=b.dataset.nav;render();scrollTo(0,0)}});
-  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); if(VIEW==='numbers')bindNumbers();if(VIEW==='wo')woBind();
+  $$('[data-nav]').forEach(function(b){b.onclick=function(){closeSheet();if(b.dataset.nav==='wo'&&WOV!=='edit'){WOV='list';WOC=null}VIEW=b.dataset.nav;render();scrollTo(0,0)}});
+  var fn=VIEWS[VIEW]||VIEWS.home; $('#main').innerHTML=fn(); bindView(); navSave(); if(VIEW==='numbers')bindNumbers();if(VIEW==='wo')woBind();
 }
 function loginView(){
   return '<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div><h1>Wellbe Team</h1><p>Open the private link Majd sent you on WhatsApp. It signs you in on this phone, once.</p>'+
@@ -1137,15 +1142,15 @@ try{var th=store('wb_theme');if(th&&th!=='system')document.documentElement.setAt
 // private link: #k=KEY, kept on this phone, then removed from the address bar
 // the key stays in the address so "Add to Home Screen" saves it (iPhone home screen apps do not share Safari's storage)
 var hk=/[#&]k=([a-f0-9]{16,64})/i.exec(location.hash);if(hk){KEY=hk[1];store('wb_key',KEY)}else{KEY=store('wb_key')||null;if(KEY)history.replaceState(null,'',location.pathname+'#k='+KEY)}
-if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
-render();if(KEY)boot(LOADED);
+var WOL=null,WOLD=0,WOC=null,WOE=null,WOV='list',WOQ='',WOLIB=null,WOOPEN={},WODIRTY=false;
+var WO_SEC={warm:'Warm up',main:'Workout',abs:'Abs',stretch:'Stretching'};
+var WO_TYPES=[['single','1 move'],['superset','Superset'],['circuit','Circuit']];
+var WOCACHE={},WOT=0;
+try{var wc=KEY&&JSON.parse(localStorage.getItem('wb_wo_'+String(KEY).slice(0,8))||'null');if(wc){WOL=wc.l;WOLIB=WOL&&WOL.lib;WOCACHE=wc.c||{}}}catch(e){}
 // fresh data when the app comes back to the front, and every 3 minutes while open
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on')&&!(VIEW==='wo'&&WOV==='edit'))boot(true)});
 setInterval(function(){if(!document.hidden&&KEY&&LOADED&&!BUSY&&!$('#sheet').classList.contains('on')&&!(VIEW==='wo'&&WOV==='edit'))boot(true)},180000);
 /* ---------------- workouts: programs per client ---------------- */
-var WOL=null,WOLD=0,WOC=null,WOE=null,WOV='list',WOQ='',WOLIB=null,WOOPEN={},WODIRTY=false;
-var WO_SEC={warm:'Warm up',main:'Workout',abs:'Abs',stretch:'Stretching'};
-var WO_TYPES=[['single','1 move'],['superset','Superset'],['circuit','Circuit']];
 function woClone(o){return JSON.parse(JSON.stringify(o))}
 function woGet(o,path){if(!path)return o;return path.split('.').reduce(function(a,k){return a==null?a:a[k]},o)}
 function woSet(o,path,v){var ks=path.split('.'),last=ks.pop(),t=woGet(o,ks.join('.'));if(t!=null)t[last]=v}
@@ -1156,10 +1161,18 @@ function woNewMove(sec){return sec==='warm'?{ex:'',reps:'',det:''}:sec==='stretc
 function woNewW(n){return {name:'Workout '+n,warm:[woNewMove('warm')],main:[{type:'single',rounds:'',rest:'',moves:[woNewMove('main')]}],abs:[],stretch:[]}}
 function woNewPhase(n){return {name:'Phase '+n,len:2,unit:'w',note:'',workouts:[woNewW(1)]}}
 function woUnit(u,n){return (u==='d'?'day':u==='m'?'month':'week')+(+n===1?'':'s')}
-function woLoad(force){if(WOLD)return;if(force)WOL=null;WOLD=1;api('app_wo_list').then(function(j){WOL=j;WOLIB=j.lib;WOLD=0;if(VIEW==='wo')render()}).catch(function(e){WOLD=0;WOL={err:e.message};if(VIEW==='wo')render()})}
-function woOpenClient(cid){VIEW='wo';WOV='client';WOC={cid:cid,loading:1,name:(clientById(cid)||{}).name||cid};render();scrollTo(0,0);
-  api('app_wo_get',{cid:cid}).then(function(j){WOC=j;if(VIEW==='wo'&&WOV==='client')render()}).catch(function(e){WOC={cid:cid,name:WOC.name,err:e.message};render()});
+function woLoad(force){if(WOLD)return;WOLD=1;api('app_wo_list',{full:1}).then(function(j){var full=j.full||{};delete j.full;WOLD=0;WOT=Date.now();
+    Object.keys(full).forEach(function(c){WOCACHE[c]=full[c]});var ch=JSON.stringify(j)!==JSON.stringify(WOL);WOL=j;WOLIB=j.lib;woStore();if(VIEW!=='wo')return;
+    if(WOV==='list'&&ch)return render();
+    if(WOV==='client'&&WOC&&full[WOC.cid]&&!WOC.pending&&JSON.stringify(full[WOC.cid])!==JSON.stringify(WOC)){var y=scrollY;WOC=full[WOC.cid];render();scrollTo(0,y)}})
+   .catch(function(e){WOLD=0;if(!WOL||WOL.err){WOL={err:e.message};if(VIEW==='wo'&&WOV==='list')render()}})}
+function woStore(){try{localStorage.setItem('wb_wo_'+String(KEY).slice(0,8),JSON.stringify({l:WOL&&!WOL.err?WOL:null,c:WOCACHE}))}catch(e){}}
+function woOpenClient(cid,name,quiet){VIEW='wo';WOV='client';WOC=WOCACHE[cid]||{cid:cid,loading:1,t0:Date.now(),name:name||(clientById(cid)||{}).name||cid};if(!quiet){render();scrollTo(0,0)}
+  var late=new Promise(function(_,no){setTimeout(function(){no(new Error('The sheets took too long to answer.'))},45000)});
+  Promise.race([api('app_wo_get',{cid:cid}),late]).then(function(j){WOCACHE[cid]=j;woStore();if(!WOC||WOC.cid!==cid)return;var ch=JSON.stringify(j)!==JSON.stringify(WOC);WOC=j;if(ch&&VIEW==='wo'&&WOV==='client'){var y=scrollY;render();scrollTo(0,y)}})
+   .catch(function(e){if(!WOC||WOC.cid!==cid||!WOC.loading)return;WOC={cid:cid,name:WOC.name,err:e.message};if(VIEW==='wo'&&WOV==='client')render()});
   if(!WOLIB)woLoad()}
+setInterval(function(){var el=$('#woSecs');if(el&&WOC&&WOC.loading){var n=Math.round((Date.now()-WOC.t0)/1000);el.textContent=n>2?n+' s':''}},1000);
 
 VIEWS.wo=function(){
   if(WOV==='edit'&&WOE)return woEditView();
@@ -1177,8 +1190,8 @@ VIEWS.wo=function(){
 
 function woClientView(){
   var c=WOC,head='<div class="woh"><button class="iconbtn" data-wob="back" aria-label="Back">'+ICON('i-x')+'</button><div class="main"><h2>'+esc(c.name||c.cid)+'</h2><small>Workout program</small></div></div>';
-  if(c.loading)return head+'<div class="empty">Loading…</div>';
-  if(c.err)return head+'<div class="note bad">'+ICON('i-alert')+'<span>'+esc(c.err)+'</span></div>';
+  if(c.loading)return head+'<div class="empty">Reading '+esc(first(c.name||''))+'’s sessions from the sheets… <b id="woSecs"></b><br><span class="muted" style="font-size:13px">The first open can take up to 15 seconds.</span></div>';
+  if(c.err)return head+'<div class="note bad">'+ICON('i-alert')+'<span>'+esc(c.err)+'</span></div><button class="btn sec full" style="margin-top:12px" data-wob="retry">Try again</button>';
   var body=c.body||{},bm=c.bmr,h=head;
   if(!c.prog){
     h+='<div class="empty" style="margin-bottom:12px">No program yet. '+esc(first(c.name))+' sees no workout in the app until one is built.</div><button class="btn full" data-wob="new">'+ICON('i-plus')+'Build a program</button><button class="btn sec full" style="margin-top:8px" data-wob="copy">'+ICON('i-repeat')+'Copy from another client</button>';
@@ -1186,7 +1199,7 @@ function woClientView(){
     (c.asks||[]).forEach(function(a){h+='<div class="woask"><b>'+esc(first(c.name))+' missed '+esc(a.missed.name)+'</b><span>on '+dayLabel(a.missed.date)+'. Next session, '+dayLabel(a.date)+' at '+hl(a.start)+', is planned as '+esc(a.now.name)+'.</span><div class="two"><button class="btn sec" data-wodec="'+esc(a.sid)+'|catch|'+esc(a.missed.name)+'">Do '+esc(a.missed.name)+'</button><button class="btn" data-wodec="'+esc(a.sid)+'|keep|'+esc(a.missed.name)+'">Keep the plan</button></div></div>'});
     var up=(c.items||[]).filter(function(x){return x.date>=T}).slice(0,8),past=(c.items||[]).filter(function(x){return x.date<T}).reverse().slice(0,10);
     var it=function(x){var k=c.items.indexOf(x);return '<button class="row" data-woi="'+k+'" style="min-height:54px"><div class="main"><b>'+dayLabel(x.date)+' · '+hl(x.start)+'</b><span>W'+(x.w+1)+' '+esc(x.name)+(x.catchUp?' (catch up)':'')+' · '+esc(x.trainer)+'</span></div><span class="pill '+(x.state==='missed'?'p-bad':x.state==='done'?'p-good':x.state==='today'?'p-warn':'p-mute')+'">'+({missed:'Missed',done:'Done',today:'Today',planned:'Planned'}[x.state])+'</span></button>'};
-    h+='<div class="h"><h2>Next</h2><small>Follows the booked sessions</small></div><div class="list">'+(up.length?up.map(it).join(''):'<div class="empty">No training session booked.</div>')+'</div>';
+    h+='<div class="h"><h2>Next</h2><small>Follows the booked sessions</small></div><div class="list">'+(c.pending?'<div class="empty">Updating the schedule…</div>':up.length?up.map(it).join(''):'<div class="empty">No training session booked.</div>')+'</div>';
     var dd=woDates(c.prog);
     h+='<div class="h"><h2>Program</h2><small>'+(c.by?'by '+esc(c.by)+' · '+esc(c.updated):'')+'</small></div><div class="card" style="padding:14px">'+(c.prog.goal?'<p style="margin:0 0 10px;font-weight:600">'+esc(c.prog.goal)+'</p>':'')+
       c.prog.phases.map(function(p,i){var on=T>=dd[i].start&&T<=dd[i].end;return '<div class="wops'+(on?' on':'')+'"><b>'+esc(p.name)+(on?' <span class="pill p-good">Now</span>':'')+'</b><span>'+dayLabel(dd[i].start)+' to '+dayLabel(dd[i].end)+' · '+p.len+' '+woUnit(p.unit,p.len)+'</span><span>'+p.workouts.map(function(w,j){return 'W'+(j+1)+' '+esc(w.name)}).join(' · ')+'</span></div>'}).join('')+
@@ -1284,8 +1297,8 @@ function woBind(){
   $$('[data-woc]').forEach(function(b){b.onclick=function(){woOpenClient(b.dataset.woc)}});
   $$('[data-woi]').forEach(function(b){b.onclick=function(){woItemSheet(+b.dataset.woi)}});
   $$('[data-wodec]').forEach(function(b){b.onclick=function(){var x=b.dataset.wodec.split('|');b.disabled=true;
-    api('app_wo_decide',{cid:WOC.cid,sid:x[0],choice:x[1],missed:x[2]}).then(function(){toast(x[1]==='catch'?'Next session does '+x[2]:'Plan kept, '+x[2]+' marked missed');WOL=null;woOpenClient(WOC.cid)}).catch(function(e){b.disabled=false;toast(e.message)})}});
-  $$('[data-f]').forEach(function(el){var fn=function(){var path=el.dataset.f,v=el.value;if(/\.len$/.test(path))v=Math.max(1,parseInt(v,10)||1);woSet(WOE,path,v);WODIRTY=true;
+    api('app_wo_decide',{cid:WOC.cid,sid:x[0],choice:x[1],missed:x[2]}).then(function(){toast(x[1]==='catch'?'Next session does '+x[2]:'Plan kept, '+x[2]+' marked missed');delete WOCACHE[WOC.cid];woOpenClient(WOC.cid);woLoad()}).catch(function(e){b.disabled=false;toast(e.message)})}});
+  $$('[data-f]').forEach(function(el){var fn=function(){var path=el.dataset.f,v=el.value;if(/\.len$/.test(path))v=Math.max(1,parseInt(v,10)||1);woSet(WOE,path,v);WODIRTY=true;navSave();
     if(/\.(len|unit)$|^start$/.test(path)){var dd=woDates(WOE);$$('[data-pdates]').forEach(function(s){var d=dd[+s.dataset.pdates];if(d)s.textContent=dayLabel(d.start)+' to '+dayLabel(d.end)})}};el.addEventListener('input',fn);el.addEventListener('change',fn)});
   $$('[data-wox]').forEach(function(b){b.onclick=function(){if(!WOLIB){toast('Loading the exercise list…');woLoad();return}woPick(b.dataset.wox)}});
   $$('[data-wob]').forEach(function(b){b.onclick=function(){woAct(b.dataset.wob.split('|'))}});
@@ -1293,16 +1306,17 @@ function woBind(){
 function woAct(a){
   var k=a[0],y=scrollY,re=function(keep){render();if(keep)scrollTo(0,y);else scrollTo(0,0)};
   if(k==='reload'){woLoad(true);re();return}
+  if(k==='retry'){delete WOCACHE[WOC.cid];woOpenClient(WOC.cid,WOC.name);return}
   if(k==='back'){WOV='list';WOC=null;if(!WOL)woLoad();re();return}
   if(k==='cancel'){if(WODIRTY&&!confirm('Leave without saving your changes?'))return;WOE=null;WODIRTY=false;WOV='client';re();return}
   if(k==='new'){WOE={start:T,goal:'',phases:[woNewPhase(1)]};WOOPEN={'0|0':1};WODIRTY=true;WOV='edit';re();return}
   if(k==='edit'){WOE=woClone(WOC.prog);WOOPEN={};WODIRTY=false;WOV='edit';re();return}
   if(k==='copy'){woCopyPick();return}
   if(k==='delprog'){if(!confirm('Delete '+first(WOC.name)+'’s program? They will see no workout until a new one is built.'))return;
-    api('app_wo_save',{cid:WOC.cid,remove:1,ver:WOC.ver}).then(function(){toast('Program deleted');WOL=null;woOpenClient(WOC.cid)}).catch(function(e){toast(e.message)});return}
+    api('app_wo_save',{cid:WOC.cid,remove:1,ver:WOC.ver}).then(function(){toast('Program deleted');delete WOCACHE[WOC.cid];woOpenClient(WOC.cid);woLoad()}).catch(function(e){toast(e.message)});return}
   if(k==='save'){var bad=WOE.phases.filter(function(p){return !p.workouts.length}).length;if(!WOE.start){toast('Pick the start date');return}if(bad){toast('Every phase needs at least one workout');return}
     var btn=$('[data-wob="save"]');btn.disabled=true;btn.textContent='Saving…';
-    api('app_wo_save',{cid:WOC.cid,prog:WOE,ver:WOC.ver||0}).then(function(j){WODIRTY=false;WOE=null;WOL=null;toast('Program saved. '+first(WOC.name)+' sees it now.');woOpenClient(WOC.cid)}).catch(function(e){btn.disabled=false;btn.textContent='Save program';toast(e.message)});return}
+    var sent=WOE;api('app_wo_save',{cid:WOC.cid,prog:WOE,ver:WOC.ver||0}).then(function(j){WODIRTY=false;WOE=null;toast('Program saved. '+first(WOC.name)+' sees it now.');WOCACHE[WOC.cid]=Object.assign({},WOC,{prog:j.prog||sent,ver:j.ver,pending:1,loading:0,err:0,by:ME.name,updated:T});woOpenClient(WOC.cid);woLoad()}).catch(function(e){btn.disabled=false;btn.textContent='Save program';toast(e.message)});return}
   WODIRTY=true;
   if(k==='tog'){var key=a[1]+'|'+a[2];WOOPEN[key]=!WOOPEN[key];re(1);return}
   if(k==='addPhase'){WOE.phases.push(woNewPhase(WOE.phases.length+1));re(1);return}
@@ -1315,6 +1329,9 @@ function woAct(a){
   if(k==='type'){var bl=arr,mx=a[2]==='single'?1:a[2]==='superset'?3:10;bl.type=a[2];bl.moves=bl.moves.slice(0,mx);while(bl.moves.length<(a[2]==='single'?1:2))bl.moves.push(woNewMove('main'));re(1);return}
 }
 ACTIONS.wo=function(){closeSheet();VIEW='wo';WOV='list';render();scrollTo(0,0)};
+// start
+if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
+render();if(KEY)boot(LOADED);
 
 })();
 </script>

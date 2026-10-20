@@ -1,0 +1,15 @@
+TWO SMALL EDITS (Ctrl+H inside the file, cursor in the code first)
+
+=== 1. File: App ===
+Find:
+if (b.action === 'app_lead') { var lr = appLead_(b); appBump_(); return json_(lr); }
+
+Replace with:
+if (b.action === 'app_lead') { var lr = appLead_(b); appBump_(); return json_(lr); } if (b.action === 'app_wo_list' || b.action === 'app_wo_get') { try { var ro = (b.action === 'app_wo_list' ? woList_ : woGet_)(b, me) || {}; ro.ok = true; return json_(ro); } catch (e) { return json_({ ok: false, error: String(e.message || e) }); } }
+
+=== 2. File: Client ===
+Find:
+if (a !== 'app_cl_run' && a !== 'app_cl_wo') appBump_();
+
+Replace with:
+if (!/^app_cl_(run|wo|streak)$/.test(a)) appBump_();
