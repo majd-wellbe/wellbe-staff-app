@@ -500,6 +500,19 @@ textarea.inp{min-height:84px;resize:vertical}
 .wbody{padding:14px}.wkpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:10px}.wkpi b{display:block;font:800 26px var(--display)}.wkpi small{font-size:12px;font-weight:700;color:var(--ink-3)}.wbody p{font-size:14px;color:var(--ink-2);margin:0 0 12px}
 .pill2{flex:none;padding:6px 11px;border-radius:99px;font-size:12.5px;font-weight:800;background:var(--accent);color:#fff}.pill2.ok{background:var(--mint-soft);color:var(--mint-deep)}
 .wsheet .gh:first-child{margin-top:4px}
+
+.wpick{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:18px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);margin-bottom:12px}
+.wpick .wi,.gwhy .wi,.gserv .wi,.gstat .wi{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--mint-soft);color:var(--mint-deep)}
+.wpick.new .wi{background:var(--pink);color:#fff}.wpick b{display:block;font-size:18px}.wpick small{display:block;color:var(--ink-3);font-size:14px;margin-top:2px}.wpick .go{font-size:28px;color:var(--ink-3)}
+.wpick .grow,.gserv .grow,.gstat .grow{flex:1;min-width:0}
+.ghero{border-radius:26px;padding:24px 20px;color:#fff;background:linear-gradient(140deg,#1f6e5b,#2f9a80 60%,#6fc7b1);box-shadow:0 14px 36px rgba(31,110,91,.3);margin:6px 0 16px}
+.ghero .tag{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.85}.ghero h1{font-size:32px;line-height:1.1;margin:10px 0 8px}.ghero p{opacity:.92;margin:0 0 16px}.ghero .btn{background:#fff!important;color:#1f6e5b!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important}.ghero .btn svg{color:#1f6e5b}
+.gstat{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--mint-soft);margin-bottom:6px}.gstat b{display:block}.gstat span{font-size:14px;color:var(--ink-2)}
+.gwhy{display:grid;grid-template-columns:1fr 1fr;gap:10px}.gwhy .card{padding:14px}.gwhy b{display:block;margin:10px 0 4px;font-size:16px}.gwhy span:not(.wi){font-size:13.5px;color:var(--ink-3);line-height:1.35;display:block}
+.gserv{display:flex;gap:12px;align-items:center;padding:14px}.gserv b{display:block}.gserv span:not(.wi){font-size:14px;color:var(--ink-3)}
+.gpkg{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:14px 16px}.gpkg b{display:block}.gpkg span{font-size:14px;color:var(--ink-3)}.gpkg .gp{font:800 22px var(--display);color:var(--ink)}
+.gfoot{margin:26px 0 10px;text-align:center}.gfoot b{display:block;font-size:18px}.gfoot span{display:block;color:var(--ink-3);margin-bottom:10px}
+.slot[aria-pressed="true"]{background:var(--mint-deep);color:#fff;box-shadow:none}.slot[aria-pressed="true"] .muted{color:rgba(255,255,255,.85)}.slot:disabled{opacity:.45}
 </style>
 </head>
 <body>
@@ -626,7 +639,7 @@ function waLink(text,to){return 'https://wa.me/'+(to||(D&&D.wa)||WA_DEFAULT)+'?t
 function tabName(t){return {'1:1':'Private 1:1','1:2':'Duo 1:2','1:3':'Small group 1:3','Physio':'Physio','Prehab':'Prehab','Osteo':'Osteo','Madero':'Madero'}[t]||t}
 
 /* ---------- state ---------- */
-var ONB=null, TOKEN=null, D=null, A=0, VIEW='home', CART={}, LOGIN={step:'email',email:'',busy:false,err:''};
+var ONB=null, TOKEN=null, D=null, A=0, VIEW='home', CART={}, LOGIN={step:'welcome',mode:'client',email:'',name:'',busy:false,err:''};
 (function(){var m=/[#&]t=([^&]+)/.exec(location.hash);if(m){TOKEN=decodeURIComponent(m[1]);store('wbc_t',TOKEN)}else{TOKEN=store('wbc_t')||null;if(TOKEN)history.replaceState(null,'','#t='+encodeURIComponent(TOKEN))}
   try{CART=JSON.parse(store('wbc_cart')||'{}')}catch(e){CART={}}
   A=+(store('wbc_acc')||0)||0;
@@ -641,11 +654,13 @@ function boot(silent){
   if(!TOKEN){render();return}
   if(!D){try{var c=JSON.parse(store(cacheKey())||'null');if(c){D=c;render();warm()}}catch(e){}}
   if(!D)render();
-  return api('app_cl_boot').then(function(d){D=d;if(A>=D.accounts.length)A=0;store(cacheKey(),JSON.stringify(d));render();warm()})
+  LASTB=Date.now();return api('app_cl_boot').then(function(d){var wasG=store('wbc_g')==='1';D=d;store('wbc_g',d.guest?'1':'0');if(A>=D.accounts.length)A=0;store(cacheKey(),JSON.stringify(d));if(wasG&&!d.guest){SEC='center';VIEW='home';store('wbc_sec','center')}render();warm();if(wasG&&!d.guest)success('Welcome to Wellbe 🎉','You’re now a Wellbe client. Your sessions, packages and workouts are all here.')})
    .catch(function(e){if(e.code==='signin'){signOut(true);return}if(!D){$('#app').innerHTML=errorView(e.message)}else if(!silent)toast('Could not refresh. Check your connection.')})}
-var WARMT=0;function warm(){if(!D||!ACC()||Date.now()-WARMT<60000)return;WARMT=Date.now();woLoad(ACC(),1);runLoad()}
+var LASTB=0;document.addEventListener('visibilitychange',function(){if(!document.hidden&&TOKEN&&D&&Date.now()-LASTB>30000)boot(true)});
+setInterval(function(){if(TOKEN&&D&&D.guest&&!document.hidden)boot(true)},120000);
+var WARMT=0;function warm(){if(!D||!ACC()||Date.now()-WARMT<60000)return;WARMT=Date.now();if(!D.guest)woLoad(ACC(),1);runLoad()}
 function send(action,data){data=data||{};data.cid=ACC().cid;return api(action,data).then(function(j){boot(true);return j})}
-function signOut(expired){try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(wo|run)_/.test(k))localStorage.removeItem(k)})}catch(e){}store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:'email',email:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
+function signOut(expired){try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(wo|run)_/.test(k))localStorage.removeItem(k)})}catch(e){}store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
 
 /* ---------- render ---------- */
 function render(){
@@ -653,19 +668,19 @@ function render(){
   if(!TOKEN){app.innerHTML=loginView();bindLogin();return}
   if(!D){app.innerHTML=loadingView();return}
   var a=ACC(), full=a.full;
-  if(ONB||(!a.goal&&!store('wbc_goal_later_'+a.cid))){app.innerHTML=onbView(a);bindOnb(a);return}
+  if(ONB||(!D.guest&&!a.goal&&!store('wbc_goal_later_'+a.cid))){app.innerHTML=onbView(a);bindOnb(a);return}
   if(!full)VIEW='home';
-  var body=SEC==='play'?VIEWS.play():SEC==='work'?VIEWS.work():SEC==='me'?VIEWS.me():full?subnavView()+VIEWS[VIEW]():VIEWS.basic();
+  var body=SEC==='play'?VIEWS.play():SEC==='work'?(D.guest?VIEWS.gwork():VIEWS.work()):SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?subnavView()+VIEWS[VIEW]():VIEWS.basic();
   app.innerHTML='<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" href="'+waLink('Hi Romy, this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+'Romy</a><button class="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+esc(initials(a.name))+'</button></div></div>'+
    '<main>'+((SEC==='center'||SEC==='me')&&D.accounts.length>1?'<div class="accs" role="tablist" aria-label="Accounts">'+D.accounts.map(function(x,i){return '<button class="acc" aria-pressed="'+(i===A)+'" data-acc="'+i+'">'+esc(x.first)+'</button>'}).join('')+'</div>':'')+body+'</main>'+
-   tabsView()+(SEC==='center'?cartBar():'');
-  bind();if(SEC==='work')woBindView();
+   tabsView()+(SEC==='center'&&!D.guest?cartBar():'');
+  bind();if(SEC==='work'&&!D.guest)woBindView();if(D.guest)bindGuest();
   if(full||a.goal)loadStreak(a);
 }
 var SEC=(function(){var v=store('wbc_sec');return v==='play'||v==='work'?v:'center'})();
 function initials(n){n=String(n||'').trim().split(/\s+/);return ((n[0]||'')[0]||'').toUpperCase()+((n[1]||'')[0]||'').toUpperCase()}
 function tabsView(){
-  return '<nav class="tabs" aria-label="Main"><div class="in">'+[['center','i-home','Center'],['play','i-play','Play'],['work','i-dumbbell','Workouts']].map(function(t){
+  return '<nav class="tabs" aria-label="Main"><div class="in">'+[['center','i-home',D&&D.guest?'Wellbe':'Center'],['play','i-play','Play'],['work','i-dumbbell','Workouts']].map(function(t){
    return '<button data-sec="'+t[0]+'"'+(SEC===t[0]?' aria-current="page"':'')+'>'+ICON(t[1])+t[2]+'</button>'}).join('')+'</div></nav>'}
 function subnavView(){var n=Object.keys(CART).reduce(function(s,k){return s+CART[k]},0);
   return '<div class="subnav" role="tablist" aria-label="Center">'+[['home','Home'],['sessions','Sessions'],['shop','Shop'],['plan','My plan']].map(function(t){
@@ -675,32 +690,46 @@ function errorView(m){return '<div class="login"><div class="hero"><div class="b
 
 /* ---------- login ---------- */
 function loginView(){var L=LOGIN;
+  if(L.step==='welcome')return '<div class="login"><div class="hero"><div class="brand">WELLBE</div><h1>Train smart. Stay pain free.</h1><p>Physio-led training in small groups of 3, in Beirut.</p></div>'+
+    '<button class="wpick" id="wClient"><span class="wi">'+ICON('i-users')+'</span><span class="grow"><b>I’m a Wellbe client</b><small>Sign in with the email you gave us</small></span><span class="go">›</span></button>'+
+    '<button class="wpick new" id="wNew"><span class="wi">'+ICON('i-spark')+'</span><span class="grow"><b>I’m new to Wellbe</b><small>See how we train, our packages, and book a free trial</small></span><span class="go">›</span></button>'+
+    '<p class="foot2"><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I have a question about Wellbe.')+'">Questions? Message Romy</a></p></div>';
+  if(L.step==='email'&&L.mode==='new'){var e0=L.err?'<div class="note bad" style="margin-bottom:14px">'+ICON('i-alert')+'<span>'+esc(L.err)+'</span></div>':'';
+    return '<div class="login"><div class="hero"><div class="brand">WELLBE</div><h1>Welcome to Wellbe</h1><p>Tell us who you are. We send a 6 digit code to your email to open the app.</p></div>'+e0+
+    '<form id="f"><label class="flabel" for="nm">Your name</label><input class="inp" id="nm" autocomplete="name" placeholder="First and last name" value="'+esc(L.name)+'" required>'+
+    '<label class="flabel" for="em" style="margin-top:14px">Your email</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" placeholder="name@email.com" value="'+esc(L.email)+'" required>'+
+    '<button class="btn block" style="margin-top:16px" '+(L.busy?'disabled':'')+'>'+(L.busy?'Sending...':'Send my code')+'</button></form>'+
+    '<button class="btn ghost block" style="margin-top:10px" id="wBack">Back</button><p class="foot2">Already a client? Use the email you gave us and we open your client app.</p></div>'}
   var hero='<div class="hero"><div class="brand">WELLBE</div><h1>'+(L.step==='code'?'Check your email':'Your training, in your pocket')+'</h1><p>'+(L.step==='code'?'We sent a 6 digit code to <b>'+esc(L.email)+'</b>.':'Sessions, packages, physio and supplements. Sign in with the email you gave us.')+'</p></div>';
   var err=L.err?'<div class="note bad" style="margin-bottom:14px">'+ICON('i-alert')+'<span>'+esc(L.err)+'</span></div>':'';
   if(L.step==='unknown') return '<div class="login">'+hero+'<div class="note warn">'+ICON('i-alert')+'<span>We could not find <b>'+esc(L.email)+'</b>. Maybe we have another email for you, or none yet.</span></div>'+
     '<a class="btn wa block" style="margin-top:16px" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I want to use the Wellbe app but my email ('+L.email+') is not found. Can you add it?')+'">'+ICON('i-wa')+'Ask Romy to add my email</a>'+
-    '<button class="btn ghost block" style="margin-top:10px" id="back">Try another email</button></div>';
+    '<button class="btn block" style="margin-top:16px" id="asNew">I’m new: continue with this email</button><button class="btn ghost block" style="margin-top:10px" id="back">Try another email</button></div>';
   if(L.step==='code') return '<div class="login">'+hero+err+'<form id="f"><label class="flabel" for="code">6 digit code</label><input class="inp codein" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required autofocus>'+
     '<button class="btn block" style="margin-top:16px" '+(L.busy?'disabled':'')+'>'+(L.busy?'Checking...':'Sign in')+'</button></form>'+
     '<div class="btns" style="margin-top:10px"><button class="btn ghost sm" id="resend">Send a new code</button><button class="btn ghost sm" id="back">Change email</button></div>'+
     '<p class="foot2">No email? Check your spam folder. The code works for 10 minutes.</p></div>';
   return '<div class="login">'+hero+err+'<form id="f"><label class="flabel" for="em">Your email</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" placeholder="name@email.com" value="'+esc(L.email)+'" required>'+
     '<button class="btn block" style="margin-top:16px" '+(L.busy?'disabled':'')+'>'+(L.busy?'Sending...':'Send my code')+'</button></form>'+
-    '<p class="foot2">Parents: use the email you gave us, you will see your child’s account.<br><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I need help signing in to the Wellbe app.')+'">Need help? Message Romy</a></p></div>'}
+    '<button class="btn ghost block" style="margin-top:10px" id="wBack">Back</button><p class="foot2">Parents: use the email you gave us, you will see your child’s account.<br><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I need help signing in to the Wellbe app.')+'">Need help? Message Romy</a></p></div>'}
 function bindLogin(){
   var f=$('#f'),back=$('#back'),re=$('#resend');
   if(back)back.onclick=function(){LOGIN.step='email';LOGIN.err='';render()};
+  if($('#wClient'))$('#wClient').onclick=function(){LOGIN.mode='client';LOGIN.step='email';LOGIN.err='';render()};
+  if($('#wNew'))$('#wNew').onclick=function(){LOGIN.mode='new';LOGIN.step='email';LOGIN.err='';render()};
+  if($('#wBack'))$('#wBack').onclick=function(){LOGIN.step='welcome';LOGIN.err='';render()};
+  if($('#asNew'))$('#asNew').onclick=function(){LOGIN.mode='new';LOGIN.step='email';LOGIN.err='';render()};
   if(re)re.onclick=function(){askCode(LOGIN.email)};
   if(f)f.onsubmit=function(e){e.preventDefault();
-    if(LOGIN.step==='email')askCode($('#em').value.trim());
+    if(LOGIN.step==='email'){if($('#nm')){LOGIN.name=$('#nm').value.trim();if(LOGIN.name.length<2){LOGIN.err='Please type your name.';render();return}}askCode($('#em').value.trim())}
     else{var code=$('#code').value.replace(/\D/g,'');if(code.length!==6){LOGIN.err='Type the 6 digits from the email.';render();return}
       LOGIN.busy=true;LOGIN.err='';render();
-      api('app_cl_login',{email:LOGIN.email,code:code}).then(function(j){TOKEN=j.token;store('wbc_t',TOKEN);history.replaceState(null,'','#t='+encodeURIComponent(TOKEN));LOGIN={step:'email',email:'',busy:false,err:''};VIEW='home';boot()})
+      api('app_cl_login',{email:LOGIN.email,code:code}).then(function(j){TOKEN=j.token;store('wbc_t',TOKEN);history.replaceState(null,'','#t='+encodeURIComponent(TOKEN));LOGIN={step:'welcome',mode:'client',email:'',name:'',busy:false,err:''};VIEW='home';SEC='center';store('wbc_sec','center');boot()})
        .catch(function(e){LOGIN.busy=false;LOGIN.err=e.message;render()})}};
   var c=$('#code');if(c){c.focus();c.oninput=function(){if(c.value.replace(/\D/g,'').length===6)f.requestSubmit?f.requestSubmit():f.onsubmit(new Event('submit'))}}
 }
 function askCode(email){LOGIN.email=email;LOGIN.busy=true;LOGIN.err='';render();
-  api('app_cl_code',{email:email}).then(function(){LOGIN.step='code';LOGIN.busy=false;render();toast('Code sent. Check your email.')})
+  api('app_cl_code',{email:email,mode:LOGIN.mode,name:LOGIN.name}).then(function(j){LOGIN.step='code';LOGIN.busy=false;render();toast(j.client?'You’re already a Wellbe client. Code sent!':'Code sent. Check your email.')})
    .catch(function(e){LOGIN.busy=false;if(e.code==='unknown'){LOGIN.step='unknown'}else LOGIN.err=e.message;render()})}
 
 /* ---------- pieces ---------- */
@@ -904,8 +933,8 @@ VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=sto
       (L.length?L.map(function(r){return '<div class="lb'+(r.i<=3?' top':'')+(r.me?' mine':'')+'"><div class="n">'+(r.i===1?'🥇':r.i===2?'🥈':r.i===3?'🥉':r.i)+'</div><div class="nm">'+esc(r.n)+'</div><div class="sc">'+r.s.toLocaleString()+'</div></div>'}).join(''):'<div class="lbe">No runs yet. Be the first on the board.</div>')+
       (rk>10?'<div class="lb mine"><div class="n">'+rk+'</div><div class="nm">Your best</div><div class="sc">'+(RUNTAB==='all'?RS.best:'').toLocaleString()+'</div></div>':'')+'</div>';
     var C=RS.cash||{bal:0,today:0,mToday:0,dayMax:50,perM:2000,cents:10,min:100,max:1000,trained:false,pending:0},usd=function(x){return '$'+(x/100).toFixed(2)},cp=Math.min(100,Math.round(C.today/C.dayMax*100)),use=Math.min(C.bal,C.max);
-    h+='<div class="gh"><h2>💵 Your Cash</h2><small>Real money off your renewal</small></div><div class="prize cashc"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' for every '+(C.perM/1000)+' km you run, up to '+usd(C.dayMax)+' a day. Only in weeks you train at Wellbe.</p>'+
-      '<div class="bar"><i style="width:'+cp+'%"></i></div><small>Today '+usd(C.today)+' of '+usd(C.dayMax)+(C.today<C.dayMax&&C.trained?' · '+(C.perM-(C.mToday%C.perM)).toLocaleString()+' m to the next '+usd(C.cents):'')+'</small>'+
+    h+='<div class="gh"><h2>💵 Your Cash</h2><small>Real money off your renewal</small></div><div class="prize cashc"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' every run you reach x5 (about 3 minutes of running), up to '+usd(C.dayMax)+' a day. Only in weeks you train at Wellbe.</p>'+
+      '<div class="bar"><i style="width:'+cp+'%"></i></div><small>Today '+usd(C.today)+' of '+usd(C.dayMax)+(C.today<C.dayMax&&C.trained?' · '+Math.round((C.dayMax-C.today)/C.cents)+' more x5 run'+((C.dayMax-C.today)/C.cents>1?'s':'')+' today':'')+'</small>'+
       (C.trained?'':'<div class="cnote">Train at Wellbe this week to start earning Cash.</div>')+
       (C.pending?'<div class="cnote ok">'+usd(C.pending)+' is waiting for your next renewal.</div>':C.bal>=C.min?'<button class="btn block" data-act="rredeem">Use '+usd(use)+' at my next renewal</button>':'<div class="cnote">You can use Cash from '+usd(C.min)+'. Max '+usd(C.max)+' per renewal.</div>')+'</div>';
     var UP=[['magnet','linear-gradient(135deg,#e0457a,#a3263f)','<path d="M6 4v8a6 6 0 0 0 12 0V4"/><path d="M6 8h4M14 8h4"/>','Magnet',function(l){return 'Lasts '+(8+2*l)+' s'}],
@@ -928,9 +957,54 @@ VIEWS.me=function(){var a=ACC(),b=runBest();
   h+='<div class="card"><b>My promise</b><div class="muted" style="font-size:14px;margin-bottom:10px">'+(a.goal?'“'+esc(a.goal.promise)+'”':'Not written yet')+'</div><button class="btn sec2 block" data-act="goal">'+(a.goal?'Change my promise':'Write my promise')+'</button></div>';
   h+='<div class="pstats"><div class="card"><b class="num">'+(b?b+' m':'—')+'</b><span>Corniche Run best</span></div><div class="card"><b class="num">'+(a.pkgs||[]).filter(function(p){return p.phase==='current'}).length+'</b><span>Active packages</span></div></div>';
   h+='<div class="card" style="margin-top:14px"><b>App color</b><div class="swatches">'+[['rose','#a3263f'],['mint','#1f6e5b'],['ocean','#1e5f8c'],['sunset','#c2571a'],['plum','#6b2d7a']].map(function(x){return '<button aria-label="'+x[0]+'" aria-pressed="'+((store('wbc_accent')||'rose')===x[0])+'" data-accent="'+x[0]+'" style="background:'+x[1]+'"></button>'}).join('')+'</div></div>';
-  if(a.full)h+='<button class="btn ghost block" style="margin-top:14px" data-nav="plan">'+ICON('i-card')+'My packages and requests</button>';
+  if(a.full&&!D.guest)h+='<button class="btn ghost block" style="margin-top:14px" data-nav="plan">'+ICON('i-card')+'My packages and requests</button>';
   h+='<button class="btn ghost block" style="margin-top:10px" data-act="out">'+ICON('i-out')+'Sign out</button>';
   return h};
+// ---------- not a client yet: why Wellbe, services, packages, and 3 ways in
+var GSERV=[['i-users','Small group 1:3','3 people, 1 coach. Private-level coaching at a group price.'],['i-users','Duo 1:2','Train with a partner, one coach for the two of you.'],['i-dumbbell','Private 1:1','The coach is all yours, every rep.'],
+  ['i-steth','Physiotherapy','Pain, injury or recovery: 60 minutes with Majd, physiotherapist.'],['i-heart','Prehab','10 sessions to fix the weak links before they become injuries.'],['i-spark','Osteopathy','Hands-on treatment with Jad.'],['i-madero','Maderotherapy','Wood therapy with Melanie to smooth, sculpt and drain.']];
+function gTrialCard(){var t=D.guest.trial;if(!t)return '';
+  return '<div class="gstat"><span class="wi">'+ICON('i-check')+'</span><div class="grow"><b>Your free trial'+(t.status==='Confirmed'?' is confirmed':' is booked')+'</b><span>'+dayLong(t.date)+' at '+esc(t.time)+(t.status==='Confirmed'?'':' · Romy will confirm on WhatsApp')+'</span></div></div>'}
+VIEWS.wellbe=function(){var a=ACC(),G=D.guest,as=G.asked||{};
+  var h='<div class="ghero"><div class="tag">Wellbe Health Center</div><h1>Physio-led training, in a group of 3</h1><p>Every program is built and checked by a physiotherapist. You get stronger, move better, and stay away from injuries, with the energy of a small group.</p>'+
+    (G.trial?'':'<button class="btn block" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>';
+  h+=gTrialCard();
+  h+='<div class="sec"><h2>3 ways to start</h2></div><div class="list">'+
+    (G.trial?'':gWay('i-gift','Free trial session','Pick a real time slot. Train with us once, free.','gtrial'))+
+    gWay('i-wa','Free 15 min coach call',as.call===D.today?'Requested. The coach will WhatsApp you.':'Tell a coach your goal, get a plan for it.','gcall')+
+    gWay('i-card','Get a package',as.pkg?'Requested: '+esc(as.pkg.replace(/\s*\(\$[^)]*\)/,''))+'. Romy will WhatsApp you.':'Pick it here, pay at the center.','gpkgs')+'</div>';
+  h+='<div class="sec"><h2>Why Wellbe</h2></div><div class="gwhy">'+[['i-steth','Backed by a physio','Majd, our physiotherapist, designs and checks every program.'],['i-users','Max 3 per coach','Coached like private training, priced like a group.'],['i-heart','Built around your body','Your injuries, pain and goals shape your plan.'],['i-spark','Train for life','Better health and more energy, without getting hurt.']]
+    .map(function(x){return '<div class="card"><span class="wi">'+ICON(x[0])+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></div>'}).join('')+'</div>';
+  h+='<div class="sec"><h2>What we do</h2></div><div class="list">'+GSERV.map(function(x){return '<div class="card gserv"><span class="wi">'+ICON(x[0])+'</span><div class="grow"><b>'+x[1]+'</b><span>'+x[2]+'</span></div></div>'}).join('')+'</div>';
+  h+='<div class="sec"><h2>Packages</h2><button class="link" data-act="gpkgs">All prices</button></div>'+gPkgList(G.packages.filter(function(p){return p.kind==='1:3'}));
+  h+='<div class="sec"><h2>My promise</h2></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
+  h+='<div class="gfoot"><b>Questions?</b><span>Romy answers on WhatsApp.</span><a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi Romy, this is '+a.name+'. I have a question about Wellbe.')+'">'+ICON('i-wa')+'Message Romy</a></div>';
+  return h};
+function gWay(ic,t,sub,act){return '<button class="book" data-act="'+act+'"><span class="ic">'+ICON(ic)+'</span><div class="grow"><b>'+t+'</b><span>'+sub+'</span></div><span class="go">›</span></button>'}
+function gLabel(p){return /x\/month/.test(p.label)?tabName(p.kind)+' · '+p.n+' a month':p.label}
+function gPkgList(list){return '<div class="list">'+list.map(function(p){return '<button class="card gpkg" data-act="gpkg|'+esc(p.name)+'"><div class="grow"><b>'+esc(gLabel(p))+'</b><span>'+p.n+' session'+(p.n>1?'s':'')+(p.n>1?' · '+money(Math.round(p.price/p.n*10)/10)+' per session':'')+'</span></div><span class="gp num">'+money(p.price)+'</span></button>'}).join('')+'</div>'}
+VIEWS.gwork=function(){return '<div class="hello"><h1>Your <em>workouts</em></h1></div><div class="empty" style="text-align:left"><b style="font-size:18px">Your coach builds your plan</b><p class="muted">After your first session, your coach writes a program made for your body. It shows here, one workout at a time, with your weights.</p>'+
+  (D.guest.trial?gTrialCard():'<button class="btn block" style="margin-top:14px" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>'}
+function gPhoneField(){return '<label class="flabel" for="gph" style="margin-top:16px">Your WhatsApp number</label><input class="inp" id="gph" type="tel" inputmode="tel" autocomplete="tel" placeholder="70 123 456" value="'+esc(D.guest.phone||'')+'">'}
+function gSend(op,data,btn,done){var ph=$('#gph')?$('#gph').value.trim():D.guest.phone;if(String(ph||'').replace(/\D/g,'').length<7){toast('Type your WhatsApp number');return}
+  busy(btn,true);data.op=op;data.phone=ph;api('app_cl_guest',Object.assign({cid:ACC().cid},data)).then(function(j){D.guest.phone=ph;if(j.asked)D.guest.asked=j.asked;if(j.trial)D.guest.trial=j.trial;store(cacheKey(),JSON.stringify(D));closeSheet();render();done(j);boot(true)}).catch(function(e){fail(btn,e)})}
+function gActs(){ACT.gtrial=function(){var days=(D.guest.slots||[]).filter(function(d){return d.slots.some(function(x){return x.type!=='full'})});
+  if(!days.length){openSheet('Free trial','<p class="muted">No open morning slot this week. Message Romy and she will find you a time.</p>','<a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I want to book my free trial at Wellbe.')+'">'+ICON('i-wa')+'Message Romy</a>');return}
+  var sel=days[0].date,hr=null;
+  var paint=function(){var d=days.filter(function(x){return x.date===sel})[0];$('#gslots').innerHTML=d.slots.map(function(x){return '<button class="slot" aria-pressed="'+(x.hour===hr)+'" data-h="'+x.hour+'"'+(x.type==='full'?' disabled':'')+'><b>'+hl((x.hour<10?'0':'')+x.hour+':00')+'</b><span class="muted">'+(x.type==='full'?'Full':'Small group 1:3 with Joe')+'</span></button>'}).join('');
+    $$('#gslots [data-h]').forEach(function(b){b.onclick=function(){hr=+b.dataset.h;paint()}})};
+  openSheet('Book your free trial','<p class="muted" style="margin-top:0">One free small group session, 60 minutes. Pick a day and a time.</p>'+dayChips(days.map(function(d){return d.date}),sel,'gdays')+'<div class="slots" id="gslots" style="margin-top:12px"></div>'+gPhoneField(),'<button class="btn block" id="gok">Book my free trial</button>');
+  pickOne('#gdays',function(b){sel=b.dataset.d;hr=null;paint()});paint();
+  $('#gok').onclick=function(){if(hr==null){toast('Pick a time');return}gSend('trial',{date:sel,hour:hr},this,function(j){success('Your free trial is booked','<b>'+dayLong(j.trial.date)+' at '+esc(j.trial.time)+'</b><br>Romy will confirm on WhatsApp. Bring water and comfortable shoes.')})}};
+ACT.gcall=function(){openSheet('Free 15 min coach call','<p class="muted" style="margin-top:0">A coach WhatsApps you to understand your goal, your past injuries and your schedule, then tells you exactly how we would train you.</p><label class="flabel" for="gnote">Your goal (optional)</label><input class="inp" id="gnote" placeholder="e.g. lose 6 kg, back pain, get strong">'+gPhoneField(),'<button class="btn block" id="gok">Ask for my call</button>');
+  $('#gok').onclick=function(){gSend('call',{note:$('#gnote').value.trim()},this,function(){success('Call requested','A coach will WhatsApp you soon. Keep your phone close.')})}};
+ACT.gpkgs=function(){var P=D.guest.packages,kinds=['1:3','1:2','1:1','Prehab','Physio','Osteo','Madero'];
+  openSheet('Packages',kinds.map(function(k){var l=P.filter(function(p){return p.kind===k});return l.length?'<div class="sec" style="margin-top:14px"><h2>'+tabName(k)+'</h2></div>'+gPkgList(l):''}).join('')+'<p class="muted" style="font-size:14px">Pay at the center, cash or Whish. Not sure which one fits you? Ask for a free coach call.</p>');bind()};
+ACT.gpkg=function(name){var p=D.guest.packages.filter(function(x){return x.name===name})[0];if(!p)return;
+  openSheet('Get this package','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+esc(gLabel(p))+'</b><div class="muted">'+p.n+' session'+(p.n>1?'s':'')+' · '+money(p.price)+'</div></div><p class="muted">Romy WhatsApps you to choose your start date and times. You pay at the center (cash or Whish).</p>'+gPhoneField(),'<button class="btn block" id="gok">Request this package</button>');
+  $('#gok').onclick=function(){gSend('pkg',{pkg:p.name},this,function(){success('Package requested','Romy will WhatsApp you to set your start date. Welcome to Wellbe!')})}};
+}
+function bindGuest(){}
 // clients without a package
 VIEWS.basic=function(){var a=ACC(),past=a.pkgs.slice().reverse();
   var h='<div class="hello"><h1>Hi <em>'+esc(a.first)+'</em></h1><p>Good to see you. Ready for your next step?</p></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
@@ -1025,7 +1099,7 @@ function freezeSheet(p){if(!p)return;var min=p.start>D.today?p.start:D.today;
    '<div class="field"><label for="fn">Reason (optional)</label><input class="inp" id="fn" placeholder="e.g. travel"></div>','<button class="btn block" id="go">Request the freeze</button>');
   $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'freeze',pkg:p.id,from:$('#ff').value,note:$('#fn').value.trim()}).then(function(){success('Freeze requested','Romy will confirm it. Your new end date shows here once it’s done.')}).catch(function(e){fail(b,e)})}}
 
-var ACT={};
+var ACT={};gActs();
 var w$=function(s,r){return (r||document).querySelector(s)},w$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 // Workouts: the program the client's coaches built. Nothing shows until a coach builds one.
 var WOS={},WOLD={},WODR={};

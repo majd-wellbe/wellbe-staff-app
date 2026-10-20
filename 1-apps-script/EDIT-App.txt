@@ -1,0 +1,7 @@
+ONE SMALL EDIT in the App file (Ctrl+H, cursor in the code first)
+
+Find:
+function appClientInfo_(cid) {
+
+Replace with:
+function appClientInfo_(cid) { if (/^G\d+$/.test(String(cid))) { var gq = guestById_(cid); return gq ? { name: gq.name, phone: gq.phone, email: gq.email } : null; }
