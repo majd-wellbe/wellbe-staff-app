@@ -2,8 +2,8 @@
 // CORNICHE RUN (client app game)
 // Two currencies:
 //  COINS (250 / 500 lira): in-game only. Upgrades, extra lives, revives. Never cashed out.
-//  CASH: real money off a renewal. $0.10 for every run that reaches x5 (about 3 minutes), max $0.50 a day, only for
-//        clients who trained at the center in the last 7 days. Used at renewal, max $10 per package.
+//  CASH: real money off a renewal. $0.10 for every run that passes 2,000 m (once per run), max $0.50 a day, only for
+//        clients who trained at the center in the last 7 days. Used at renewal (center or online workouts), max $20 per package.
 // Everything is saved here (CORNICHE RUN tab) so it cannot be faked on the phone.
 // Action app_cl_run with op: get | save | buy | redeem
 // =====================================================================
@@ -11,7 +11,7 @@ var RUN = {
   HEAD: ['Client ID', 'Name', 'Best score', 'Best m', 'Coins', 'Runs', 'Total m', 'Day', 'Day best', 'Week', 'Week best', 'Upgrades', 'Missions', 'Badges', 'Last run', 'Earned total', 'Updated', 'Cash (cents)', 'Cash earned (cents)'],
   UP_COST: [500, 1000, 2000, 4000, 8000],
   LIFE_COST: 1000, LIFE_MAX: 3,   // extra life: start a run with 2 hearts
-  CASH: { MULT: 5, MIN_SECS: 170, CENTS: 10, DAY_MAX: 50, REDEEM_MIN: 100, REDEEM_MAX: 1000, TRAINED_DAYS: 7 },
+  CASH: { MIN_M: 2000, CENTS: 10, DAY_MAX: 50, REDEEM_MIN: 100, REDEEM_MAX: 2000, TRAINED_DAYS: 7 },
   MISSIONS: [
     { k: 'coins', t: 'Collect 150 coins in one run', s: 'coins', m: 'max', n: 150, r: 200 },
     { k: 'd1', t: 'Run 1,000 m in one run', s: 'm', m: 'max', n: 1000, r: 200 },
@@ -64,9 +64,9 @@ function clRun_(b, cid) {
     if (ms.done.length >= 3 && !ms.bonus) { ms.bonus = 1; earned += RUN.ALL_BONUS; out.mdone.push({ t: 'All 3 missions done', r: RUN.ALL_BONUS }); }
     var lt = Math.max(0, Math.min(Math.round(Number(ev.letters) || 0), m >= 800 ? 2 : m >= 350 ? 1 : 0));
     if (lt) { ms.wl = Math.min(7, (Number(ms.wl) || 0) + lt); if (ms.wl >= 7 && !ms.wb) { ms.wb = 1; earned += 1000; out.mdone.push({ t: 'WELLBE complete', r: 1000 }); } }
-    // cash: $0.10 for a run that reaches x5, max $0.50 a day, only after training this week
-    out.cashEarned = 0; out.reachedX = Math.min(5, Math.round(Number(ev.mult) || 1));
-    if (trained && out.reachedX >= RUN.CASH.MULT && (Number(r.secs) || 0) >= RUN.CASH.MIN_SECS) {
+    // cash: $0.10 for a run that passes 2,000 m (once per run), max $0.50 a day, only after training this week
+    out.cashEarned = 0;
+    if (trained && m >= RUN.CASH.MIN_M) {
       var ce = Math.max(0, Math.min(RUN.CASH.CENTS, RUN.CASH.DAY_MAX - (Number(ms.cash) || 0)));
       ms.cash = (Number(ms.cash) || 0) + ce; rec[17] += ce; rec[18] += ce; out.cashEarned = ce;
     }
@@ -104,7 +104,7 @@ function clRun_(b, cid) {
     var amt = Math.min(rec[17], RUN.CASH.REDEEM_MAX);
     if (amt < RUN.CASH.REDEEM_MIN) throw new Error('You need at least $' + (RUN.CASH.REDEEM_MIN / 100).toFixed(2) + ' Cash.');
     rec[17] -= amt; pend = amt;
-    clLog_(ops, cid, rec[1], 'Game cash', rec[1] + ' used $' + (amt / 100).toFixed(2) + ' Corniche Run Cash: take it off their next package when they renew (max $10 per package).', '', '', 'New', { cents: amt });
+    clLog_(ops, cid, rec[1], 'Game cash', rec[1] + ' used $' + (amt / 100).toFixed(2) + ' Corniche Run Cash: take it off their next package when they renew, at the center or online workouts (max $20 per package).', '', '', 'New', { cents: amt });
     out.redeemed = amt; changed = true;
   }
 
@@ -124,7 +124,7 @@ function clRun_(b, cid) {
   }
   out.coins = Number(rec[4]) || 0; out.best = Number(rec[2]) || 0; out.bestM = Number(rec[3]) || 0; out.runs = Number(rec[5]) || 0;
   out.up = { magnet: up.magnet || 0, jet: up.jet || 0, shoes: up.shoes || 0, life: up.life || 0 }; out.upCost = RUN.UP_COST; out.lifeCost = RUN.LIFE_COST; out.lifeMax = RUN.LIFE_MAX;
-  out.cash = { bal: rec[17], total: rec[18], today: Number(ms.cash) || 0, mult: RUN.CASH.MULT, cents: RUN.CASH.CENTS, dayMax: RUN.CASH.DAY_MAX,
+  out.cash = { bal: rec[17], total: rec[18], today: Number(ms.cash) || 0, minM: RUN.CASH.MIN_M, cents: RUN.CASH.CENTS, dayMax: RUN.CASH.DAY_MAX,
     min: RUN.CASH.REDEEM_MIN, max: RUN.CASH.REDEEM_MAX, trained: trained, pending: pend || 0 };
   out.missions = runToday_(today).map(function (mi) { return { k: mi.k, t: mi.t, n: mi.n, p: Math.min(mi.n, Number(ms.st[mi.k]) || 0), done: ms.done.indexOf(mi.k) >= 0, r: mi.r, s: mi.s, m: mi.m }; });
   out.allBonus = RUN.ALL_BONUS; out.bonusDone = !!ms.bonus; out.word = Number(ms.wl) || 0; out.wordBonus = 1000;
