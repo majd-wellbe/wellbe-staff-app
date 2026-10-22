@@ -245,6 +245,37 @@ input.wonote{margin-top:6px}
 .wol{margin:6px 0 14px;padding-left:18px}.wol li{margin:6px 0}.wolast{display:block;color:var(--good);font-weight:700;font-size:12.5px}.wolb{margin-bottom:6px}.wolt{font-size:13px;color:var(--crimson);text-transform:uppercase}
 .wolog{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;display:grid;gap:6px}.wolog small{color:var(--ink-3)}
 .woset{display:grid;grid-template-columns:22px 1fr 1fr;gap:6px;align-items:center}.woset span{font-weight:800;color:var(--ink-3)}.woset input{min-height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);padding:0 10px;width:100%}
+/* ---------- searchable dropdowns (every select with 6+ choices) ---------- */
+.ss{position:relative;width:100%}
+.ss-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);padding:0 12px;font:inherit;font-size:15px;color:var(--ink);text-align:left;cursor:pointer}
+.ss-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ss-btn i{font-style:normal;color:var(--ink-3)}
+.ss-pan{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;background:var(--card);border:2px solid var(--mint-deep);border-radius:14px;box-shadow:0 12px 30px rgba(31,110,91,.18);overflow:hidden}
+.ss-sb{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.ss-sb input{flex:1;border:0;outline:0;background:transparent;font:inherit;font-size:16px;color:var(--ink);min-height:34px;padding:0}
+.ss-sb small{font-size:11px;color:var(--ink-3);white-space:nowrap}
+.ss-list{max-height:280px;overflow-y:auto;overscroll-behavior:contain}
+.ss-g{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--ink-3);padding:8px 12px 4px;background:var(--bg)}
+.ss-o{display:flex;justify-content:space-between;gap:10px;width:100%;padding:11px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;font:inherit;font-size:15px;color:var(--ink);text-align:left;cursor:pointer}
+.ss-o small{color:var(--ink-3);font-size:12px;white-space:nowrap}.ss-o.on{background:var(--mint-soft)}
+.ss-o mark{background:#fff1b8;color:#151b1e;font-weight:700;border-radius:2px}
+.ss-none{padding:14px 12px;color:var(--ink-3);font-size:14px}
+/* ---------- client history ---------- */
+.hx-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.hx-chip{font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--ink-2);cursor:pointer}
+.hx-chip[aria-pressed="true"]{background:var(--mint-deep);border-color:var(--mint-deep);color:#fff}
+.hx-pk{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.hx-h{display:flex;justify-content:space-between;align-items:center;gap:8px}.hx-h b{font-size:15px}
+.hx-meta{font-size:12.5px;color:var(--ink-3);margin:3px 0 10px}
+.hx-bar{height:8px;border-radius:9px;background:var(--track);overflow:hidden;display:flex}.hx-bar i{background:var(--good)}.hx-bar u{background:var(--bad)}
+.hx-cnt{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin:7px 0 4px}
+.hx-s{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.hx-n{flex:0 0 24px;height:24px;border-radius:50%;background:var(--bg);font-size:11px;font-weight:700;display:grid;place-items:center;color:var(--ink-2)}
+.hx-s .d{flex:1;min-width:0}.hx-s .d small{display:block;color:var(--ink-3);font-size:12px}
+.hx-more{width:100%;border:0;background:transparent;font:inherit;color:var(--ink-3);padding:8px;cursor:pointer}
+.hx-warn{background:var(--warn-soft);color:var(--warn);font-size:13px;border-radius:12px;padding:9px 11px;margin-top:8px;line-height:1.4}
+
+/* iOS: keep the fixed footer and + button glued to the bottom while scrolling */
+.tabs,.fab{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);-webkit-backface-visibility:hidden;backface-visibility:hidden}
 </style>
 </head>
 <body>
@@ -723,7 +754,7 @@ function clientSheet(id){
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
   if($('#woOpen'))$('#woOpen').onclick=function(){closeSheet();woOpenClient(id)};
   if(ME.role==='owner')bindOwnerExtras(c);
-  if(ME.role!=='trainer')bindStaffClientTools(c);
+  if(ME.role!=='trainer')bindStaffClientTools(c);hxMount(id);
   if($('#editCl'))$('#editCl').onclick=function(){
     openSheet('Edit '+first(c.name),'<div class="field"><label for="ecn">Full name</label><input id="ecn" type="text" value="'+esc(c.name)+'" autocomplete="off"></div><div class="field"><label for="ecp">Phone</label><input id="ecp" type="tel" inputmode="tel" value="'+esc(c.phone)+'"></div><div class="field"><label for="ece">Email <span class="muted" style="font-weight:500">(used to sign in to the client app)</span></label><input id="ece" type="email" inputmode="email" autocomplete="off" value="'+esc(c.email)+'"></div><p class="muted" style="font-size:13px;margin-top:10px">Parents: put the parent\u2019s email on the child\u2019s profile, they will see it from their own sign in.</p>',
      '<button class="btn ok full" id="doEc">'+ICON('i-check')+'Save</button>');
@@ -1329,6 +1360,94 @@ function woAct(a){
   if(k==='type'){var bl=arr,mx=a[2]==='single'?1:a[2]==='superset'?3:10;bl.type=a[2];bl.moves=bl.moves.slice(0,mx);while(bl.moves.length<(a[2]==='single'?1:2))bl.moves.push(woNewMove('main'));re(1);return}
 }
 ACTIONS.wo=function(){closeSheet();VIEW='wo';WOV='list';render();scrollTo(0,0)};
+/* ---------- searchable dropdowns: every select with 6+ choices gets a search box, now and in the future ---------- */
+var SS_MIN=6;
+function ssNorm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim()}
+function ssMark(t,q){t=String(t);if(!q)return esc(t);var i=ssNorm(t).indexOf(q);if(i<0)return esc(t);return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))}
+function ssInfo(o){ // extra line and group for client and package choices
+  var v=o.value,c=/^[CG]\d+$/i.test(v)&&typeof clientById==='function'?clientById(v):null;
+  if(c){var p=typeof pkgOf==='function'?pkgOf(c.id):null,act=typeof isActive==='function'?isActive(c.id):!!p;return {sub:c.id+(p?' · '+(p.kind||''):''),grp:act?'ACTIVE CLIENTS':'OTHER CLIENTS',extra:(c.phone||'')+' '+c.id}}
+  var k=/^PKG-/i.test(v)&&typeof pkgById==='function'?pkgById(v):null;
+  if(k)return {sub:k.id+' · '+(k.total-k.used)+' left',grp:'',extra:k.id};
+  var og=o.parentNode&&o.parentNode.tagName==='OPTGROUP'?o.parentNode.label:'';
+  return {sub:'',grp:og,extra:v}}
+function ssLabel(sel){var o=sel.options[sel.selectedIndex];return o?o.textContent:'Choose'}
+function ssEnhance(sel){
+  if(sel._ss||sel.multiple||sel.options.length<SS_MIN||sel.closest('.ss'))return;
+  var w=document.createElement('div');w.className='ss';sel.parentNode.insertBefore(w,sel);w.appendChild(sel);sel.style.display='none';
+  var b=document.createElement('button');b.type='button';b.className='ss-btn';b.setAttribute('aria-haspopup','listbox');w.insertBefore(b,sel);
+  if(sel.id){var lb=document.querySelector('label[for="'+sel.id+'"]');if(lb)lb.onclick=function(e){e.preventDefault();b.click()}}
+  var paint=function(){b.innerHTML='<span>'+esc(ssLabel(sel))+'</span><i>▾</i>';b.disabled=sel.disabled};
+  sel._ss={paint:paint};paint();
+  new MutationObserver(paint).observe(sel,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+  sel.addEventListener('change',paint);
+  b.onclick=function(e){e.stopPropagation();if(w.querySelector('.ss-pan')){ssClose();return}ssClose();ssOpen(w,sel)}}
+function ssClose(){$$('.ss-pan').forEach(function(p){p.remove()})}
+function ssOpen(w,sel){
+  var pan=document.createElement('div');pan.className='ss-pan';
+  pan.innerHTML='<div class="ss-sb">'+ICON('i-search')+'<input type="search" placeholder="Search" autocomplete="off" aria-label="Search"><small></small></div><div class="ss-list" role="listbox"></div>';
+  w.appendChild(pan);pan.onclick=function(e){e.stopPropagation()};
+  var inp=pan.querySelector('input'),list=pan.querySelector('.ss-list'),cnt=pan.querySelector('small'),opts=[].slice.call(sel.options).filter(function(o){return !o.hidden});
+  var items=opts.map(function(o){var x=ssInfo(o);return {o:o,t:o.textContent,sub:x.sub,grp:x.grp,key:ssNorm(o.textContent+' '+x.extra+' '+x.sub)}});
+  var draw=function(){var q=ssNorm(inp.value),hit=items.filter(function(it){return !q||it.key.indexOf(q)>-1});
+    if(q)hit.sort(function(a,b){return (ssNorm(a.t).indexOf(q)===0?0:1)-(ssNorm(b.t).indexOf(q)===0?0:1)});
+    var grs=[];hit.forEach(function(it){if(grs.indexOf(it.grp)<0)grs.push(it.grp)});grs.sort(function(a,b){return (a==='OTHER CLIENTS')-(b==='OTHER CLIENTS')});
+    cnt.textContent=q?hit.length+' found':'';
+    list.innerHTML=hit.length?grs.map(function(g){return (g&&grs.length>1||g&&g!=='ACTIVE CLIENTS'&&g!=='OTHER CLIENTS'?'<div class="ss-g">'+esc(g)+'</div>':'')+hit.filter(function(it){return it.grp===g}).map(function(it){var i=items.indexOf(it);
+      return '<button type="button" role="option" class="ss-o'+(it.o.selected?' on':'')+'" data-i="'+i+'"'+(it.o.disabled?' disabled':'')+'><span>'+ssMark(it.t,q)+'</span>'+(it.sub?'<small>'+esc(it.sub)+'</small>':'')+'</button>'}).join('')}).join(''):'<div class="ss-none">Nothing matches “'+esc(inp.value)+'”</div>';
+    $$('.ss-o',list).forEach(function(x){x.onclick=function(){var o=items[+x.dataset.i].o;sel.value=o.value;ssClose();sel.dispatchEvent(new Event('input',{bubbles:true}));sel.dispatchEvent(new Event('change',{bubbles:true}));paint2()}})};
+  var paint2=function(){sel._ss.paint()};
+  inp.oninput=draw;inp.onkeydown=function(e){if(e.key==='Escape')ssClose();if(e.key==='Enter'){e.preventDefault();var f=list.querySelector('.ss-o:not([disabled])');if(f)f.click()}};
+  draw();var on=list.querySelector('.ss-o.on');if(on)on.scrollIntoView({block:'nearest'});
+  if(opts.length>8)setTimeout(function(){inp.focus()},30)}
+// keep the button text right when the code sets select.value
+(function(){var d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');if(!d||!d.set)return;
+  Object.defineProperty(HTMLSelectElement.prototype,'value',{get:d.get,set:function(v){d.set.call(this,v);if(this._ss)this._ss.paint()},configurable:true})})();
+document.addEventListener('click',ssClose);
+(function(){var run=function(root){(root.querySelectorAll?[].slice.call(root.querySelectorAll('select')):[]).concat(root.tagName==='SELECT'?[root]:[]).forEach(ssEnhance)};
+  new MutationObserver(function(ms){ms.forEach(function(m){[].forEach.call(m.addedNodes,function(n){if(n.nodeType===1)run(n)});if(m.target&&m.target.tagName==='SELECT')ssEnhance(m.target)})}).observe(document.body,{childList:true,subtree:true});
+  run(document.body)})();
+
+/* ---------- client history: every session, per service and per package ---------- */
+var HX_SVC={'1:1':['1:1'],'1:2':['1:2'],'1:3':['1:3'],'Prehab':['Prehab'],'Physio':['Physio'],'Osteo':['Osteo'],'Madero':['Madero']};
+function hxState(s,c){var a=String(c.att||'');
+  if(/late/i.test(a))return ['Late cancel','p-bad'];if(/no show/i.test(a))return ['No show','p-bad'];if(/cancel/i.test(a))return ['Early cancel','p-mute'];
+  if(/present|done/i.test(a))return ['Present','p-good'];if(s.date>=T)return ['Booked','p-warn'];return ['Not marked','p-warn']}
+function hxView(id,svc){
+  var mine=[];SESS.forEach(function(s){s.clients.forEach(function(c){if(c.cid===id)mine.push({s:s,c:c})})});
+  var from=HIST?'0000-00-00':ymd(addDays(TODAY,-70));
+  var pk=PKGS.filter(function(p){return p.client===id}).sort(function(a,b){return (a.start||'')<(b.start||'')?1:-1});
+  var svcOf=function(p){return p.kind||''},count={};pk.forEach(function(p){count[svcOf(p)]=(count[svcOf(p)]||0)+1});
+  var svcs=Object.keys(count);
+  var chips='<div class="hx-chips">'+['All'].concat(svcs).map(function(k){return '<button class="hx-chip" data-hx="'+esc(k)+'" aria-pressed="'+(k===svc)+'">'+esc(k)+' · '+(k==='All'?pk.length:count[k])+'</button>'}).join('')+'</div>';
+  var cards=pk.filter(function(p){return svc==='All'||svcOf(p)===svc}).map(function(p){
+    var rows=mine.filter(function(x){return x.c.pkg===p.id}).sort(function(a,b){return (a.s.date+a.s.start)<(b.s.date+b.s.start)?1:-1});
+    var used=p.used,left=Math.max(0,p.total-used),y=rows.filter(function(x){return x.c.flag==='Y'}).length;
+    var pres=rows.filter(function(x){return hxState(x.s,x.c)[0]==='Present'}).length,late=rows.filter(function(x){return /Late|No show/.test(hxState(x.s,x.c)[0])}).length,booked=rows.filter(function(x){return hxState(x.s,x.c)[0]==='Booked'}).length;
+    var wrong=rows.filter(function(x){var ok=HX_SVC[x.s.tab]||[x.s.tab];return p.kind&&ok.indexOf(p.kind)<0});
+    var warn='';
+    if(wrong.length)warn+='<div class="hx-warn"><b>'+wrong.length+' session'+(wrong.length>1?'s':'')+' on the wrong package:</b> '+wrong.map(function(x){return x.s.tab+' '+dayLabel(x.s.date)+' ('+x.s.id+')'}).join(', ')+'. A '+esc(p.kind)+' package should only hold '+esc(p.kind)+' sessions. Move '+(wrong.length>1?'them':'it')+' to the right package in the sheet.</div>';
+    if(p.start&&p.start>=from&&y!==used)warn+='<div class="hx-warn">The sheet says <b>'+used+' used</b>, the sessions below took <b>'+y+' passes</b>. Check the Pass column for this package.</div>';
+    var dw=p.total?Math.min(100,used/p.total*100):0,lw=p.total?Math.min(100-dw,late/p.total*100):0;
+    var list=rows.map(function(x,i){var st=hxState(x.s,x.c);return '<div class="hx-s"'+(i>=5?' data-hxm hidden':'')+'><span class="hx-n">'+(rows.length-i)+'</span><span class="d">'+dayLabel(x.s.date)+' · '+hl(x.s.start)+'<small>'+esc(x.s.tab)+' with '+esc(x.s.trainer)+(x.c.flag==='Y'?' · pass taken':'')+'</small></span><span class="pill '+st[1]+'">'+st[0]+'</span></div>'}).join('');
+    var done=/complete|finish|expired|cancel/i.test(p.status)||(!left&&!booked);
+    return '<div class="hx-pk"><div class="hx-h"><b>'+esc(p.type.replace(/\s*\(\$[^)]*\)/,''))+'</b><span class="pill '+(done?'p-mute':'p-good')+'">'+(done?'Finished':esc(p.status||'Active'))+'</span></div>'+
+      '<div class="hx-meta">'+esc(p.id)+(p.start?' · '+dayLabel(p.start):'')+(p.expiry?' → '+dayLabel(p.expiry):'')+(ME.role!=='trainer'&&p.price?' · '+money(p.price)+(p.paid>=p.price?' paid':' ('+money(p.paid||0)+' paid)'):'')+'</div>'+
+      '<div class="hx-bar"><i style="width:'+dw+'%"></i><u style="width:'+lw+'%"></u></div>'+
+      '<div class="hx-cnt"><span><b>'+pres+'</b> attended'+(late?' · <b>'+late+'</b> late cancel / no show':'')+(booked?' · <b>'+booked+'</b> booked':'')+'</span><b style="color:var(--good)">'+left+' of '+p.total+' left</b></div>'+
+      (rows.length?list:'<div class="hx-s"><span class="d muted">'+(p.start&&p.start<from?'Sessions older than 70 days are not loaded here.':'No sessions yet.')+'</span></div>')+
+      (rows.length>5?'<button class="hx-more" data-hxmore>Show '+(rows.length-5)+' more</button>':'')+warn+'</div>'}).join('');
+  return '<span class="flabel">Session history</span>'+chips+(cards||'<p class="muted">No packages.</p>')+(!HIST&&ME.role!=='owner'?'<p class="muted" style="font-size:12px">Showing the last 70 days of sessions.</p>':'')}
+function hxMount(id,svc){
+  var body=$('#shBody');if(!body)return;var box=body.querySelector('#hxBox');
+  if(!box){var lab=[].slice.call(body.querySelectorAll('.flabel')).filter(function(x){return /Recent sessions/.test(x.textContent)})[0];
+    box=document.createElement('div');box.id='hxBox';
+    if(lab){var nx=lab.nextElementSibling;lab.parentNode.insertBefore(box,lab);lab.remove();if(nx&&nx.classList.contains('list'))nx.remove()}else body.appendChild(box)}
+  box.innerHTML=hxView(id,svc||'All');
+  $$('[data-hx]',box).forEach(function(b){b.onclick=function(){hxMount(id,b.dataset.hx)}});
+  $$('[data-hxmore]',box).forEach(function(b){b.onclick=function(){$$('[data-hxm]',b.parentNode).forEach(function(r){r.hidden=false});b.remove()}});
+  if(ME.role==='owner'&&!HIST&&typeof loadHistory==='function'&&!hxMount._asked){hxMount._asked=1;loadHistory()}}
+
 // start
 if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
 render();if(KEY)boot(LOADED);

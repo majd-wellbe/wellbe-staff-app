@@ -8,7 +8,7 @@
 // Action app_cl_run with op: get | save | buy | redeem
 // =====================================================================
 var RUN = {
-  HEAD: ['Client ID', 'Name', 'Best score', 'Best m', 'Coins', 'Runs', 'Total m', 'Day', 'Day best', 'Week', 'Week best', 'Upgrades', 'Missions', 'Badges', 'Last run', 'Earned total', 'Updated', 'Cash (cents)', 'Cash earned (cents)'],
+  HEAD: ['Client ID', 'Name', 'Best score', 'Best m', 'Coins', 'Runs', 'Total m', 'Day', 'Day best', 'Week', 'Week best', 'Upgrades', 'Missions', 'Badges', 'Last run', 'Earned total', 'Updated', 'Cash (cents)', 'Cash earned (cents)', 'XP', 'Owned'],
   UP_COST: [500, 1000, 2000, 4000, 8000],
   LIFE_COST: 1000, LIFE_MAX: 3,   // extra life: start a run with 2 hearts
   CASH: { MIN_M: 2000, CENTS: 10, DAY_MAX: 50, REDEEM_MIN: 100, REDEEM_MAX: 2000, TRAINED_DAYS: 7 },
@@ -34,10 +34,11 @@ function clRun_(b, cid) {
   var ops = SpreadsheetApp.openById(CFG.OPS_ID), tz = CFG.TZ, now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   var week = runWeek_(today), sh = appTab_(ops, 'CORNICHE RUN', RUN.HEAD), n = sh.getLastRow();
   if (String(sh.getRange(1, 18).getValue()) !== RUN.HEAD[17]) sh.getRange(1, 18, 1, 2).setValues([[RUN.HEAD[17], RUN.HEAD[18]]]).setFontWeight('bold').setBackground('#1f2a2e').setFontColor('#ffffff');
+  if (String(sh.getRange(1, 20).getValue()) !== 'XP') sh.getRange(1, 20, 1, 2).setValues([['XP', 'Owned']]).setFontWeight('bold').setBackground('#1f2a2e').setFontColor('#ffffff');
   var v = n > 1 ? sh.getRange(2, 1, n - 1, RUN.HEAD.length).getValues() : [], at = -1;
   for (var i = 0; i < v.length; i++) if (String(v[i][0]).toUpperCase() === cid) { at = i; break; }
-  var rec = at < 0 ? [cid, runName_(cid), 0, 0, 0, 0, 0, '', 0, '', 0, '{}', '{}', '[]', '', 0, '', 0, 0] : v[at].slice();
-  rec[17] = Number(rec[17]) || 0; rec[18] = Number(rec[18]) || 0;
+  var rec = at < 0 ? [cid, runName_(cid), 0, 0, 0, 0, 0, '', 0, '', 0, '{}', '{}', '[]', '', 0, '', 0, 0, 0, '{}'] : v[at].slice();
+  rec[17] = Number(rec[17]) || 0; rec[18] = Number(rec[18]) || 0; rec[19] = Number(rec[19]) || 0; var owned = lvMigrate_(runJ_(rec[20], {}), runJ_(rec[11], {}));
   var up = runJ_(rec[11], {}), ms = runJ_(rec[12], {}), badges = runJ_(rec[13], []);
   if (ms.d !== today) ms = { d: today, st: {}, done: [], bonus: 0 };
   var dk = 'D' + today, wk = 'W' + week;   // text keys so Sheets never turns them into dates
@@ -48,9 +49,12 @@ function clRun_(b, cid) {
   if (op === 'save') {
     var r = b.run || {}, secs = Math.max(0, Number(r.secs) || 0), m = Math.max(0, Math.round(Number(r.m) || 0)),
       coins = Math.max(0, Math.round(Number(r.coins) || 0)), score = Math.max(0, Math.round(Number(r.score) || 0)), spent = Math.max(0, Math.round(Number(r.spent) || 0));
+    var tk = r.ev || {}, head = tk.t1500 ? 1500 : 0, ran = Math.max(0, m - head);   // meters actually run: a head start never counts for Cash or XP
+    if (tk.t1500 && !(Number(owned.t1500) > 0)) throw new Error('No start at 1,500 m ticket left.');
+    if (tk.t500 && !(Number(owned.t500) > 0)) throw new Error('No 500 coin run ticket left.');
     var last = Number(String(rec[14] || '').replace(/^T/, '')) || 0;
     if (secs < 3 || secs > 3600) throw new Error('That run is not possible.');
-    if (m > secs * 17.5 + 30 || coins > m * 0.35 + 80 || score > m * 5 + coins * 5 + 50) throw new Error('That run is not possible.');
+    if (ran > secs * 17.5 + 30 || coins > ran * 0.35 * (tk.t500 ? 2 : 1) + 80 || score > m * 5 + coins * 5 + 50) throw new Error('That run is not possible.');
     if (last && now.getTime() - last < secs * 700) throw new Error('Slow down, one run at a time.');
     var ev = r.ev || {}, cap = function (k, max) { return Math.max(0, Math.min(Math.round(Number(ev[k]) || 0), max)); };
     var got = { coins: coins, m: m, score: score, jumps: cap('jumps', secs * 3), slides: cap('slides', secs * 3), roof: cap('roof', m), runs: 1, powers: cap('powers', Math.floor(m / 40) + 2), clean: cap('clean', m), mult: cap('mult', 5) };
@@ -66,10 +70,16 @@ function clRun_(b, cid) {
     if (lt) { ms.wl = Math.min(7, (Number(ms.wl) || 0) + lt); if (ms.wl >= 7 && !ms.wb) { ms.wb = 1; earned += 1000; out.mdone.push({ t: 'WELLBE complete', r: 1000 }); } }
     // cash: $0.10 for a run that passes 2,000 m (once per run), max $0.50 a day, only after training this week
     out.cashEarned = 0;
-    if (trained && m >= RUN.CASH.MIN_M) {
+    if (ran >= RUN.CASH.MIN_M) {   // every player earns Cash (clients and guests)
       var ce = Math.max(0, Math.min(RUN.CASH.CENTS, RUN.CASH.DAY_MAX - (Number(ms.cash) || 0)));
       ms.cash = (Number(ms.cash) || 0) + ce; rec[17] += ce; rec[18] += ce; out.cashEarned = ce;
     }
+    // levels: XP for meters run, missions, and training at the center today (once a day)
+    var xpg = Math.floor(ran * LV.XP.PER_M) + out.mdone.length * LV.XP.MISSION;
+    if (!ms.trx && lvTrainedToday_(ops, cid, today)) { ms.trx = 1; xpg += LV.XP.TRAINED; out.trainedXp = LV.XP.TRAINED; }
+    if (tk.t1500) owned.t1500 = Number(owned.t1500) - 1;
+    if (tk.t500) owned.t500 = Number(owned.t500) - 1;
+    out.xpGain = xpg; out.levelUps = lvAdd_(rec, owned, xpg);
     if (ev.lifeUsed && (Number(up.life) || 0) > 0) up.life = Number(up.life) - 1;
     rec[4] = Math.max(0, (Number(rec[4]) || 0) + earned - spent);
     rec[15] = (Number(rec[15]) || 0) + earned;
@@ -85,6 +95,7 @@ function clRun_(b, cid) {
     if (rec[15] >= 10000) add('rich'); if (boost) add('boost');
     out._badgeAdd = add; changed = true;
   }
+  if (op === 'shop') { out.bought = lvBuy_(rec, owned, String(b.item || '')); changed = true; }
   if (op === 'buy') {
     var item = String(b.item || '');
     if (item === 'life') {
@@ -108,7 +119,7 @@ function clRun_(b, cid) {
     out.redeemed = amt; changed = true;
   }
 
-  rec[11] = JSON.stringify(up); rec[12] = JSON.stringify(ms); rec[16] = Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm');
+  rec[11] = JSON.stringify(up); rec[12] = JSON.stringify(ms); rec[20] = JSON.stringify(owned); rec[16] = Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm');
   if (at < 0) v.push(rec); else v[at] = rec;
   var boards = runBoards_(v, cid, dk, wk);
   if (out._badgeAdd) {
@@ -125,11 +136,11 @@ function clRun_(b, cid) {
   out.coins = Number(rec[4]) || 0; out.best = Number(rec[2]) || 0; out.bestM = Number(rec[3]) || 0; out.runs = Number(rec[5]) || 0;
   out.up = { magnet: up.magnet || 0, jet: up.jet || 0, shoes: up.shoes || 0, life: up.life || 0 }; out.upCost = RUN.UP_COST; out.lifeCost = RUN.LIFE_COST; out.lifeMax = RUN.LIFE_MAX;
   out.cash = { bal: rec[17], total: rec[18], today: Number(ms.cash) || 0, minM: RUN.CASH.MIN_M, cents: RUN.CASH.CENTS, dayMax: RUN.CASH.DAY_MAX,
-    min: RUN.CASH.REDEEM_MIN, max: RUN.CASH.REDEEM_MAX, trained: trained, pending: pend || 0 };
+    min: RUN.CASH.REDEEM_MIN, max: RUN.CASH.REDEEM_MAX, trained: true, pending: pend || 0 };
   out.missions = runToday_(today).map(function (mi) { return { k: mi.k, t: mi.t, n: mi.n, p: Math.min(mi.n, Number(ms.st[mi.k]) || 0), done: ms.done.indexOf(mi.k) >= 0, r: mi.r, s: mi.s, m: mi.m }; });
   out.allBonus = RUN.ALL_BONUS; out.bonusDone = !!ms.bonus; out.word = Number(ms.wl) || 0; out.wordBonus = 1000;
   out.badges = badges.map(function (id) { return { id: id, t: RUN.BADGES[id] }; });
-  out.boost = boost; out.boards = boards.lists; out.rank = boards.rank;
+  out.boost = boost; out.boards = boards.lists; out.rank = boards.rank; out.lv = lvOut_(rec, owned);
   return out;
 }
 
