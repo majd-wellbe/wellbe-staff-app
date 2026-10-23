@@ -1,0 +1,24 @@
+PROFILE: 3 SMALL EDITS in the Client file (Ctrl+H inside the file, cursor in the code first)
+Before: add the new file Profile (Profile.gs). After: run profTest() once, then Deploy > Manage deployments > Edit > New version.
+The client app works without these edits too (no photo saving, no in-app rating, no brand catalog from the server).
+
+=== 1. File: Client (boot gets the photo, the center price list and the brand catalog) ===
+Find:
+return who.guest ? guestBoot_(who) : insClientBoot_(clBoot_(who));
+
+Replace with:
+return profBoot_(who.guest ? guestBoot_(who) : insClientBoot_(clBoot_(who)));
+
+=== 2. File: Client (guests can set a photo and rate the app) ===
+Find:
+app_cl_guest: guestAct_, app_cl_nut: nutClient_ }
+
+Replace with:
+app_cl_guest: guestAct_, app_cl_nut: nutClient_, app_cl_profile: profClient_ }
+
+=== 3. File: Client (clients can set a photo and rate the app) ===
+Find:
+app_cl_streak: clStreak_, app_cl_nut: nutClient_ })[a];
+
+Replace with:
+app_cl_streak: clStreak_, app_cl_nut: nutClient_, app_cl_profile: profClient_ })[a];
