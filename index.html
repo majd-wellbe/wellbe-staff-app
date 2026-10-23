@@ -765,28 +765,29 @@ function clientSheet(id){
   if($('#editNotes'))$('#editNotes').onclick=function(){var s=SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).filter(function(x){return x.date<=T})[0]||SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})})[0];noteSheet(s.id,s.clients.findIndex(function(y){return y.cid===id}))};
 }
 ACTIONS.sell=function(cid){
-  var months=1;
+  var months=1,PRICE=null;   // PRICE: final price typed by staff (the discount is then calculated)
   openSheet('Sell a package','<div class="field"><label for="sc">Client</label><select id="sc">'+CLIENTS.slice().sort(function(a,b){return a.name<b.name?-1:1}).map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.name)+'</option>'}).join('')+'</select></div>'+
    '<div class="field"><label for="st">Package</label><select id="st">'+PKG_TYPES.map(function(t,i){return '<option value="'+i+'">'+esc(t.t)+'</option>'}).join('')+'</select></div>'+
    '<div class="field" id="smf"><span class="flabel">Length</span><div class="seg" id="smo"><button aria-pressed="true" data-m="1">1 month</button><button aria-pressed="false" data-m="3">3 months · 7% off</button><button aria-pressed="false" data-m="6">6 months · 15% off</button></div></div>'+
-   '<div class="two"><div class="field"><label for="sd">Discount %</label><input id="sd" type="number" inputmode="decimal" value="0" min="0" max="100"></div><div class="field"><label for="sp">Paid now ($)</label><input id="sp" type="number" inputmode="decimal" value="0" min="0"></div></div>'+
+   '<div class="two"><div class="field"><label for="sfp">Final price ($)</label><input id="sfp" type="number" inputmode="decimal" min="0" step="0.5"></div><div class="field"><label for="sd">Discount %</label><input id="sd" type="number" inputmode="decimal" value="0" min="0" max="100"></div></div>'+
+   '<div class="field"><label for="sp">Paid now ($)</label><input id="sp" type="number" inputmode="decimal" value="0" min="0"></div>'+
    '<div class="field"><label for="sday">Starts</label><input id="sday" type="date" value="'+T+'"></div>'+
    '<div class="field"><span class="flabel">Paid by</span><div class="seg" id="sm"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div id="sumP" class="note good"></div>',
    '<button class="btn ok full" id="doSell">'+ICON('i-check')+'Create package</button>');
   $$('#sm button').forEach(function(b){b.onclick=function(){$$('#sm button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')}});
   var clientDisc=function(){var c=clientById($('#sc').value);return c&&c.disc||0};
-  var setDisc=function(){$('#sd').value=Math.max(clientDisc(),months===3?7:months===6?15:0)};
+  var setDisc=function(){PRICE=null;$('#sd').value=Math.max(clientDisc(),months===3?7:months===6?15:0)};
   $$('#smo button').forEach(function(b){b.onclick=function(){$$('#smo button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');months=+b.dataset.m;setDisc();
     var t=PKG_TYPES[+$('#st').value],tot=Math.round(t.p*months*(1-(+$('#sd').value||0)/100));$('#sp').value=months===6?Math.round(tot/2):months===3?tot:0;sum()}});
   var sum=function(){var t=PKG_TYPES[+$('#st').value],mel=isMel($('#sc').value),mad=/madero/i.test(t.t),monthly=/x\/month/.test(t.t);
     $('#smf').hidden=!monthly;if(!monthly&&months!==1){months=1;$$('#smo button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.m==='1'?'true':'false')});setDisc()}
-    var d=+$('#sd').value||0,total=Math.round(t.p*months*(1-d/100)),paid=Math.min(total,+$('#sp').value||0),st=$('#sday').value||T,each=Math.round(total/months*100)/100;
+    var list=t.p*months,d=+$('#sd').value||0,total=Math.round(list*(1-d/100));if(PRICE!=null){total=Math.round(PRICE*100)/100;d=list>0?Math.max(0,Math.round((1-total/list)*10000)/100):0;$('#sd').value=d}else $('#sfp').value=total;var paid=Math.min(total,+$('#sp').value||0),st=$('#sday').value||T,each=Math.round(total/months*100)/100;
     var lines=months>1?'<br>'+[].concat.apply([],Array(months).fill(0).map(function(x,k){return [k]})).map(function(k){var dd=ymd(addDays(new Date(st+'T12:00:00'),30*k));return 'Month '+(k+1)+': '+dayLabel(dd)+' · '+t.n+' sessions · '+money(k<months-1?each:total-each*(months-1))}).join('<br>'):'';
     $('#sumP').innerHTML=ICON('i-check')+'<span>'+(months>1?'<b>'+months+' packages, one per month.</b> ':'')+t.n+' passes'+(months>1?' each':'')+' · total '+money(total)+(months>1?' instead of '+money(t.p*months):'')+' · '+money(Math.max(0,total-paid))+' left to pay'+(months===6?' (2nd half due on day 1 of month 3)':'')+'.'+
       (months===1?' Valid '+(mad?'2 months':/prehab/i.test(t.t)?'3 months':/stretching/i.test(t.t)?'6 weeks':'30 days')+'.':'')+lines+(mad?'<br>Madero: 100% Melanie, Romy collects from the client as usual.':mel?'<br>Melanie\'s client: Romy collects from the client, Melanie pays the center $4/pass upfront.':'')+'</span>'};
-  ['st','sd','sp','sday'].forEach(function(i){$('#'+i).oninput=sum});$('#st').onchange=sum;$('#sc').onchange=function(){setDisc();sum()};setDisc();sum();
+  ['sp','sday'].forEach(function(i){$('#'+i).oninput=sum});$('#sd').oninput=function(){PRICE=null;sum()};$('#sfp').oninput=function(){var v=this.value;PRICE=v===''?null:Math.max(0,+v||0);sum()};$('#st').onchange=$('#st').oninput=function(){PRICE=null;sum()};$('#sc').onchange=function(){setDisc();sum()};setDisc();sum();
   $('#doSell').onclick=function(){var t=PKG_TYPES[+$('#st').value],c=clientById($('#sc').value),m=($('#sm [aria-pressed="true"]')||{}).textContent||'Cash';closeSheet();
-    save('app_sell',{cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,paid:+$('#sp').value||0,method:m,start:$('#sday').value||T},null,true).then(function(j){toast((j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name)})};
+    save('app_sell',{cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,price:PRICE!=null?PRICE:undefined,paid:+$('#sp').value||0,method:m,start:$('#sday').value||T},null,true).then(function(j){toast((j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name)})};
 };
 ACTIONS.desk=function(){VIEW='home';render();scrollTo(0,0)};
 ACTIONS.home=ACTIONS.desk;
@@ -912,17 +913,29 @@ ACTIONS.book=function(){
       (p?'<div class="notebox"><b>Package</b>'+esc(p.type)+' · '+(p.total-p.used)+' of '+p.total+' left'+(r?' · <span style="color:var(--bad);font-weight:700">'+(r.late?'payment late: ':'owes ')+money(r.due)+'</span>':'')+'</div>':'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No active package. Sell one first or book as a trial.</span></div>');
     if(p){var k=p.kind;if(['1:3','1:2','1:1','Madero','Prehab','Physio','Osteo'].indexOf(k)>-1){$('#bty').value=k;var f0={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[k];if(f0)$('#btr').value=f0}}
     $('#bform').hidden=false;var b=$('#doBook');b.disabled=false;b.textContent='Book '+first(c.name);cap()};
-  var cap=function(){var n=joeLoad($('#bd').value,$('#bt').value);$('#bcap').innerHTML=$('#btr').value==='Joe'&&n>=3?'<div class="note bad">'+ICON('i-alert')+'<span>Joe already has 3 clients at that hour.</span></div>':''};
+  var cap=function(){if($('#bsell'))return;var n=joeLoad($('#bd').value,$('#bt').value);$('#bcap').innerHTML=$('#btr').value==='Joe'&&n>=3?'<div class="note bad">'+ICON('i-alert')+'<span>Joe already has 3 clients at that hour.</span></div>':''};
   $('#bq').oninput=list;['bd','bt'].forEach(function(i){$('#'+i).onchange=cap});
   var FIX={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'};
-  $('#bty').onchange=function(){var f=FIX[this.value];if(f)$('#btr').value=f;cap()};
+  var tkind=function(x){x=String(x);return /^1:3|trial|- 1:3 \(free\)/i.test(x)?'1:3':/^1:2/.test(x)?'1:2':/^1:1|with mel|stretching/i.test(x)?'1:1':/prehab/i.test(x)?'Prehab':/physio|assessment/i.test(x)?'Physio':/osteo/i.test(x)?'Osteo':/madero/i.test(x)?'Madero':'1:1'};
+  var bkSellPanel=function(ty,single){var opts=PKG_TYPES.map(function(x,i){return {x:x,i:i}}).filter(function(o){return tkind(o.x.t)===ty&&o.x.p>0});if(!opts.length){toast('No paid '+ty+' package type to sell');return}
+    var def=opts.filter(function(o){return o.x.t===single})[0]||opts[0];
+    $('#bcap').innerHTML='<div id="bsell" class="card" style="padding:12px 14px;margin-top:6px"><b>No free '+esc(ty)+' pass for '+esc(first(clientById(st.cid).name))+'. Sell one now and book it:</b>'+
+     '<div class="field" style="margin-top:10px"><label for="bsty">Package</label><select id="bsty">'+opts.map(function(o){return '<option value="'+o.i+'"'+(o===def?' selected':'')+'>'+esc(o.x.t)+'</option>'}).join('')+'</select></div>'+
+     '<div class="two"><div class="field"><label for="bspr">Price you charge ($)</label><input id="bspr" type="number" inputmode="decimal" min="0" step="0.5" value="'+def.x.p+'"></div><div class="field"><label for="bspd">Paid now ($)</label><input id="bspd" type="number" inputmode="decimal" min="0" value="0"></div></div>'+
+     '<div class="field"><span class="flabel">Paid by</span><div class="seg" id="bsm"><button aria-pressed="true">Cash</button><button aria-pressed="false">Whish</button><button aria-pressed="false">Neo</button></div></div><div id="bsum" class="note good"></div></div>';
+    $$('#bsm button').forEach(function(b){b.onclick=function(){$$('#bsm button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true')}});
+    var bs=function(){var x=PKG_TYPES[+$('#bsty').value],pr=Math.max(0,+$('#bspr').value||0),dc=x.p>0?Math.max(0,Math.round((1-pr/x.p)*10000)/100):0;$('#bsum').innerHTML=ICON('i-check')+'<span>List '+money(x.p)+' · you charge '+money(pr)+' · '+(dc?'<b>'+dc+'% discount</b>':'no discount')+' · '+money(Math.max(0,pr-Math.min(pr,+$('#bspd').value||0)))+' left to pay</span>'};
+    $('#bsty').onchange=function(){$('#bspr').value=PKG_TYPES[+this.value].p;bs()};$('#bspr').oninput=bs;$('#bspd').oninput=bs;bs()};
+  var clearSell=function(){if($('#bsell')){$('#bcap').innerHTML='';var b=$('#doBook');if(st.cid)b.textContent='Book '+first(clientById(st.cid).name)}};
+  $('#bty').onchange=function(){var f=FIX[this.value];if(f)$('#btr').value=f;clearSell();cap()};
   $('#btr').onchange=function(){if(this.value==='Jad')$('#bty').value='Osteo';else if($('#bty').value==='Osteo')$('#bty').value='1:3';cap()};
   $('#doBook').onclick=function(){var d=$('#bd').value,t=$('#bt').value,tr=$('#btr').value,ty=$('#bty').value,c=clientById(st.cid);
     var p=bookPkg(st.cid,ty,d);
     if(tr==='Joe'&&joeLoad(d,t)>=3){toast('Joe is full at that hour');return}
     var single={Osteo:'Osteo - Single Session ($150)',Physio:'Physio - Single Session ($50)'}[ty];
-    if(!p&&single){var bb=this;if(bb.dataset.sure!=='1'){bb.dataset.sure='1';bb.textContent='Sell 1 '+ty+' session and book';toast('No '+ty+' session left: tap again to sell one and book');return}
-      closeSheet();save('app_sell',{cid:c.id,type:single,months:1,discount:0,paid:0,start:d}).then(function(j){return save('app_book',{cid:c.id,pkg:j.id,name:c.name,date:d,time:t,trainer:{Osteo:'Jad',Physio:'Majd'}[ty],type:ty},first(c.name)+' booked with '+({Osteo:'Jad',Physio:'Majd'}[ty])+' on '+dayLabel(d)+' at '+hl(t),true)});return}
+    if(!p&&ME.role!=='trainer'){if(!d||!t){toast('Pick a day and time');return}if(!$('#bsell')){bkSellPanel(ty,single);this.textContent='Sell and book';return}
+      var bt2=PKG_TYPES[+$('#bsty').value],pr=Math.max(0,+$('#bspr').value||0),paid2=Math.min(pr,Math.max(0,+$('#bspd').value||0)),m2=($('#bsm [aria-pressed="true"]')||{}).textContent||'Cash',tr2={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[ty]||tr,dc=bt2.p>0?Math.max(0,Math.round((1-pr/bt2.p)*10000)/100):0;
+      closeSheet();save('app_sell',{cid:c.id,type:bt2.t,months:1,discount:dc,price:pr,paid:paid2,method:m2,start:d}).then(function(j){return save('app_book',{cid:c.id,pkg:j.id,name:c.name,date:d,time:t,trainer:tr2,type:ty},first(c.name)+': '+bt2.t.split(' (')[0]+' sold for '+money(pr)+(dc?' ('+dc+'% off)':'')+' and booked on '+dayLabel(d)+' at '+hl(t),true)});return}
     if(!p){var all=PKGS.filter(function(x){return x.client===st.cid&&!/cancel/i.test(x.status)});toast(all.length?'No free '+ty+' pass for '+first(c.name)+' ('+all.map(function(x){return x.type.split(' (')[0]+': '+avail(x)+' free'}).join(', ')+'). Sell the next package.':'No package for '+first(c.name)+': sell one first');return}if(!d||!t){toast('Pick a day and time');return}
     var fixedTr={Prehab:'Majd',Physio:'Majd',Osteo:'Jad',Madero:'Melanie'}[ty];if(fixedTr)tr=fixedTr;
     var ex=SESS.filter(function(x){return x.date===d&&x.start===t&&x.trainer===tr&&x.tab===ty&&x.status!=='Cancelled'})[0];
@@ -1361,7 +1374,7 @@ function woAct(a){
 }
 ACTIONS.wo=function(){closeSheet();VIEW='wo';WOV='list';render();scrollTo(0,0)};
 /* ---------- searchable dropdowns: every select with 6+ choices gets a search box, now and in the future ---------- */
-var SS_MIN=6;
+var SS_MIN=8;   // short lists (7 or less) stay as the phone's own picker
 function ssNorm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim()}
 function ssMark(t,q){t=String(t);if(!q)return esc(t);var i=ssNorm(t).indexOf(q);if(i<0)return esc(t);return esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))}
 function ssInfo(o){ // extra line and group for client and package choices
@@ -1386,7 +1399,7 @@ function ssClose(){$$('.ss-pan').forEach(function(p){p.remove()})}
 function ssOpen(w,sel){
   var pan=document.createElement('div');pan.className='ss-pan';
   pan.innerHTML='<div class="ss-sb">'+ICON('i-search')+'<input type="search" placeholder="Search" autocomplete="off" aria-label="Search"><small></small></div><div class="ss-list" role="listbox"></div>';
-  w.appendChild(pan);pan.onclick=function(e){e.stopPropagation()};
+  w.appendChild(pan);pan.onclick=function(e){e.stopPropagation()};var rb=w.getBoundingClientRect(),below=innerHeight-rb.bottom;if(below<320&&rb.top>below){pan.style.top='auto';pan.style.bottom='calc(100% + 4px)'}setTimeout(function(){try{pan.scrollIntoView({block:'nearest'})}catch(x){}},0);
   var inp=pan.querySelector('input'),list=pan.querySelector('.ss-list'),cnt=pan.querySelector('small'),opts=[].slice.call(sel.options).filter(function(o){return !o.hidden});
   var items=opts.map(function(o){var x=ssInfo(o);return {o:o,t:o.textContent,sub:x.sub,grp:x.grp,key:ssNorm(o.textContent+' '+x.extra+' '+x.sub)}});
   var draw=function(){var q=ssNorm(inp.value),hit=items.filter(function(it){return !q||it.key.indexOf(q)>-1});
