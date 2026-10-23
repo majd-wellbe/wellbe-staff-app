@@ -80,7 +80,7 @@ function clRun_(b, cid) {
     if (tk.t1500) owned.t1500 = Number(owned.t1500) - 1;
     if (tk.t500) owned.t500 = Number(owned.t500) - 1;
     out.xpGain = xpg; out.levelUps = lvAdd_(rec, owned, xpg);
-    if (ev.lifeUsed && (Number(up.life) || 0) > 0) up.life = Number(up.life) - 1;
+    if (ev.lifeUsed && (Number(up.life) || 0) > 0) up.life = Math.max(0, Number(up.life) - Math.min(Math.round(Number(ev.lifeUsed) || 1), lvHas_(owned, lvOf_(rec[19]).level, 'life2') ? 2 : 1));   // 2nd life slot: up to 2 extra lives in one run
     rec[4] = Math.max(0, (Number(rec[4]) || 0) + earned - spent);
     rec[15] = (Number(rec[15]) || 0) + earned;
     rec[5] = (Number(rec[5]) || 0) + 1; rec[6] = (Number(rec[6]) || 0) + m;

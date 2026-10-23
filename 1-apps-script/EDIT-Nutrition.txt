@@ -1,0 +1,44 @@
+NUTRITION: 6 SMALL EDITS (Ctrl+H inside each file, cursor in the code first)
+Before: add the new file Nutrition (Nutrition.gs). After: run nutSetup() once, then Deploy > Manage deployments > Edit > New version.
+
+=== 1. File: Client (Guests can use the free macro calculator) ===
+Find:
+? { app_cl_run: clRun_, app_cl_streak: clStreak_, app_cl_goal: clGoal_, app_cl_guest: guestAct_ }
+
+Replace with:
+? { app_cl_run: clRun_, app_cl_streak: clStreak_, app_cl_goal: clGoal_, app_cl_guest: guestAct_, app_cl_nut: nutClient_ }
+
+=== 2. File: Client (Clients get the nutrition action) ===
+Find:
+app_cl_goal: clGoal_, app_cl_streak: clStreak_ })[a];
+
+Replace with:
+app_cl_goal: clGoal_, app_cl_streak: clStreak_, app_cl_nut: nutClient_ })[a];
+
+=== 3. File: Client (Nutrition saves do not reset everyone's cache) ===
+Find:
+if (!/^app_cl_(run|wo|streak)$/.test(a)) appBump_();
+
+Replace with:
+if (!/^app_cl_(run|wo|streak|nut)$/.test(a)) appBump_();
+
+=== 4. File: Client (Done / accept on a Nutrition plan item in Romy's To do approves the plan, decline declines it) ===
+Find:
+if (q.status !== 'New') throw new Error('Already handled by ' + (q.by || 'someone'));
+
+Replace with:
+if (q.status !== 'New') throw new Error('Already handled by ' + (q.by || 'someone')); if (q.type === 'Nutrition plan') out = nutFromReq_(q, b, me);
+
+=== 5. File: App (Staff nutrition actions) ===
+Find:
+app_wo_ex: woEx_ }[b.action];
+
+Replace with:
+app_wo_ex: woEx_, app_nut_list: nutList_, app_nut_get: nutGet_, app_nut_decide: nutDecide_ }[b.action];
+
+=== 6. File: App (Nutrition staff actions do not reset everyone's cache) ===
+Find:
+if (/^app_wo_/.test(b.action)) { out.ok = true; return json_(out); }
+
+Replace with:
+if (/^app_(wo|nut)_/.test(b.action)) { out.ok = true; return json_(out); }

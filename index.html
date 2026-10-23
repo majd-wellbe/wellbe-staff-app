@@ -385,7 +385,7 @@ function loadHistory(){if(HIST||HIST_LOADING||!ME||ME.role!=='owner')return;HIST
 function boot(silent){
   if(!silent){LOADED=false;LOAD_ERR='';render()}
   return api('app_boot').then(function(d){
-    applyBoot(d);render();if(Date.now()-WOT>60000)woLoad();
+    applyBoot(d);render();if(Date.now()-WOT>60000)woLoad();nutQLoad();
     try{CACHE_KEY='wb_cache_'+String(KEY).slice(0,8);localStorage.setItem(CACHE_KEY,JSON.stringify(d))}catch(e){}
   }).catch(function(e){if(e.message==='auth'){try{localStorage.removeItem(CACHE_KEY)}catch(x){}KEY=null;store('wb_key','');LOADED=false}LOAD_ERR=e.message;if(!LOADED||e.message==='auth')render();else toast('Could not refresh: '+e.message)})}
 // weekly pattern from the last 60 days: a slot that ran in 3+ different weeks, with the clients who came at least half the time
@@ -485,8 +485,8 @@ VIEWS.home=function(){
 function qbtn(act,ic,t,count){return '<button class="qb" data-act="'+act+'"><span class="ic">'+ICON(ic)+(count?'<span class="dot num">'+count+'</span>':'')+'</span>'+t+'</button>'}
 var DONE_TODO={};
 function todoItems(){
-  var items=[];
-  (typeof REQUESTS!=='undefined'?REQUESTS:[]).forEach(function(q){var m=REQ_META[q.type]||['i-bell','mute'];items.push({id:'req-'+q.id,level:m[1],icon:m[0],title:esc(q.client)+' · '+esc(q.type),sub:esc(q.slot?q.slot+' · ':'')+esc(q.details).slice(0,120),btn:'Open',act:'req|'+q.id})});
+  var items=nutTodoItems();
+  (typeof REQUESTS!=='undefined'?REQUESTS:[]).filter(function(q){return q.type!=='Nutrition plan'}).forEach(function(q){var m=REQ_META[q.type]||['i-bell','mute'];items.push({id:'req-'+q.id,level:m[1],icon:m[0],title:esc(q.client)+' · '+esc(q.type),sub:esc(q.slot?q.slot+' · ':'')+esc(q.details).slice(0,120),btn:'Open',act:'req|'+q.id})});
   LEADS.filter(function(l){return l.status!=='Confirmed'}).forEach(function(l){items.push({id:'lead-'+l.id,level:l.date?'warn':'bad',icon:'i-users',title:esc(l.name)+(l.date?' booked a free trial':' left without booking'),sub:l.date?dayLabel(l.date)+' · '+l.time+' · '+l.type:'Call her to find a time',btn:'Open',act:'lead|'+l.id})});
   overdue().forEach(function(x){var m=melOwes(x.p);items.push({id:'pay-'+x.p.id,level:'bad',icon:'i-cash',title:m?'Melanie owes '+money(x.due)+' · '+esc(x.p.name):esc(x.p.name)+' owes '+money(x.due),sub:m?'Center share $4 x '+x.p.total+' passes, paid upfront':'Session '+x.p.used+' of '+x.p.total+' · late',btn:m?'Record':'Remind',act:(m?'paid|':'pay|')+x.p.id})});
   var tomorrowS=sessOn(ymd(nextWorkday())).reduce(function(n,s){return n+s.clients.filter(function(c){return !c.reminded}).length},0);
@@ -754,7 +754,7 @@ function clientSheet(id){
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
   if($('#woOpen'))$('#woOpen').onclick=function(){closeSheet();woOpenClient(id)};
   if(ME.role==='owner')bindOwnerExtras(c);
-  if(ME.role!=='trainer')bindStaffClientTools(c);hxMount(id);
+  if(ME.role!=='trainer')bindStaffClientTools(c);hxMount(id);nutClientBtn(id);
   if($('#editCl'))$('#editCl').onclick=function(){
     openSheet('Edit '+first(c.name),'<div class="field"><label for="ecn">Full name</label><input id="ecn" type="text" value="'+esc(c.name)+'" autocomplete="off"></div><div class="field"><label for="ecp">Phone</label><input id="ecp" type="tel" inputmode="tel" value="'+esc(c.phone)+'"></div><div class="field"><label for="ece">Email <span class="muted" style="font-weight:500">(used to sign in to the client app)</span></label><input id="ece" type="email" inputmode="email" autocomplete="off" value="'+esc(c.email)+'"></div><p class="muted" style="font-size:13px;margin-top:10px">Parents: put the parent\u2019s email on the child\u2019s profile, they will see it from their own sign in.</p>',
      '<button class="btn ok full" id="doEc">'+ICON('i-check')+'Save</button>');
@@ -1447,6 +1447,59 @@ function hxMount(id,svc){
   $$('[data-hx]',box).forEach(function(b){b.onclick=function(){hxMount(id,b.dataset.hx)}});
   $$('[data-hxmore]',box).forEach(function(b){b.onclick=function(){$$('[data-hxm]',b.parentNode).forEach(function(r){r.hidden=false});b.remove()}});
   if(ME.role==='owner'&&!HIST&&typeof loadHistory==='function'&&!hxMount._asked){hxMount._asked=1;loadHistory()}}
+
+/* ---------- NUTRITION PLANS: coach approval (approved preview, 23 Oct) ----------
+   Every role loads its own list (app_nut_list): owner and Romy see all, trainers only their clients. */
+var NUTQ=[],NUTO=null,NUTDAY=0,NUTFULL=false,NUTWK=[0,1,2,3,0,1,2];
+function nutQLoad(){if(!ME)return;api('app_nut_list').then(function(j){NUTQ=j.plans||[];render()}).catch(function(){})}
+function nutTodoItems(){return NUTQ.map(function(p){var w=p.status==='Pending';
+  return {id:'nut-'+p.id,level:w?'warn':'bad',icon:'i-heart',title:esc(p.name)+' · Nutrition plan',sub:w?'Ready to check · '+(p.kcal||'?')+' kcal · P '+(p.p||'?')+' C '+(p.c||'?')+' F '+(p.f||'?'):p.status==='Coach review'?'Health answers: build it with them personally':'The AI could not write it: regenerate',btn:'Open',act:'nut|'+p.cid+'|'+p.id}})}
+function nutTodoBlock(){var it=nutTodoItems().filter(function(x){return !DONE_TODO[x.id]});if(!it.length)return '';
+  return '<div class="h"><h2>Nutrition plans</h2><small>'+it.length+' to check</small></div><div class="list" style="margin-bottom:16px">'+it.map(todoRow).join('')+'</div>'}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-todo^="nut|"]');if(!b)return;var x=b.dataset.todo.split('|');nutSheet(x[1],x[2])});
+var _nutTT=trainerToday;trainerToday=function(){return nutTodoBlock()+_nutTT()};
+var _nutVM=VIEWS.mine;VIEWS.mine=function(){return nutTodoBlock()+_nutVM()};
+function nutDate(ymd){return ymd?dayLabel(ymd):''}
+function nutView(){var o=NUTO,p=o.plan||{},m=p.macros||o.calc||{},pl=p.plan,a=o.answers||{},b=o.body||{},fl=o.flags||[];
+  var st={Pending:['Waiting for you','p-warn'],Approved:['Approved','p-good'],'Coach review':['Coach review','p-bad'],Failed:['AI failed','p-bad'],Queued:['Writing','p-mute'],Writing:['Writing','p-mute'],Declined:['Declined','p-mute']}[p.status]||[p.status||'No plan','p-mute'];
+  var L=function(v){return (v||[]).join ? (v||[]).filter(function(x){return x!=='none'}).join(', ') : (v||'')};
+  var h='<div class="card" style="padding:14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>'+esc(o.name||o.cid)+'</b><span class="pill '+st[1]+'">'+st[0]+'</span></div>'+
+   '<div class="muted" style="font-size:14px">'+(b.age?b.age+' · ':'')+(b.weight||'?')+' → '+(o.target||'?')+' kg'+(o.paid?'':' · no paid package')+'</div>'+
+   '<dl class="kv" style="margin-top:10px"><dt>Daily</dt><dd>'+(m.kcal?Number(m.kcal).toLocaleString()+' kcal · P '+m.p+' · C '+m.c+' · F '+m.f:'Set by coach')+'</dd>'+
+   (m.rateKg?'<dt>Pace</dt><dd>'+m.rateKg+' kg / week</dd>':'')+(m.method?'<dt>Method</dt><dd>'+esc(m.method)+((o.comp||{}).bf?' (body fat '+o.comp.bf+'%)':'')+'</dd>':'')+
+   '<dt>Allergies</dt><dd>'+esc(L(a.allergy)||'None')+(a.allergy_other?' · '+esc(a.allergy_other):'')+'</dd><dt>Rules</dt><dd>'+esc(L(a.rules)||'None')+'</dd><dt>Dislikes</dt><dd>'+esc(a.dislike||'None')+'</dd>'+
+   (pl?'<dt>Days</dt><dd>'+pl.days.length+' templates, all checked ✓</dd>':'')+'</dl>'+
+   '<div class="note '+(fl.length?'bad':'warn')+'" style="margin-top:10px">'+ICON(fl.length?'i-alert':'i-check')+'<span>'+(fl.length?'<b>Health answers: '+esc(fl.join(', '))+'.</b> Check this plan carefully'+(/minor|pregnant|ed|kidney/.test(fl.join(','))?', or build it with them personally.':'.'):'Health answers: none. The code checked every day: calories, protein, allergies, dislikes.')+'</span></div>'+
+   (p.error?'<div class="note bad" style="margin-top:8px">'+ICON('i-alert')+'<span>'+esc(p.error).slice(0,240)+'</span></div>':'')+'</div>';
+  h+='<div class="field" style="margin-top:12px"><label for="nuN">Coach note to client</label><textarea id="nuN" rows="3" placeholder="e.g. On training days have the banana before the session">'+esc(p.note||'')+'</textarea></div>';
+  h+='<details class="card" style="padding:12px 14px;margin-top:4px"><summary style="font-weight:700;cursor:pointer">Regenerate with different numbers (optional)</summary><div class="two" style="margin-top:10px"><div class="field"><label for="nuK">Calories</label><input id="nuK" type="number" inputmode="numeric" placeholder="'+(m.kcal||'')+'"></div><div class="field"><label for="nuP">Protein g</label><input id="nuP" type="number" inputmode="numeric" placeholder="'+(m.p||'')+'"></div><div class="field"><label for="nuC">Carbs g</label><input id="nuC" type="number" inputmode="numeric" placeholder="'+(m.c||'')+'"></div><div class="field"><label for="nuF">Fat g</label><input id="nuF" type="number" inputmode="numeric" placeholder="'+(m.f||'')+'"></div></div><div class="muted" style="font-size:13px">Empty = same numbers. The note above is sent to the AI too.</div></details>';
+  h+='<details class="card" style="padding:12px 14px;margin-top:10px"><summary style="font-weight:700;cursor:pointer">Their answers</summary><dl class="kv" style="margin-top:10px">'+
+   [['Goal',a.goal],['Why',a.why],['Pace',a.pace],['Job',a.job],['Training',a.train_days?a.train_days+' days · '+(a.train_time||''):''],['Meals',a.meals],['Breakfast',a.breakfast],['Cooks',a.cook],['Eats now',a.now_day],['Eats a lot',L(a.often)],['Loves',L(a.love)+(a.love_other?', '+a.love_other:'')],['Digestion',L(a.digest)],['Drinks','coffee '+(a.coffee||'?')+' · sugary '+(a.sugar_drinks||'?')+' · alcohol '+(a.alcohol||'?')],['Cravings',a.cravings],['Weekend',a.weekend],['Supplements',L(a.supps)]].filter(function(x){return x[1]}).map(function(x){return '<dt>'+x[0]+'</dt><dd>'+esc(x[1])+'</dd>'}).join('')+'</dl></details>';
+  if(pl){h+='<button class="btn sec full" id="nuFull" style="margin-top:12px">'+(NUTFULL?'Hide the full plan':'Open the full plan · Day A B C D · Grocery list')+'</button>';
+    if(NUTFULL){var di=NUTWK[NUTDAY]%pl.days.length,d=pl.days[di],t=d.totals||{};
+      h+='<div class="hx-chips" style="margin-top:12px">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(x,i){return '<button class="hx-chip" data-nuday="'+i+'" aria-pressed="'+(i===NUTDAY)+'">'+x+'</button>'}).join('')+'</div>'+
+       '<div class="muted" style="font-size:13px;margin-bottom:8px">Day '+'ABCD'.charAt(di)+' · '+(t.kcal||0)+' kcal · P '+(t.p||0)+' C '+(t.c||0)+' F '+(t.f||0)+'</div>'+
+       (d.meals||[]).map(function(ml){return '<div class="card" style="padding:12px 14px;margin-bottom:8px"><div class="muted" style="font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">'+esc(ml.slot||'')+(ml.time?' · '+esc(ml.time):'')+'</div><b>'+esc((ml.name||{}).en||'')+'</b>'+
+         (ml.items||[]).map(function(x){return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px;border-top:1px solid var(--line);padding:5px 0;margin-top:4px"><span>'+esc((x.food||{}).en||'')+'</span><span class="muted">'+Math.round(x.g||0)+' '+(x.unit||'g')+' · '+esc((x.measure||{}).en||'')+' · '+Math.round(x.kcal||0)+' kcal</span></div>'}).join('')+
+         (ml.swap&&ml.swap.en?'<div style="font-size:13px;color:var(--mint-deep);margin-top:4px">↺ '+esc(ml.swap.en)+'</div>':'')+'</div>'}).join('')+
+       '<div class="h" style="margin-top:10px"><h2 style="font-size:20px">Grocery list</h2></div>'+(pl.grocery||[]).map(function(g){return '<div class="muted" style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:10px 0 4px">'+esc(g.aisle.en)+'</div>'+g.items.map(function(x){return '<div style="display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px solid var(--line)"><span>'+esc(x.en)+'</span><span class="muted">'+esc(x.qty)+'</span></div>'}).join('')}).join('')}}
+  return h}
+function nutSheet(cid,id){NUTFULL=false;NUTDAY=0;openSheet('Nutrition plan','<p class="muted" style="padding:30px 0;text-align:center">Loading the plan…</p>');
+  api('app_nut_get',{cid:cid,id:id}).then(function(o){NUTO=o;nutPaint()}).catch(function(e){closeSheet();toast('Could not open: '+e.message)})}
+function nutPaint(){var p=(NUTO.plan||{}),can=p.status==='Pending'&&p.plan,open=/Pending|Coach review|Failed|Approved/.test(p.status||'');
+  openSheet('Nutrition plan',nutView(),(open?'<div style="display:grid;grid-template-columns:'+(can?'1fr ':'')+'1fr 1fr;gap:8px">'+(can?'<button class="btn ok" id="nuA">'+ICON('i-check')+'Approve</button>':'')+'<button class="btn sec" id="nuR">Regenerate</button>'+(p.status!=='Approved'?'<button class="btn sec" id="nuX" style="color:var(--bad)">Decline</button>':'<button class="btn sec" id="nuS">Save note</button>')+'</div>':''));
+  var sc=$('#shBody').scrollTop;
+  if($('#nuFull'))$('#nuFull').onclick=function(){NUTFULL=!NUTFULL;var y=$('#shBody').scrollTop;nutPaint();$('#shBody').scrollTop=y};
+  $$('[data-nuday]').forEach(function(b){b.onclick=function(){NUTDAY=+b.dataset.nuday;var y=$('#shBody').scrollTop;nutPaint();$('#shBody').scrollTop=y}});
+  var go=function(act,msg,extra){var d=Object.assign({cid:NUTO.cid,id:p.id,act:act,note:$('#nuN').value.trim()},extra||{});BUSY++;paintBusy();closeSheet();
+    api('app_nut_decide',d).then(function(){BUSY--;paintBusy();toast(msg);NUTQ=NUTQ.filter(function(x){return x.id!==p.id});REQUESTS=REQUESTS.filter(function(q){return !(q.type==='Nutrition plan'&&q.cid===NUTO.cid)});render();nutQLoad()}).catch(function(e){BUSY--;paintBusy();toast('Not saved: '+e.message)})};
+  if($('#nuA'))$('#nuA').onclick=function(){go('approve','Approved: '+first(NUTO.name||'')+' can see the plan now')};
+  if($('#nuX'))$('#nuX').onclick=function(){go('decline','Declined. Tell '+first(NUTO.name||'')+' what happens next.')};
+  if($('#nuS'))$('#nuS').onclick=function(){go('note','Note saved')};
+  if($('#nuR'))$('#nuR').onclick=function(){var n=function(id){var v=$('#'+id);return v&&+v.value||0};go('regen','A new plan is being written. It comes back here to check.',{kcal:n('nuK'),p:n('nuP'),c:n('nuC'),f:n('nuF')})}}
+// button in the client sheet
+function nutClientBtn(cid){var body=$('#shBody');if(!body||body.querySelector('#nuOpen'))return;var b=document.createElement('button');b.className='btn sec full';b.id='nuOpen';b.style.margin='0 0 14px';b.innerHTML=ICON('i-heart')+'Nutrition plan';
+  var wo=body.querySelector('#woOpen');if(wo&&wo.parentNode)wo.parentNode.insertBefore(b,wo.nextSibling);else body.appendChild(b);b.onclick=function(){nutSheet(cid,'')}}
 
 // start
 if(KEY){try{var cached=localStorage.getItem('wb_cache_'+String(KEY).slice(0,8));if(cached){applyBoot(JSON.parse(cached))}}catch(e){}}
