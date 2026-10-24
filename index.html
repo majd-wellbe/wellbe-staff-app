@@ -825,11 +825,13 @@ function changeSession(id){
       msg='Hi '+first(targets[0].name)+', your session is moved to '+dayLabel(nd)+' at '+hl(nt)+' with '+s.trainer+'. See you then! Wellbe';}
     if(what==='trainer'){if(!$('#ntr')){toast(s.tab+' always runs with '+s.trainer);return}s.trainer=$('#ntr').value;req.trainer=s.trainer;msg='Hi '+first(targets[0].name)+', small update: your session on '+dayLabel(s.date)+' at '+hl(s.start)+' will be with '+s.trainer+'. Wellbe'}
     var c=clientOf(targets[0].cid),btn=this;if(btn.disabled)return;btn.disabled=true;btn.textContent='Saving…';
-    save('app_change',req,null,true).then(function(){
-    openSheet('Saved','<div class="note good" style="margin-bottom:14px">'+ICON('i-check')+'<span>Schedule, passes and calendar updated.</span></div><p class="muted" style="margin-bottom:8px">Message ready for '+esc(targets[0].name)+':</p><div class="card" style="padding:12px 14px;font-size:15px">'+esc(msg)+'</div>',
+    var done=function(bg){
+    openSheet('Saved','<div class="note good" style="margin-bottom:14px">'+ICON('i-check')+'<span>'+(bg?'Saving in the background. You can keep working; if it fails you get a message and the screen reloads.':'Schedule, passes and calendar updated.')+'</span></div><p class="muted" style="margin-bottom:8px">Message ready for '+esc(targets[0].name)+':</p><div class="card" style="padding:12px 14px;font-size:15px">'+esc(msg)+'</div>',
       '<a class="btn wa full" href="'+wa(c.phone,msg)+'" target="_blank" rel="noopener">'+ICON('i-wa')+'Send on WhatsApp</a><button class="btn sec full" id="doneBtn">Done</button>');
-    $('#doneBtn').onclick=function(){closeSheet();render()};
-    }).catch(function(){btn.disabled=false;btn.textContent='Save change'});
+    $('#doneBtn').onclick=function(){closeSheet();render()}};
+    // cancels and no shows cannot be refused for capacity: show it at once and save in the background (the busy dot shows while it saves)
+    if(what==='cancel'){render();done(true);save('app_change',req,null,true).catch(function(){});return}
+    save('app_change',req,null,true).then(function(){done(false)}).catch(function(){btn.disabled=false;btn.textContent='Save change'});
   };
 }
 ACTIONS.pay=function(){
