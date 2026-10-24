@@ -1,0 +1,60 @@
+WELLBE PHASE 1 + 2 SERVER CHANGELOG (Apps Script)
+Files changed: Code, App, Client, Guest, Nutrition, RunGame, Profile, Insurance, Streak, Workout. Not changed: Wallet, Levels.
+
+1. 1:2 RULE (App, Client)
+ - Early cancel (day before or earlier) by one client: row Cancelled, both flags N, both invites deleted, nobody charged
+   (app12EarlyCancel_). Notices go to the partner, the trainer, Romy and Majd, and Romy gets a WhatsApp after the lock
+   (client cancels ping through the request log, staff cancels ping unless Romy did it herself).
+ - Late cancel / no show: the other client stays Scheduled and unmarked. The row only becomes Done once someone is Present
+   or both are marked. A "Name: Late Cancel" mark goes in Notes, because the Y flag alone cannot tell Present from Late Cancel.
+ - appDefaultPresent: on 1:2 rows, every client with no flag yet becomes Present at 21:30.
+ - appSessObj_: a 1:2 client with no flag is never Present (app12Att_).
+ - New NOTICES tab {ID, Created, For, Type, Text, Read}, written only by noticeAdd_. Unread notices are sent as `notices`
+   in client boot and staff boot. New actions: app_cl_notice_read {cid, ids} and app_notice_read {ids}.
+2. appChange_ partial move: Joe cap, package kind and "client not already booked then" are checked first. If booking still
+   fails, the old spot is put back, and the old invite is deleted only after the new booking works.
+3. clJoin_: passes left minus upcoming unmarked bookings, same rule as canJoin. The day must be between the package start
+   and end.
+4. 6 month upgrade: the client only logs a request with the offer data. Accept in appReqDone_ creates months 4, 5, 6.
+   It refuses if those months already exist (requests made before this update). The response is still {due, ids: []}.
+5. Lock: notifyLater_ / flushNotify_ queue. alert_ and clPingRomy_ only queue. Messages are sent after releaseLock in
+   doPost, app_route_, client_route_, w40_confirmRow and nutWorker. A landing page lead save locks only around its sheet
+   write. The goal AI and the body comp upload (Drive + AI) run before the lock (clGoalPre_, nutClientPre_).
+6. Secrets: CALLMEBOT_KEY, WHATSAPP_TO, ROMY_WA, ROMY_KEY come from Script Properties, and no literal keys are left in the
+   code. If a key is missing there is no WhatsApp and a warning is logged. Run setupSecrets_help() to see what is set.
+7. Trainers: staff boot lists only the clients the trainer trained in the last 60 days or has booked (any tab). That
+   includes their notes, their physio intake (medical info), and their own wallet and insurance only (no claims).
+   app_notes is limited to those clients. Workouts: copying a program, logging (woLog_) and deciding (woDecide_) all check
+   woCanSee_.
+8. IDs: nextId_ (highest + 1, under the lock) for REQ-, REC-, CLM-, NP-, G, NT- and DEL-. clLog_ no longer uses getLastRow.
+   appFreeze_ passes "handled by" into clLog_ instead of editing the last row.
+9. Formula injection: cellSafe_ is applied to guest rows, request rows, goal keys (AI), client notes, session notes,
+   physio intake text, recurring expenses, the booking name, nutrition text and file rows. emailOk_ is one strict email
+   check used everywhere.
+10. Guest sign up: the row is created in clLogin_ under the lock, only after the code is right. The name waits in the
+    cache with the code. 'unknown' is kept. Limits: 3 codes per 15 minutes and 8 per day per email. The global
+    80 per day lockout is removed.
+11. Same phone: a lead is linked only if the emails match, or if one side has no email and the names match. Otherwise a
+    new lead is made.
+12. Trial date and time are written as text ('@') in book_ and saveLead_. Lead IDs are W40-yyMMdd-XXXXXXXX
+    (8 random characters).
+13. Staff boot `leadFollowups` (owner and Romy): No Booking and Pending leads, with stage 15m / 24h / 72h (the oldest
+    passed). Fields: id, row, name, phone, stage, status, submitted, date, time. Leads older than 30 days are left out.
+14. Profile: PHOTO_MAX is 45000 and profile writes do not bump. Nutrition: the worker runs every 5 minutes. Attempts and
+    Writing since columns were added; a plan fails after 2 tries. Stuck detection uses the time writing started (before,
+    it used the time the plan was created). Only Pending plans can be approved. A plan that is too long is refused before
+    anything is written. A plan replaced while the AI was writing stays replaced.
+15. app_cl_delete (clients and guests): logs a 'Delete account' request, adds a row to the DELETION REQUESTS tab, and
+    refuses every token made before the request (CL_DELETED in Script Properties, checked in clWho_). It returns
+    {ok, msg:'We will delete your account and data within 7 days.'}. A new sign in later works again.
+16. RunGame: lbHide on get/save is saved as owned.lbHide. runBoards_ leaves hidden players off other people's boards, and
+    they still see their own rank. The response has lbHide.
+17. Wording: "Cash" is now "Wellbe Credit" in the redeem error and the request text. The RunGame header says every player
+    earns it, and it can be used on the first or next package or an online workout, max $20 at a time. Field names and
+    the request type 'Game cash' are unchanged.
+18. doPost: app_ routing is in try/catch, so errors come back as JSON.
+19. Cache: client-only writes (goal, streak, profile, run, wo, nut, notice read) only drop that person's cached boot
+    (appUnCache_). Cancel, join, request, upgrade and delete reload everyone, and so does a streak reward, because it
+    adds a package. Staff writes still reload everyone (except wo/nut and notice read).
+
+TESTS: tests/run.js (node, Apps Script mocks): 15 groups, 96 checks, all pass.

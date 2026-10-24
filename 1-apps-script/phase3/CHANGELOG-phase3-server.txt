@@ -1,0 +1,85 @@
+WELLBE PHASE 3 SERVER: WHAT CHANGED
+Behavior is the same. 192 automatic checks pass (96 old + 96 new).
+
+NEW
+- Config.gs: every business value in one place, with today's values as the fallback.
+  STAFF, PACKAGE TYPES and SETTINGS tabs override it (cfgSetup creates them). Cached 10 minutes, cfgBump reloads.
+- Both apps receive the settings at start (d.cfg). Clients never get emails, phones or pay rules.
+  Trainers and Romy get no emails or phones. Majd gets everything.
+
+MOVED OUT OF THE CODE INTO SETTINGS
+- Staff list, logins, trainer names in old rows, Joe's max of 3 per hour.
+- Package types, prices, kinds, how long each stays valid (Madero 2 months, Prehab 3, stretching 42 days, singles 10, monthly 30).
+- Fixed practitioners (physio Majd, osteo Jad, Madero Melanie) and rooms.
+- 3 month 7% and 6 month 15% offers, 70 day bundle window, physio $40 instead of $50 (20%).
+- Trial hours, days and window, holidays, physio hours, join and freeze windows, history windows.
+- Center WhatsApp, review link, friend link, app links, insurance rate $27, streak 30 days.
+- Game: upgrade costs, extra life, Wellbe Credit rules, level shop.
+- Front desk name in messages ("Message Romy") comes from the STAFF tab.
+
+CLEANED UP
+- PACKAGES is read once per app start instead of 2 times (staff) and the client phase rule exists once.
+- Joe's load code reads the session columns from the same map as the rest of the app (no second copy).
+- Duplicate tab headers, date and JSON helpers merged. The guest and client package lists are one function.
+- Removed: the 6 client names written in appTagMelanie_ (they are already ticked in CLIENT NOTES),
+  an unused training check in every game save, an empty myFunction, a dead "request" comment.
+
+NOT CHANGED ON PURPOSE
+- Column numbers of the tabs: they go away with the Supabase move.
+- Who earns Wellbe Credit (today everybody, also guests): this is a business choice, not a code fix.
+- Nutrition science numbers (protein per kg, floors): coaching rules, kept in Nutrition.gs.
+
+
+PHASE 4: SPEED (same files, same install)
+Nothing changes on screen. What changes is how much the server reads and waits.
+
+1. No waiting in line for screens that only read
+   The game screen, the workout screen, the nutrition questionnaire, the streak screen and the staff
+   nutrition list no longer wait for the "one at a time" lock. If such a screen needs to write
+   (first game of a new player, a missing tab, leaderboard hide changed), it goes back in line and
+   does it exactly as before. Writes still go one at a time.
+
+2. Smarter cache (2 minutes, like before)
+   Before: any write cleared every cached screen of every person.
+   Now: expenses, recurring expenses, client notes, flags, physio intake, files and insurance claims
+   only reload the staff screens; a client's own change (game, streak, goal, profile, workout log,
+   nutrition) only reloads the screens that show that client (a parent who sees the child too).
+   Sales, bookings, attendance, cancels and payments still reload everyone, like before.
+   The cache versions are kept in the cache, so the APP_VER Script Property is no longer written.
+
+3. Fewer full sheet reads
+   * Client boot reads only the photos of the people on that screen (before: every client's photo).
+   * Opening the game reads your own row; the leaderboards come from a 1 minute cache that is
+     renewed after every run save. A manual edit in the CORNICHE RUN tab shows within 1 minute.
+   * New package / expense rows are written in a few calls instead of one call per cell
+     (same cells, same formats, same formulas). ID scans read only the filled rows.
+   * A 1:2 cancel and a session change recount all their packages in one pass.
+
+4. Daily quotas
+   * The client sign in secret, the staff keys and the deleted accounts list are read from the cache
+     (10 minutes) instead of Script Properties on every request. Changing them (sign everyone out,
+     new staff link) is seen at once.
+   * An email that is not a client is remembered 2 minutes (guests asked on every screen).
+     A client created from a confirmed lead is seen at once.
+   * If Gmail's daily email limit is reached, the sign in screen says so clearly instead of an error.
+
+5. One change you will notice (on purpose)
+   Romy gets at most one WhatsApp per client every 10 minutes for app requests. Every request is
+   still saved and shows in her To do list. CallMeBot bans numbers that receive too many messages.
+
+Tests: 243 checks (the 192 from before plus 51 new ones for the speed work), all passing.
+
+BUG FIX (found while porting to Supabase)
+ * Promise streak reward: a client on a 1:1 package now gets a free 1:1 session. Before, everyone got a 1:3 session because the package kind was never read.
+
+FOR WHOEVER CHANGES THE APPS LATER (not needed for the install)
+ * After changing client/run.html: change GAME_V in client/index.html (for example p4-1 to p4-2).
+ * After changing core/wb-core.js: change ?v=1 to ?v=2 in the 3 pages that load it.
+ * sw.js is the offline cache. To switch it off for everyone: set OFF = true in sw.js and push.
+
+YOUR ANSWERS (24 Oct)
+ * Promise streak: 28 days in a row (SETTINGS streak.days). Was 30.
+ * Wellbe Credit: unchanged, $0.10 per run over 2,000 m, max $0.50 a day.
+ * Ad leads from 21:00 to 9:00 (Beirut) wait until 9:00 before showing as "call now" in Romy's To do.
+   Day 1 and day 3 follow ups count from 9:00. Change the hours in SETTINGS leads.quietFrom / leads.quietTo
+   (same number in both = switched off).

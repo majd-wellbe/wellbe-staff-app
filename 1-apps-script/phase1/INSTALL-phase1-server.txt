@@ -1,0 +1,60 @@
+WELLBE PHASE 1 + 2 SERVER FIXES: INSTALL
+Project: "Wellbe W40 Backend" (Apps Script). About 15 minutes.
+
+A. NEW WHATSAPP KEYS FIRST (the old keys were written in the code, treat them as public)
+ 1. From Majd's WhatsApp, ask CallMeBot for a NEW API key (send the CallMeBot activation message again,
+    as explained on callmebot.com > WhatsApp API). Write the key down.
+ 2. Do the same from Romy's WhatsApp.
+
+B. SCRIPT PROPERTIES (gear icon "Project Settings" > Script Properties > Add script property)
+ 3. Add these 4 (digits only, no + and no spaces):
+      CALLMEBOT_KEY  = Majd's NEW CallMeBot key
+      WHATSAPP_TO    = 96170976173
+      ROMY_WA        = 96176511048
+      ROMY_KEY       = Romy's NEW CallMeBot key
+    Keep the ones already there (ANTHROPIC_KEY, CL_SECRET, APP_KEYS, APP_VER). Click Save.
+    If a key is missing, the app still works but sends no WhatsApp (a WARNING appears in the log).
+
+C. PASTE THE FILES (for each: open it in the editor, Ctrl+A, paste the new file, Ctrl+S)
+ 4. Code       <- Code.gs
+ 5. App        <- App.gs
+ 6. Client     <- Client.gs
+ 7. Guest      <- Guest.gs
+ 8. Nutrition  <- Nutrition.gs
+ 9. RunGame    <- RunGame.gs
+10. Profile    <- Profile.gs
+11. Insurance  <- Insurance.gs
+12. Streak     <- Streak.gs
+13. Workout    <- Workout.gs
+    NOT changed, leave them: Wallet, Levels.
+    No new files to add.
+
+D. RUN ONCE (pick the function in the dropdown at the top, press Run, allow if asked)
+14. setupSecrets_help   -> the log must show [set] next to all 4 keys.
+15. nutSetup            -> replaces the 1 minute nutrition worker with a 5 minute one.
+16. testW40Alert        -> Majd and Romy get a WhatsApp, Majd gets an email.
+
+E. TRIGGERS (clock icon "Triggers" on the left): check you now have exactly
+17.   nutWorker          time based, every 5 minutes   (delete any old "every minute" nutWorker if you see one)
+      appDefaultPresent  time based, every day 21:00 to 22:00
+      w40_onEdit         from spreadsheet, on edit
+    Nothing else to change.
+
+F. DEPLOY (same link, nothing to send to anyone)
+18. Deploy > Manage deployments > pencil (Edit) > Version: New version > Deploy.
+
+G. QUICK CHECKS AFTER DEPLOY
+19. Staff app as Joe: he sees only the clients he trained in the last 60 days or has booked.
+20. Client app: sign in works. A new person's guest row appears in APP GUESTS only after they type the code.
+
+GOOD TO KNOW FOR ROMY
+ - 1:2 sessions: a cancel the day before (or earlier) by ONE client cancels the whole session for both.
+   The partner and the trainer get a message in the app, Romy and Majd too, Romy gets a WhatsApp.
+ - 1:2 late cancel / no show: the other client stays Scheduled and is marked Present at 21:30 if nobody marks them.
+   The app keeps "Name: Late Cancel via app" in the session Notes column. Do not delete these notes in SESSIONS 1:2:
+   the app reads them to know who came. A plain Y pass flag with no note = Present.
+ - 6 month upgrade: the client's request now waits in Romy's To do. Months 4, 5, 6 are created only when she taps Accept.
+ - Delete account requests: a row in the new DELETION REQUESTS tab + a To do item. Delete the person's data within 7 days,
+   then write Done in that row. They are signed out right away.
+ - New tabs appear by themselves the first time they are needed: NOTICES, DELETION REQUESTS.
+   NUTRITION PLANS gets 2 new columns at the end (Attempts, Writing since): leave them.

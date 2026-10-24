@@ -1,0 +1,110 @@
+WELLBE PHASE 3 SERVER: INSTALL
+Project: "Wellbe W40 Backend" (Apps Script). About 20 minutes.
+
+THIS FOLDER REPLACES THE phase1 FOLDER. It already has every Phase 1 and Phase 2 fix inside.
+It also includes the Phase 4 speed work (same install, nothing extra to do).
+If you have not installed phase1 yet, skip it and install only this one.
+If you already installed phase1, do this anyway: same steps, the files are newer.
+
+A. NEW WHATSAPP KEYS (skip if you did it for phase1)
+ 1. From Majd's WhatsApp, ask CallMeBot for a NEW API key (send the activation message again,
+    as explained on callmebot.com > WhatsApp API). Write the key down.
+ 2. Do the same from Romy's WhatsApp.
+
+B. SCRIPT PROPERTIES (skip if you did it for phase1)
+   Gear icon "Project Settings" > Script Properties > Add script property. Digits only, no + and no spaces:
+ 3.   CALLMEBOT_KEY  = Majd's NEW CallMeBot key
+      WHATSAPP_TO    = 96170976173
+      ROMY_WA        = 96176511048
+      ROMY_KEY       = Romy's NEW CallMeBot key
+    Keep the ones already there (ANTHROPIC_KEY, CL_SECRET, APP_KEYS, APP_VER). Click Save.
+
+C. ADD ONE NEW FILE
+ 4. Files "+" > Script > name it Config (the editor adds .gs). Paste Config.gs into it. Ctrl+S.
+
+D. PASTE THE OTHER FILES (each one: open it, Ctrl+A, paste the new file, Ctrl+S)
+ 5. Code       <- Code.gs
+ 6. App        <- App.gs
+ 7. Client     <- Client.gs
+ 8. Guest      <- Guest.gs
+ 9. Nutrition  <- Nutrition.gs
+10. RunGame    <- RunGame.gs
+11. Levels     <- Levels.gs
+12. Profile    <- Profile.gs
+13. Insurance  <- Insurance.gs
+14. Streak     <- Streak.gs
+15. Workout    <- Workout.gs
+    Wallet is not changed, leave it. (Wallet.gs is in the folder only for the tests.)
+
+E. RUN ONCE (pick the function in the dropdown at the top, press Run, allow if asked)
+16. cfgSetup            -> creates 3 new tabs in the Operations sheet: STAFF, PACKAGE TYPES, SETTINGS,
+                           filled with today's values. Rows already there are never overwritten.
+17. setupSecrets_help   -> the log must show [set] next to all 4 keys.
+18. nutSetup            -> the nutrition worker runs every 5 minutes.
+19. testW40Alert        -> Majd and Romy get a WhatsApp, Majd gets an email.
+
+F. TRIGGERS (clock icon on the left): you should have exactly
+20.   nutWorker          time based, every 5 minutes
+      appDefaultPresent  time based, every day 21:00 to 22:00
+      w40_onEdit         from spreadsheet, on edit
+
+G. DEPLOY (same link, nothing to send to anyone)
+21. Deploy > Manage deployments > pencil (Edit) > Version: New version > Deploy.
+    Do this BEFORE you push the new staff and client apps to GitHub.
+
+G2. PUSH THE APPS (GitHub Desktop, after step 21)
+    Changed: index.html, client/index.html, client/run.html, client/run-test.html.
+    New folder: core (with wb-core.js). Tick all of them, Commit, Push.
+
+H. QUICK CHECKS
+22. Staff app and client app open normally. Prices, offers and names look the same as before.
+23. Staff app as Joe: he sees only the clients he trained in the last 60 days or has booked.
+
+HOW TO CHANGE THINGS FROM NOW ON (no code)
+All in the Operations sheet. Changes show in the apps within 10 minutes.
+To see them at once: in Apps Script pick cfgBump and press Run.
+A row with a mistake is skipped (the old value stays). You see why in Executions > Logs.
+
+ STAFF tab, one row per person
+   ID            short, small letters, never change it (joe). It is their login.
+   Name          full name shown in the apps
+   Role          owner, assistant or trainer
+   Trainer name  the name in the Trainer column of the session tabs (Joe). Empty for Romy.
+   Email, Phone  only Majd sees them
+   Max per hour  most clients this trainer takes in one hour across 1:1, 1:2, 1:3 (Joe: 3). Empty = no limit.
+   Pay rule      fixed, tier or cut. Pay base, Pay cut, Fixed pay: the numbers of that rule.
+   Active        N = can no longer sign in, old sessions still show their name
+   Match text    a piece of the name to find in old session rows (mik finds Mike and Mikel)
+   Trains in the gym  Y = shows in Book and Change trainer (Majd, Joe, Mikel, Melanie today)
+   Arabic name   optional, used in the Arabic nutrition screens (Romy: رومي)
+   New trainer: add a row, then run appSetup and appLinks to get their private link.
+
+ PACKAGE TYPES tab, one row per package you sell
+   Name          exactly as it should appear (keep the price in brackets like today)
+   Passes, Price numbers
+   Kind          1:1, 1:2, 1:3, Physio, Prehab, Osteo or Madero
+   Valid days    days from the start (30 for monthly, 10 for singles)
+   Valid months  use this instead of days (Madero 2, Prehab 3)
+   Melanie       Y for "PT with Mel" packages (the client becomes Melanie's client)
+   Trial, Free   Y for the free trial
+   Active        N = can no longer be sold (old packages keep working)
+   In client app Y = shown in "All Wellbe packages"
+   The Package Type dropdown in PACKAGES belongs to the Operations sheet: add a new type there too.
+
+ SETTINGS tab: Key, Value, Notes
+   Change only the Value. Lists are written like ["Cash","Whish","Neo"] and numbers like 7.
+   Examples: offers.m3Pct (3 month discount %), offers.m6Pct, offers.physioPrice, center.wa,
+   hours.trial (trial hours), hours.blocked (holidays, like ["2026-12-25"]), windows.joinMinH,
+   streak.days, game.cash.CENTS, insurance.rate.
+
+GOOD TO KNOW FOR ROMY
+ * 1:2 sessions: a cancel the day before (or earlier) by ONE client cancels the whole session for both.
+   The partner and the trainer get a message in the app, Romy and Majd too, Romy gets a WhatsApp.
+ * 1:2 late cancel / no show: the other client stays Scheduled and is marked Present at 21:30 if nobody marks them.
+   The app keeps "Name: Late Cancel via app" in the session Notes column. Do not delete these notes in SESSIONS 1:2:
+   the app reads them to know who came. A plain Y pass flag with no note = Present.
+ * 6 month upgrade: the client's request now waits in Romy's To do. Months 4, 5, 6 are created only when she taps Accept.
+ * Delete account requests: a row in the new DELETION REQUESTS tab + a To do item. Delete the person's data within 7 days,
+   then write Done in that row. They are signed out right away.
+ * New tabs appear by themselves the first time they are needed: NOTICES, DELETION REQUESTS.
+   NUTRITION PLANS gets 2 new columns at the end (Attempts, Writing since): leave them.

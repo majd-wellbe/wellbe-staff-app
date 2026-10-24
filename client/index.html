@@ -346,6 +346,7 @@ main{max-width:640px;margin:0 auto;padding:4px 16px calc(96px + env(safe-area-in
 .sheet .foot{padding:12px 18px 16px;border-top:1px solid var(--line)}
 .note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:15px;background:var(--mint-soft);color:var(--mint-ink)}
 .note.bad{background:var(--crimson-soft);color:var(--crimson)}
+.ntc{display:grid;gap:10px;margin:4px 0 14px}.ntc-i{align-items:flex-start}.ntc-i .t{flex:1;min-width:0;line-height:1.35}.ntc-i .t b{display:block;margin-bottom:2px}.ntc-i .t small{display:block;opacity:.7;margin-top:4px;font-size:13px}.ntc-i .btn{flex:none}
 .note.warn{background:var(--amber-soft);color:var(--amber)}
 .note .icon{margin-top:1px}
 .field{margin-top:16px}
@@ -516,22 +517,7 @@ textarea.inp{min-height:84px;resize:vertical}
 
 .tabs{-webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);-webkit-backface-visibility:hidden;backface-visibility:hidden}
 
-/* ---------- floating footer with Play in the middle (approved preview 1 A) ---------- */
-:root nav.tabs.v2{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:0;background:transparent;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
-:root nav.tabs.v2 .in{position:relative;max-width:520px;height:66px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 84px 1fr 1fr;align-items:center;background:var(--card);border-radius:24px;box-shadow:0 10px 28px rgba(31,110,91,.18),0 0 0 1px var(--line)}
-:root nav.tabs.v2 button,:root nav.tabs.v2 .tb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font-size:11.5px;font-weight:700;color:var(--ink-3);position:relative;text-decoration:none}
-:root nav.tabs.v2 button .icon,:root nav.tabs.v2 .tb .icon{width:24px;height:24px}
-:root nav.tabs.v2 button[aria-current="page"]{color:var(--accent)}
-:root nav.tabs.v2 button[aria-current="page"]::before{display:none}
-:root nav.tabs.v2 .dot{top:2px;left:calc(50% + 6px)}
-:root nav.tabs.v2 .fab2{position:absolute;left:50%;top:-26px;transform:translateX(-50%);width:66px;height:66px;padding:0;border-radius:50%;background:linear-gradient(145deg,#2c8a72,#1f6e5b 55%,#17594a);color:#fff;display:grid;place-items:center;box-shadow:0 0 0 6px var(--bg),0 12px 26px rgba(31,110,91,.45)}
-:root nav.tabs.v2 .fab2 .icon{width:30px;height:30px;margin-left:3px;color:#fff}
-:root nav.tabs.v2 .fab2[aria-current="page"]{background:linear-gradient(145deg,#c2405a,#a3263f)}
-:root nav.tabs.v2 .fabl{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);font-size:11.5px;font-weight:800;color:var(--accent);pointer-events:none}
-:root[data-theme="dark"] nav.tabs.v2 .in{background:#12181a;box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 0 1px var(--line)}
-:root[data-theme="dark"] nav.tabs.v2 button[aria-current="page"]{color:#fff}
-:root[data-theme="dark"] nav.tabs.v2 button[aria-current="page"] .icon{color:var(--gold)}
-:root[data-theme="dark"] nav.tabs.v2 .fabl{color:var(--gold)}
+/* ---------- space for the tab bar ---------- */
 .cart{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 main{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
@@ -839,10 +825,12 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="../core/wb-core.js?v=1"></script>
 <script>
-var API='https://script.google.com/macros/s/AKfycbxrCVPkY-h2xqTqeHhhaChdaSAf1KbEsJ_HbRSP-oyg4r-qgF-sgSJtFZ0D0uyhDiOS/exec';
-var WA_DEFAULT='96176511048';
-var IMG={
+/* ---------- content: texts and lists the app shows (not business settings, those are in cfg) ---------- */
+var CONTENT={
+  // shop product photos (supplier images)
+  img:{
   synpro:'https://syntech-nutrition.com/media/catalog/product/cache/d5dacba96299379be6af275d6c7e64d6/s/y/synpro_whey_900g_-_im_2020-processed_1.png',
   aes:'https://syntech-nutrition.com/media/catalog/product/cache/d5dacba96299379be6af275d6c7e64d6/a/e/aestheticwhey_1_8_bag_3d_vector-processed_1.png',
   creatine:'https://syntech-nutrition.com/media/catalog/product/cache/d5dacba96299379be6af275d6c7e64d6/c/r/creatine_monohydrate_300g_-_blackline_-_packshot_nieuwe_pot_hr_cat-processed_1.png',
@@ -851,9 +839,9 @@ var IMG={
   carn:'https://syntech-nutrition.com/media/catalog/product/cache/d5dacba96299379be6af275d6c7e64d6/l/-/l-carnitine_100_caps_hr_im_2020-processed_1.png',
   bcaa:'https://syntech-nutrition.com/media/catalog/product/cache/d5dacba96299379be6af275d6c7e64d6/b/c/bcaa_im_hr_2020_v2-processed_1.png',
   syned:'https://syntech-nutrition.com/media/catalog/product/cache/d5dacba96299379be6af275d6c7e64d6/s/y/synedrine_120_vcaps_im_hr_2020-processed_1.png'
-};
-// [match, image, short line, featured rank]
-var CATALOG=[
+},
+  // shop catalog: [match, image, short line, featured rank]
+  catalog:[
   [/synpro.*68/i,'synpro','Whey protein for recovery · 68 servings',1],
   [/synpro.*34/i,'synpro','Whey protein for recovery · 34 servings',2],
   [/creatine/i,'creatine','Creatine monohydrate · strength and power',3],
@@ -864,9 +852,9 @@ var CATALOG=[
   [/bcaa/i,'bcaa','Amino acids for training days',0],
   [/synedrine/i,'syned','Thermogenic capsules',0],
   [/bites/i,'','High protein snack',0]
-];
-// daily quote: monks and Zen, discipline, training, nutrition, life, and our own
-var QUOTES=[
+],
+  // daily quote: monks and Zen, discipline, training, nutrition, life, and our own
+  quotes:[
  ['Fall seven times, stand up eight.','Japanese proverb'],
  ['When walking, walk. When eating, eat.','Zen saying'],
  ['The obstacle is the path.','Zen saying'],
@@ -906,50 +894,129 @@ var QUOTES=[
  ['Prepare your food on Sunday and your week takes care of itself.','Wellbe'],
  ['Nothing tastes as good as feeling strong in your body.','Wellbe'],
  ['Recovery starts on your fork: protein, colour, water, sleep.','Wellbe']
-];
+],
+  // promise ideas: [promise, daily key that fits it]
+  promises:[
+ ['Wake up without pain and trust my body again','Do your 10 minute mobility routine before bed'],
+ ['Be strong enough to carry my kids, and one day my grandkids, without thinking twice','Do 20 slow squats at home, chest up, heels down'],
+ ['Lose weight step by step and feel at home in my own body','Stop eating 3 hours before bed'],
+ ['Have the energy to show up fully for the people I love, not just get through the day','Be in bed by 11, phone out of the room'],
+ ['Stop starting over. Keep this promise to myself, even on the hard days','Write down one win from today before you sleep'],
+ ['Stay independent and active for the next 30 years, on my own two feet','Stand on one leg for 1 minute each side'],
+ ['Work on my belly and see my waistline again','Skip sugary drinks and desserts today'],
+ ['Build real muscle and feel proud of what I see in the mirror','Get protein in every meal, starting with breakfast'],
+ ['Get toned, firm arms and legs I’m happy to show in summer','Give your last set everything, then stretch 5 minutes'],
+ ['Lose fat without losing muscle, and look as strong as I feel','Eat a palm sized portion of protein at every meal'],
+ ['Fix my posture and stop slouching at my desk','Stand up and roll your shoulders back every hour'],
+ ['Sleep deeply and wake up with real energy','No caffeine after 2 PM'],
+ ['Feel confident in my clothes again','Choose water over every sugary drink today'],
+ ['Run, play and move with no knee or back pain','Warm up your knees and hips 5 minutes before training'],
+ ['Get back in shape after my pregnancy, at my own pace','Do your 5 minute core and breathing routine'],
+ ['Clear my head and handle stress better through training','Take 5 slow deep breaths before and after your session'],
+ ['Beat my sugar cravings and take control of what I eat','Keep a protein snack with you so cravings don’t win'],
+ ['Be the fittest version of me at 40, 50 and beyond','Stretch for 10 minutes after training'],
+ ['Recover fully from my injury and come back stronger','Do the home exercises your physio gave you'],
+ ['Prove to myself that I finish what I start','Book your next session before you leave the center']],
+  // the 3 habits on rest days
+  restHabits:['Eat right today: focus on clean, simple food','Keep moving: don’t stay seated more than an hour','Hit at least 10,000 steps'],
+  // guest screen: what we do (functions, so names follow the settings)
+  services:function(){return [['i-users','Small group 1:3','3 people, 1 coach. Private-level coaching at a group price.'],['i-users','Duo 1:2','Train with a partner, one coach for the two of you.'],['i-dumbbell','Private 1:1','The coach is all yours, every rep.'],
+  ['i-steth','Physiotherapy','Pain, injury or recovery: 60 minutes with '+SVCNAME('Physio')+', physiotherapist.'],['i-heart','Prehab','10 sessions to fix the weak links before they become injuries.'],['i-spark','Osteopathy','Hands-on treatment with '+SVCNAME('Osteo')+'.'],['i-madero','Maderotherapy','Wood therapy massage with '+SVCNAME('Madero')+' that can help your skin look smoother.']]},
+  why:function(){return [['i-steth','Backed by a physio',''+SVCNAME('Physio')+', our physiotherapist, designs and checks every program.'],['i-users','Max 3 per coach','Coached like private training, priced like a group.'],['i-heart','Built around your body','Your injuries, pain and goals shape your plan.'],['i-spark','Train for life','Better health and more energy, without getting hurt.']]},
+  sessionNames:{'1:1':'Private 1:1','1:2':'Duo 1:2','1:3':'Small group 1:3','Physio':'Physio','Prehab':'Prehab','Osteo':'Osteo','Madero':'Madero'},
+  // cellulite card: profile sex first (nutrition body, workout body), these first names only when no sex is saved
+  femaleNames:['lina','maria','nour','rita','joy','tania','julia','chloe','jeanine','anji','melanie','romy','ara','sara','sarah','rana','hala','maya','nadine','carla','rima','dana','lea','lara','yara','zeina','mira','tsoline','joelle','christelle','nathalie','cynthia','grace','layal','reem','rania','hiba','jana','tala','perla','pamela','stephanie','nancy','dina','diana','mona','samar','nada','ghada','maha','nisrine','rola','roula','mariam','myriam','sandra','jessica','patricia','vanessa','aline','yasmina','yasmine','marie','michelle','cherine','sirine','farah','ghina','lama','nayla','noura','raya','sally','tamara','alia']
+};
 
-var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+/* ---------- settings ----------
+   Business settings (staff, center contacts, offers, streak, game rules) come from the server in boot as d.cfg.
+   CFG_FALLBACK = today's values, used ONLY when the server is older and sends no cfg. Delete after Supabase. */
+var CFG_FALLBACK={"v":1,"center":{"desk":"romy","wa":"96176511048","location":"Bsalim","review":"https://search.google.com/local/writereview?placeid=ChIJ35Nmu5s_HxURBmvCuEEY8U0"},"staff":[{"id":"majd","name":"Majd Bou Habib","role":"owner","trainer":"Majd"},{"id":"romy","name":"Romy","role":"assistant","trainer":"","nameAr":"رومي"},{"id":"joe","name":"Joe Al Hosny","role":"trainer","trainer":"Joe"},{"id":"mikel","name":"Mikel","role":"trainer","trainer":"Mikel"},{"id":"melanie","name":"Melanie","role":"trainer","trainer":"Melanie"},{"id":"jad","name":"Jad Barakat","role":"trainer","trainer":"Jad"}],"services":{"1:3":{"trainer":"joe"},"Physio":{"fixed":"majd"},"Prehab":{"fixed":"majd"},"Osteo":{"fixed":"jad"},"Madero":{"fixed":"melanie"}},"offers":{"m3Pct":7,"m6Pct":15},"windows":{"physioDays":14},"streak":{"days":30},"game":{"cash":{"MIN_M":2000,"CENTS":10,"DAY_MAX":50,"REDEEM_MIN":100,"REDEEM_MAX":2000},"lifeCost":1000,"lifeMax":3,"shop":{"magnet":{"lv":2},"shoes":{"lv":4},"jet":{"lv":6}}}};
+function cfg(p,fb){var v=WB.get(p);if(v!==undefined)return v;var o=CFG_FALLBACK;String(p).split('.').forEach(function(k){o=o==null?o:o[k]});return o==null?fb:o}   // the server's value, else today's
+// the last settings seen are kept on the phone (not personal data), so the sign in screen shows the right names
+function cfgSet(d){var c=d&&d.cfg;if(c){WB.setCfg(c);try{localStorage.setItem('wbc_cfg',JSON.stringify(c))}catch(e){}}else if(!WB.cfg)WB.setCfg(CFG_FALLBACK)}
+WB.setCfg(WB.storeJSON('wbc_cfg',null)||CFG_FALLBACK);
+// front desk first name (requests, bookings, WhatsApp) and in Arabic
+function DESK(){return WB.deskName()}
+function DESK_AR(){var id=cfg('center.desk',''),d=WB.staffById(id)||WB.staffByRole('assistant')[0],f=d&&CFG_FALLBACK.staff.filter(function(x){return x.id===d.id})[0];return d&&(d.nameAr||f&&f.nameAr)||DESK()}
+// first name of the person who runs a service with a fixed therapist (Physio, Osteo, Madero)
+// who runs the 1:3 small groups and the free trial (first name)
+function TRIALBY(){var x=WB.staffById(cfg('services.1:3.trainer',''));return x?WB.first(x.name):''}
+function SVCNAME(k){var x=WB.staffById(cfg('services.'+k+'.fixed',''));return x?WB.first(x.name):''}
+
+var $=WB.$, $$=WB.$$;
 var ICON=function(id,st){return '<svg class="icon"'+(st?' style="'+st+'"':'')+'><use href="#'+id+'"/></svg>'};
-function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function money(n){return '$'+(Math.round(n*100)/100).toLocaleString('en-US')}
-function pad(n){return (n<10?'0':'')+n}
-function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
-function dOf(s){return new Date(s+'T12:00:00')}
-function addDays(s,n){var d=dOf(s);d.setDate(d.getDate()+n);return ymd(d)}
-function dayShort(s){return dOf(s).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}
-function dayLong(s){return dOf(s).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}
-function dmy(s){return s?dOf(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}
-function hl(t){var h=+t.split(':')[0],m=t.split(':')[1];return (h%12||12)+(m==='00'?'':':'+m)+(h<12?' AM':' PM')}
+var esc=WB.esc, pad=WB.pad, ymd=WB.ymd, dOf=WB.dOf, addDays=WB.addDaysYmd, dayShort=WB.dayShort, dayLong=WB.dayLong, dmy=WB.dmy, store=WB.store;
+function money(n){return WB.money(n,2)}
+function hl(t){return WB.hourLabel(t,true)}
 function rel(s){var t=D.today;if(s===t)return 'Today';if(s===addDays(t,1))return 'Tomorrow';return dayShort(s)}
-function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
-function waLink(text,to){return 'https://wa.me/'+(to||(D&&D.wa)||WA_DEFAULT)+'?text='+encodeURIComponent(text)}
-function tabName(t){return {'1:1':'Private 1:1','1:2':'Duo 1:2','1:3':'Small group 1:3','Physio':'Physio','Prehab':'Prehab','Osteo':'Osteo','Madero':'Madero'}[t]||t}
+// broken product image: show its first letter instead
+document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||t.dataset.fb==null)return;var sp=document.createElement('span');if(t.dataset.fbc)sp.className=t.dataset.fbc;if(t.dataset.fbs)sp.setAttribute('style',t.dataset.fbs.replace(/;/g,';'));sp.textContent=t.dataset.fb;t.replaceWith(sp)},true);
+function bToday(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Beirut',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}catch(e){return ymd(new Date())}}
+function bHm(){try{var p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Beirut',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());return p.slice(0,5)}catch(e){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}}
+// background refreshes never redraw while the person is typing; they redraw once the field loses focus
+var BGPEND=false;
+function typing(){var a=document.activeElement;return !!a&&(/^(TEXTAREA|SELECT)$/.test(a.tagName)||(a.tagName==='INPUT'&&!/^(checkbox|radio|file|button|submit)$/i.test(a.type)))}
+function bgRender(){if(typing()){BGPEND=true;return}BGPEND=false;var y=scrollY;render();scrollTo(0,y)}
+document.addEventListener('focusout',function(){setTimeout(function(){if(BGPEND&&!typing())bgRender()},60)});
+function waLink(text,to){return 'https://wa.me/'+(to||(D&&D.wa)||cfg('center.wa',''))+'?text='+encodeURIComponent(text)}
+function tabName(t){return CONTENT.sessionNames[t]||esc(t)}
 
 /* ---------- state ---------- */
 var ONB=null, TOKEN=null, D=null, A=0, VIEW='home', CART={}, LOGIN={step:'welcome',mode:'client',email:'',name:'',busy:false,err:''};
-(function(){var m=/[#&]t=([^&]+)/.exec(location.hash);if(m){TOKEN=decodeURIComponent(m[1]);store('wbc_t',TOKEN)}else{TOKEN=store('wbc_t')||null;if(TOKEN)history.replaceState(null,'','#t='+encodeURIComponent(TOKEN))}
+(function(){var m=/[#&]t=([^&]+)/.exec(location.hash);if(m){TOKEN=decodeURIComponent(m[1]);store('wbc_t',TOKEN);try{history.replaceState(null,'',location.pathname+location.search)}catch(x){}}else{TOKEN=store('wbc_t')||null}   // the sign-in token never stays in the address bar
   try{CART=JSON.parse(store('wbc_cart')||'{}')}catch(e){CART={}}
   A=+(store('wbc_acc')||0)||0;
   var ac=store('wbc_accent');if(ac&&ac!=='rose')document.documentElement.setAttribute('data-accent',ac);})();
 function ACC(){return D&&D.accounts[A]||D&&D.accounts[0]}
 
-function api(action,data){data=data||{};data.action=action;if(TOKEN)data.token=TOKEN;
-  return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)})
-   .then(function(r){return r.json()}).then(function(j){if(!j.ok){var e=new Error(j.error||'Something went wrong');e.code=j.error;throw e}return j})}
+var NETMSG={timeout:'This is taking too long. Check your connection and try again.',offline:'No connection. Check your internet and try again.',server:'Our server is busy. Try again in a minute.'};
+function netErr(k){var e=new Error(NETMSG[k]);e.code='net_'+k;return e}
+function api(action,data){return WB.api(action,data,{token:TOKEN}).catch(function(e){
+  if(e&&e.net)throw netErr(e.message==='timeout'||e.message==='server'?e.message:'offline');
+  if(!e||e instanceof SyntaxError)throw netErr('server');
+  if(e.message==='Server error')throw netErr('offline');   // no error text from the server (as before)
+  var x=new Error(e.message);x.code=e.message;throw x})}
 function cacheKey(){return 'wbc_d_'+String(TOKEN||'').slice(-10)}
+// the boot answer saved on the phone: profile photos are stored once on their own (not rewritten with every refresh), max 1.5 MB
+var LASTCS='',CS_MAX=1500000;
+function cacheStr(d,ph){return JSON.stringify(d,function(k,v){if(k==='photo'&&typeof v==='string'&&v.length>256&&this&&this.cid){if(ph)ph[this.cid]=v;return '@ph'+v.length+':'+v.slice(-32)}return v})}
+function cacheSave(d,s0,ph0){try{var ph=ph0||{},s=s0||cacheStr(d,ph);LASTCS=s;if(s.length>CS_MAX){store(cacheKey(),null);return}store(cacheKey(),s);for(var c in ph){var pk='wbc_ph_'+c;if(store(pk)!==ph[c])store(pk,ph[c])}}catch(e){}}
+function cacheLoad(){var s=store(cacheKey());if(!s)return null;var d=JSON.parse(s);LASTCS=s;(d.accounts||[]).forEach(function(a){if(typeof a.photo==='string'&&a.photo.slice(0,3)==='@ph')a.photo=store('wbc_ph_'+a.cid)||''});return d}
 function boot(silent){
   if(!TOKEN){render();return}
-  if(!D){try{var c=JSON.parse(store(cacheKey())||'null');if(c){D=c;render();warm()}}catch(e){}}
+  if(!D){try{var c=cacheLoad();if(c){D=c;cfgSet(D);if(bToday()>D.today)D.today=bToday();render();warm()}}catch(e){}}
   if(!D)render();
-  LASTB=Date.now();return api('app_cl_boot').then(function(d){var wasG=store('wbc_g')==='1';D=d;store('wbc_g',d.guest?'1':'0');if(A>=D.accounts.length)A=0;store(cacheKey(),JSON.stringify(d));if(wasG&&!d.guest){SEC='center';VIEW='home';store('wbc_sec','center')}render();warm();if(wasG&&!d.guest)success('Welcome to Wellbe 🎉','You’re now a Wellbe client. Your sessions, packages and workouts are all here.')})
-   .catch(function(e){if(e.code==='signin'){signOut(true);return}if(!D){$('#app').innerHTML=errorView(e.message)}else if(!silent)toast('Could not refresh. Check your connection.')})}
+  if(BOOTP){BOOTQ=true;return BOOTP}
+  LASTB=Date.now();BOOTP=api('app_cl_boot').then(function(d){BOOTP=null;if(!TOKEN)return;var wasG=store('wbc_g')==='1',ph={},cs=cacheStr(d,ph),same=!!D&&cs===LASTCS&&wasG===!!d.guest;D=d;cfgSet(d);if(bToday()>D.today)D.today=bToday();store('wbc_g',d.guest?'1':'0');if(A>=D.accounts.length)A=0;cacheSave(d,cs,ph);if(wasG&&!d.guest){SEC='center';VIEW='home';store('wbc_sec','center')}if(same){}else if(silent&&!wasG)bgRender();else render();warm();if(BOOTQ){BOOTQ=false;boot(true)}if(wasG&&!d.guest)success('Welcome to Wellbe 🎉','You’re now a Wellbe client. Your sessions, packages and workouts are all here.')})
+   .catch(function(e){BOOTP=null;BOOTQ=false;if(e.code==='signin'){signOut(true);return}if(!D){$('#app').innerHTML=errorView(e.message)}else if(!silent)toast('Could not refresh. Check your connection.')});return BOOTP}
+var BOOTP=null,BOOTQ=false,NBD=null;
+// a new day in Beirut: refresh dates, habits, water and runs
+setInterval(function(){if(D&&TOKEN&&bToday()>D.today){D.today=bToday();bgRender();boot(true)}},60000);
 var LASTB=0;document.addEventListener('visibilitychange',function(){if(!document.hidden&&TOKEN&&D&&Date.now()-LASTB>30000)boot(true)});
 setInterval(function(){if(TOKEN&&D&&D.guest&&!document.hidden)boot(true)},120000);
 var WARMT=0;function warm(){if(!D||!ACC()||Date.now()-WARMT<60000)return;WARMT=Date.now();if(!D.guest)woLoad(ACC(),1);runLoad();nWarm()}
 function send(action,data){data=data||{};data.cid=ACC().cid;return api(action,data).then(function(j){boot(true);return j})}
-function signOut(expired){try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(wo|run)_/.test(k))localStorage.removeItem(k)})}catch(e){}store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
+function signOut(expired){var keep={};try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(accent|theme|cfg)/.test(k))keep[k]=localStorage.getItem(k)})}catch(e){}WB.storeClear(['wbc_','cr_']);for(var kk in keep)store(kk,keep[kk]);store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
 
 /* ---------- render ---------- */
+// PATCH: render() updates the page in place (same result as a full redraw, but unchanged parts, images and animations stay)
+var PATCH=false,FORMEL=/^(INPUT|SELECT|TEXTAREA|BUTTON)$/;
+function morphAttrs(x,y){var ch=false,aa=x.attributes,i;for(i=aa.length-1;i>=0;i--){var n=aa[i].name;if(!y.hasAttribute(n)){x.removeAttribute(n);ch=true}}
+  var ba=y.attributes;for(i=0;i<ba.length;i++){if(x.getAttribute(ba[i].name)!==ba[i].value){x.setAttribute(ba[i].name,ba[i].value);ch=true}}
+  if(ch){x.onclick=null;x.onchange=null;x.oninput=null}}
+function morphKids(a,b){var bc=Array.prototype.slice.call(b.childNodes),i;
+  for(i=0;i<bc.length;i++){var x=a.childNodes[i],y=bc[i];
+    if(!x){a.appendChild(y);continue}
+    if(x.nodeType!==y.nodeType||(x.nodeType===1&&(x.tagName!==y.tagName||FORMEL.test(x.tagName)&&!x.isEqualNode(y)))){a.replaceChild(y,x);continue}
+    if(x.nodeType!==1){if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;continue}
+    if(x.isEqualNode(y))continue;
+    if(FORMEL.test(x.tagName)){a.replaceChild(y,x);continue}
+    morphAttrs(x,y);morphKids(x,y)}
+  while(a.childNodes.length>bc.length)a.removeChild(a.lastChild)}
+function setApp(app,html){if(!PATCH||!app.firstChild){app.innerHTML=html;return}var t=document.createElement('template');t.innerHTML=html;morphKids(app,t.content)}
+// redraw after a tap that changes a little (water, habits, cart, groceries, color); the workout screen always redraws fully
+function softRender(){var y=scrollY;if(SEC==='plan'&&PLANTAB==='wo'){render();scrollTo(0,y);return}PATCH=true;try{render()}finally{PATCH=false}}
 function render(){
   var app=$('#app');
   if(!TOKEN){app.innerHTML=loginView();bindLogin();return}
@@ -958,24 +1025,24 @@ function render(){
   if(ONB||(!D.guest&&!a.goal&&!store('wbc_goal_later_'+a.cid))){app.innerHTML=onbView(a);bindOnb(a);return}
   if(!full)VIEW='home';
   if(SEC==='work'){SEC='plan';PLANTAB='wo'}else if(SEC==='nut'){SEC='plan';PLANTAB='nut'}if(SEC==='shop'&&D.guest)SEC='center';
-  var body=SEC==='play'?VIEWS.play():SEC==='plan'?VIEWS.myplan():SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic();
-  app.innerHTML='<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" href="'+waLink('Hi Romy, this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+'Romy</a><button class="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+avatar(a)+'</button></div></div>'+
+  var body=(SEC==='center'&&!D.guest?noticeCards():'')+(SEC==='play'?VIEWS.play():SEC==='plan'?VIEWS.myplan():SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic());
+  setApp(app,'<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+''+DESK()+'</a><button class="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+avatar(a)+'</button></div></div>'+
    '<main>'+((SEC==='center'||SEC==='me')&&D.accounts.length>1?'<div class="accs" role="tablist" aria-label="Accounts">'+D.accounts.map(function(x,i){return '<button class="acc" aria-pressed="'+(i===A)+'" data-acc="'+i+'">'+esc(x.first)+'</button>'}).join('')+'</div>':'')+body+'</main>'+
-   tabsView()+((SEC==='center'||SEC==='shop')&&!D.guest?cartBar():'')+modalView();
+   tabsView()+((SEC==='center'||SEC==='shop')&&!D.guest?cartBar():'')+modalView());
   bind();if(SEC==='plan'&&PLANTAB==='wo'&&!D.guest)woBindView();if(D.guest)bindGuest();if(SEC==='plan'&&PLANTAB==='nut')nutBind();rdBind();
   if(full||a.goal)loadStreak(a);
 }
 var SEC=(function(){var v=store('wbc_sec');return v==='play'||v==='plan'||v==='shop'?v:v==='work'?'plan':'center'})();
 function initials(n){n=String(n||'').trim().split(/\s+/);return ((n[0]||'')[0]||'').toUpperCase()+((n[1]||'')[0]||'').toUpperCase()}
 function loadingView(){return '<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div></div></div><main><div class="skel" style="height:44px;width:60%;margin:10px 0 18px"></div><div class="skel" style="height:150px"></div><div class="skel" style="height:110px;margin-top:14px"></div><div class="skel" style="height:110px;margin-top:14px"></div></main>'}
-function errorView(m){return '<div class="login"><div class="hero"><div class="brand">WELLBE</div><h1>We could not load your app</h1><p>'+esc(m)+'</p></div><button class="btn block" onclick="location.reload()">Try again</button><a class="btn ghost block" style="margin-top:10px" href="'+waLink('Hi Romy, the Wellbe app is not loading for me.')+'" target="_blank">Message Romy</a></div>'}
+function errorView(m){return '<div class="login"><div class="hero"><div class="brand">WELLBE</div><h1>We could not load your app</h1><p>'+esc(m)+'</p></div><button class="btn block" onclick="location.reload()">Try again</button><a class="btn ghost block" style="margin-top:10px" href="'+waLink('Hi '+DESK()+', the Wellbe app is not loading for me.')+'" target="_blank">Message '+DESK()+'</a></div>'}
 
 /* ---------- login ---------- */
 function loginView(){var L=LOGIN;
   if(L.step==='welcome')return '<div class="login"><div class="hero"><div class="brand">WELLBE</div><h1>Train smart. Stay pain free.</h1><p>Physio-led training in small groups of 3, in Beirut.</p></div>'+
     '<button class="wpick" id="wClient"><span class="wi">'+ICON('i-users')+'</span><span class="grow"><b>I’m a Wellbe client</b><small>Sign in with the email you gave us</small></span><span class="go">›</span></button>'+
     '<button class="wpick new" id="wNew"><span class="wi">'+ICON('i-spark')+'</span><span class="grow"><b>I’m new to Wellbe</b><small>See how we train, our packages, and book a free trial</small></span><span class="go">›</span></button>'+
-    '<p class="foot2"><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I have a question about Wellbe.')+'">Questions? Message Romy</a></p></div>';
+    '<p class="foot2"><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', I have a question about Wellbe.')+'">Questions? Message '+DESK()+'</a></p></div>';
   if(L.step==='email'&&L.mode==='new'){var e0=L.err?'<div class="note bad" style="margin-bottom:14px">'+ICON('i-alert')+'<span>'+esc(L.err)+'</span></div>':'';
     return '<div class="login"><div class="hero"><div class="brand">WELLBE</div><h1>Welcome to Wellbe</h1><p>Tell us who you are. We send a 6 digit code to your email to open the app.</p></div>'+e0+
     '<form id="f"><label class="flabel" for="nm">Your name</label><input class="inp" id="nm" autocomplete="name" placeholder="First and last name" value="'+esc(L.name)+'" required>'+
@@ -985,7 +1052,7 @@ function loginView(){var L=LOGIN;
   var hero='<div class="hero"><div class="brand">WELLBE</div><h1>'+(L.step==='code'?'Check your email':'Your training, in your pocket')+'</h1><p>'+(L.step==='code'?'We sent a 6 digit code to <b>'+esc(L.email)+'</b>.':'Sessions, packages, physio and supplements. Sign in with the email you gave us.')+'</p></div>';
   var err=L.err?'<div class="note bad" style="margin-bottom:14px">'+ICON('i-alert')+'<span>'+esc(L.err)+'</span></div>':'';
   if(L.step==='unknown') return '<div class="login">'+hero+'<div class="note warn">'+ICON('i-alert')+'<span>We could not find <b>'+esc(L.email)+'</b>. Maybe we have another email for you, or none yet.</span></div>'+
-    '<a class="btn wa block" style="margin-top:16px" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I want to use the Wellbe app but my email ('+L.email+') is not found. Can you add it?')+'">'+ICON('i-wa')+'Ask Romy to add my email</a>'+
+    '<a class="btn wa block" style="margin-top:16px" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', I want to use the Wellbe app but my email ('+L.email+') is not found. Can you add it?')+'">'+ICON('i-wa')+'Ask '+DESK()+' to add my email</a>'+
     '<button class="btn block" style="margin-top:16px" id="asNew">I’m new: continue with this email</button><button class="btn ghost block" style="margin-top:10px" id="back">Try another email</button></div>';
   if(L.step==='code') return '<div class="login">'+hero+err+'<form id="f"><label class="flabel" for="code">6 digit code</label><input class="inp codein" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required autofocus>'+
     '<button class="btn block" style="margin-top:16px" '+(L.busy?'disabled':'')+'>'+(L.busy?'Checking...':'Sign in')+'</button></form>'+
@@ -993,7 +1060,7 @@ function loginView(){var L=LOGIN;
     '<p class="foot2">No email? Check your spam folder. The code works for 10 minutes.</p></div>';
   return '<div class="login">'+hero+err+'<form id="f"><label class="flabel" for="em">Your email</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" placeholder="name@email.com" value="'+esc(L.email)+'" required>'+
     '<button class="btn block" style="margin-top:16px" '+(L.busy?'disabled':'')+'>'+(L.busy?'Sending...':'Send my code')+'</button></form>'+
-    '<button class="btn ghost block" style="margin-top:10px" id="wBack">Back</button><p class="foot2">Parents: use the email you gave us, you will see your child’s account.<br><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I need help signing in to the Wellbe app.')+'">Need help? Message Romy</a></p></div>'}
+    '<button class="btn ghost block" style="margin-top:10px" id="wBack">Back</button><p class="foot2">Parents: use the email you gave us, you will see your child’s account.<br><a class="link" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', I need help signing in to the Wellbe app.')+'">Need help? Message '+DESK()+'</a></p></div>'}
 function bindLogin(){
   var f=$('#f'),back=$('#back'),re=$('#resend');
   if(back)back.onclick=function(){LOGIN.step='email';LOGIN.err='';render()};
@@ -1006,7 +1073,7 @@ function bindLogin(){
     if(LOGIN.step==='email'){if($('#nm')){LOGIN.name=$('#nm').value.trim();if(LOGIN.name.length<2){LOGIN.err='Please type your name.';render();return}}askCode($('#em').value.trim())}
     else{var code=$('#code').value.replace(/\D/g,'');if(code.length!==6){LOGIN.err='Type the 6 digits from the email.';render();return}
       LOGIN.busy=true;LOGIN.err='';render();
-      api('app_cl_login',{email:LOGIN.email,code:code}).then(function(j){TOKEN=j.token;store('wbc_t',TOKEN);history.replaceState(null,'','#t='+encodeURIComponent(TOKEN));LOGIN={step:'welcome',mode:'client',email:'',name:'',busy:false,err:''};VIEW='home';SEC='center';store('wbc_sec','center');boot()})
+      api('app_cl_login',{email:LOGIN.email,code:code}).then(function(j){TOKEN=j.token;store('wbc_t',TOKEN);LOGIN={step:'welcome',mode:'client',email:'',name:'',busy:false,err:''};VIEW='home';SEC='center';store('wbc_sec','center');boot()})
        .catch(function(e){LOGIN.busy=false;LOGIN.err=e.message;render()})}};
   var c=$('#code');if(c){c.focus();c.oninput=function(){if(c.value.replace(/\D/g,'').length===6)f.requestSubmit?f.requestSubmit():f.onsubmit(new Event('submit'))}}
 }
@@ -1015,7 +1082,7 @@ function askCode(email){LOGIN.email=email;LOGIN.busy=true;LOGIN.err='';render();
    .catch(function(e){LOGIN.busy=false;if(e.code==='unknown'){LOGIN.step='unknown'}else LOGIN.err=e.message;render()})}
 
 /* ---------- pieces ---------- */
-function quoteOfDay(){var d=dOf(D.today),start=new Date(d.getFullYear(),0,0),n=Math.floor((d-start)/864e5);return QUOTES[(n*7+d.getFullYear())%QUOTES.length]}
+function quoteOfDay(){var d=dOf(D.today),start=new Date(d.getFullYear(),0,0),n=Math.floor((d-start)/864e5);return CONTENT.quotes[(n*7+d.getFullYear())%CONTENT.quotes.length]}
 function quoteCard(){var q=quoteOfDay(),open=store('wbc_q')===D.today;
   if(!open)return '<button class="quote" id="quote" aria-label="Unlock today’s quote"><span class="glow"></span><div class="lock"><span class="orb">'+ICON('i-spark')+'</span><b>Today’s quote is ready</b><span>Tap to unlock</span></div></button>';
   return '<div class="quote"><span class="glow"></span><div class="tag">'+dayLong(D.today)+'</div><blockquote>“'+esc(q[0])+'”</blockquote><cite>'+esc(q[1])+'</cite></div>'}
@@ -1042,10 +1109,10 @@ function sessItem(s,actions){
   return '<div class="item" style="display:block"><div class="row"><div class="mini"><small>'+d.toLocaleDateString('en-GB',{weekday:'short'})+'</small><b class="num">'+d.getDate()+'</b><small>'+d.toLocaleDateString('en-GB',{month:'short'})+'</small></div><div class="grow"><div class="t">'+hl(s.start)+' · '+tabName(s.tab)+'</div><div class="s">with '+esc(s.trainer)+(s.tab==='1:3'&&s.group>1?' · '+s.group+' in the group':'')+'</div></div>'+lbl+'</div>'+
    (actions&&!cancelled&&s.at<=Date.now()?'<div class="status">'+ICON('i-dumbbell','width:18px;height:18px')+'Happening now</div>':'')+(actions&&!cancelled&&s.at>Date.now()?'<div class="acts"><button class="btn sec2 sm" data-resch="'+s.id+'">'+ICON('i-swap','width:18px;height:18px')+'Reschedule</button><button class="btn ghost sm" data-cancel="'+s.id+'">Cancel</button></div>':'')+'</div>'}
 function physioCard(a){var p=D.physio;
-  return '<div class="physio"><span class="deco"></span><div class="tag">Physio with Majd · 60 min</div><h3>Feeling Sore?</h3><div style="height:12px"></div>'+
-   (a.physio.pending?'<div class="note" style="background:rgba(255,255,255,.18);color:#fff">'+ICON('i-check')+'<span>Your request is waiting. Romy confirms with Majd and messages you.</span></div>':'<button class="btn block" data-act="physio">BOOK YOUR PHYSIO VISIT</button>')+'</div>'}
+  return '<div class="physio"><span class="deco"></span><div class="tag">Physio with '+SVCNAME('Physio')+' · 60 min</div><h3>Feeling Sore?</h3><div style="height:12px"></div>'+
+   (a.physio.pending?'<div class="note" style="background:rgba(255,255,255,.18);color:#fff">'+ICON('i-check')+'<span>Your request is waiting. '+DESK()+' confirms with '+SVCNAME('Physio')+' and messages you.</span></div>':'<button class="btn block" data-act="physio">BOOK YOUR PHYSIO VISIT</button>')+'</div>'}
 function offerCards(a){var o=a.offers||{},h='';if(a.insurer)return '';
-  if(o.m6)h+='<div class="offer"><span class="deco"></span><span class="save">Save '+money(o.m6.save)+'</span><h3>Make it 6 months, 15% off</h3><p>Pay the remaining '+money(o.m6.due)+' and months 4, 5 and 6 are added right away. Same spot, same coach.</p><button class="btn block" data-act="m6">See my 6 month upgrade</button></div>';
+  if(o.m6)h+='<div class="offer"><span class="deco"></span><span class="save">Save '+money(o.m6.save)+'</span><h3>Make it 6 months, '+cfg('offers.m6Pct')+'% off</h3><p>Pay the remaining '+money(o.m6.due)+' and months 4, 5 and 6 are added right away. Same spot, same coach.</p><button class="btn block" data-act="m6">See my 6 month upgrade</button></div>';
   else if(o.m3)h+='<div class="offer"><span class="deco"></span><span class="save">Save '+money(o.m3.save)+'</span><h3>Lock in your next 3 months</h3><p>'+esc(o.m3.type)+': '+money(o.m3.p3)+' instead of '+money(o.m3.t3)+'. One payment, same spot, same coach.</p><button class="btn block" data-act="m3">I want the 3 months</button></div>';
   return h}
 function spotsRow(a){if(!a.open||!a.open.length)return '';
@@ -1057,14 +1124,15 @@ var STK={},STREAK_GOAL=30;
 function keyState(a){var z=STK[a.cid];if(z&&z.keys)return z.keys.slice();try{return JSON.parse(store('wbc_keys_'+a.cid+'_'+D.today)||'[false,false,false]')}catch(e){return [false,false,false]}}
 function stkSet(a,j){STK[a.cid]={keys:j.keys,streak:j.streak,count:j.count,goal:j.goal||STREAK_GOAL,reward:j.reward,t:Date.now()}}
 function loadStreak(a){if(!a||!a.goal||STK[a.cid]&&STK[a.cid].t>Date.now()-6e4)return;STK[a.cid]=STK[a.cid]||{off:true};STK[a.cid].t=Date.now();
-  api('app_cl_streak',{cid:a.cid}).then(function(j){stkSet(a,j);var y=scrollY;render();scrollTo(0,y)}).catch(function(){STK[a.cid]={off:true,t:Date.now()}})}
-function saveKeys(a,k){var z=STK[a.cid];if(!z||z.off)return;
-  api('app_cl_streak',{cid:a.cid,keys:k}).then(function(j){stkSet(a,j);var y=scrollY;render();scrollTo(0,y);if(j.unlocked)rewardSheet()}).catch(function(){toast('Not saved. Check your connection.')})}
+  api('app_cl_streak',{cid:a.cid}).then(function(j){stkSet(a,j);bgRender()}).catch(function(){STK[a.cid]={off:true,t:Date.now()}})}
+var KEYT=0,KEYSEQ=0;
+function saveKeys(a,k){var z=STK[a.cid];if(!z||z.off)return;clearTimeout(KEYT);KEYT=setTimeout(function(){var n=++KEYSEQ;
+  api('app_cl_streak',{cid:a.cid,keys:keyState(a)}).then(function(j){if(n!==KEYSEQ)return;stkSet(a,j);bgRender();if(j.unlocked)rewardSheet()}).catch(function(){if(n===KEYSEQ)toast('Not saved. Check your connection.')})},400)}
 function rewardBar(a){var z=STK[a.cid];if(!z||z.off||!z.keys)return '';
   var g=z.goal,c=Math.min(z.count||0,g),fresh=z.reward&&z.reward.date&&z.reward.date>=addDays(D.today,-6);
-  if(fresh&&c<3)return '<div class="reward won"><span class="gift">'+ICON('i-gift')+'</span><div class="grow"><b>Free session unlocked!</b><span>It\u2019s in your plan. Romy will message you to book it.</span></div></div>';
-  return '<div class="reward"><div class="rw-top"><span>'+ICON('i-gift','width:18px;height:18px')+'<b>Free session</b></span><span class="num">Day '+c+' of '+g+'</span></div><div class="rw-bar"><i style="width:'+(c?Math.max(4,c/g*100):0)+'%"></i>'+[10,20].map(function(m){return '<em style="left:'+(m/g*100)+'%"></em>'}).join('')+'</div><div class="rw-sub">'+(c?(g-c)+' more day'+(g-c>1?'s':'')+' of all 3 Daily Habits and a free session is added to your plan. Miss a day and it starts again.':'Tick all 3 Daily Habits every day for '+g+' days in a row and we add a free session to your plan.')+'</div></div>'}
-function rewardSheet(){openSheet('',' <div class="done"><div class="ok" style="background:#fff3d9;color:#b07a00">'+ICON('i-gift')+'</div><h3>30 days. Promise kept. \uD83C\uDF89</h3><p>Your free session is now in your plan. Romy will message you to book it.</p></div>','<button class="btn block" id="okb">Amazing</button>');$('#okb').onclick=closeSheet;if(navigator.vibrate)try{navigator.vibrate([20,60,20,60,40])}catch(e){}}
+  if(fresh&&c<3)return '<div class="reward won"><span class="gift">'+ICON('i-gift')+'</span><div class="grow"><b>Free session unlocked!</b><span>It\u2019s in your plan. '+DESK()+' will message you to book it.</span></div></div>';
+  return '<div class="reward"><div class="rw-top"><span>'+ICON('i-gift','width:18px;height:18px')+'<b>Free session</b></span><span class="num">Day '+c+' of '+g+'</span></div><div class="rw-bar"><i style="width:'+(c?Math.max(4,c/g*100):0)+'%"></i>'+[Math.round(g/3),Math.round(g*2/3)].map(function(m){return '<em style="left:'+(m/g*100)+'%"></em>'}).join('')+'</div><div class="rw-sub">'+(c?(g-c)+' more day'+(g-c>1?'s':'')+' of all 3 Daily Habits and a free session is added to your plan. Miss a day and it starts again.':'Tick all 3 Daily Habits every day for '+g+' days in a row and we add a free session to your plan.')+'</div></div>'}
+function rewardSheet(){openSheet('',' <div class="done"><div class="ok" style="background:#fff3d9;color:#b07a00">'+ICON('i-gift')+'</div><h3>'+cfg('streak.days')+' days. Promise kept. \uD83C\uDF89</h3><p>Your free session is now in your plan. '+DESK()+' will message you to book it.</p></div>','<button class="btn block" id="okb">Amazing</button>');$('#okb').onclick=closeSheet;if(navigator.vibrate)try{navigator.vibrate([20,60,20,60,40])}catch(e){}}
 function streakDays(a){try{return JSON.parse(store('wbc_streak_'+a.cid)||'{}')}catch(e){return {}}}
 function streak(a){var z=STK[a.cid];if(z&&!z.off&&z.streak!=null)return z.streak;var st=streakDays(a),n=0,d=D.today;if(!st[d])d=addDays(d,-1);while(st[d]){n++;d=addDays(d,-1)}return n}
 function promiseCard(a){
@@ -1073,9 +1141,6 @@ function promiseCard(a){
   return '<div class="promise"><button class="edit" data-act="goal" aria-label="Change my promise">'+ICON('i-edit','width:18px;height:18px')+'</button><div class="tag">My promise</div><blockquote>“'+esc(a.goal.promise)+'”</blockquote>'+
    '<div class="hlabel">'+(trainDay(a)?'Training day · My 3 habits':'Rest day · My 3 habits')+'</div><div class="keys">'+todayHabits(a).map(function(x,i){return '<button class="key" aria-pressed="'+!!k[i]+'" data-key="'+i+'"><span class="n">'+(k[i]?'✓':(i+1))+'</span><span class="t">'+esc(x)+'</span></button>'}).join('')+'</div>'+
    (!trainDay(a)&&!k[2]?'<div class="stepnote">Tick your steps yourself for now. Soon the Wellbe app counts them for you.</div>':'')+'<div class="foot"><span>'+done+' of 3 today</span><span>'+(sk?'🔥 '+sk+' day'+(sk>1?'s':'')+' in a row':'Tick them as you go')+'</span></div>'+rewardBar(a)+'</div>'}
-function todayCard(s){var started=s.at<=Date.now();
-  return '<div class="today"><div class="tag">Today</div><h3>'+hl(s.start)+'</h3><p>'+tabName(s.tab)+' with '+esc(s.trainer)+'</p>'+
-   (started?'<div class="status" style="color:#fff">'+ICON('i-dumbbell','width:18px;height:18px')+'Happening now. Enjoy it!</div>':'<div class="acts"><button class="btn sm" data-late="'+s.id+'">'+ICON('i-clock','width:18px;height:18px')+'I’ll be late</button><button class="btn sm ghost" data-cancel="'+s.id+'">Cancel my session</button></div>')+'</div>'}
 function reviewCard(always){return '<div class="review"><div class="grow"><div class="stars">★★★★★</div><b style="display:block;margin-top:4px">'+(always?'Review Wellbe on Google':'Enjoying Wellbe?')+'</b><div class="muted" style="font-size:14px">'+(always?'It takes 30 seconds and helps others find us.':'A 30 second Google review helps other people find us.')+'</div></div><button class="btn sm" style="background:#e8a400" data-review="1">Review</button></div>'}
 function lateSheet(s){if(!s)return;var m=10;
   openSheet('Running late?',sessLine(s)+'<div class="field"><span class="flabel">How late?</span><div class="seg" id="lm">'+[5,10,15,20].map(function(x){return '<button aria-pressed="'+(x===m)+'" data-m="'+x+'">'+x+(x===20?'+':'')+' min</button>'}).join('')+'</div></div>'+
@@ -1083,41 +1148,18 @@ function lateSheet(s){if(!s)return;var m=10;
   pickOne('#lm',function(b){m=+b.dataset.m});
   $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'late',minutes:m,sid:s.id,pkg:s.pkg,slabel:s.date+' '+s.start,note:$('#ln').value.trim()}).then(function(){success('Got it, drive safe','We told your coach you’re about '+m+' minutes late.')}).catch(function(e){fail(b,e)})}}
 // first sign in: the promise, then 3 Daily Habits
-var PROMISES=[
- ['Wake up without pain and trust my body again','Do your 10 minute mobility routine before bed'],
- ['Be strong enough to carry my kids, and one day my grandkids, without thinking twice','Do 20 slow squats at home, chest up, heels down'],
- ['Lose the weight for good and finally feel at home in my own body','Stop eating 3 hours before bed'],
- ['Have the energy to show up fully for the people I love, not just get through the day','Be in bed by 11, phone out of the room'],
- ['Stop starting over. Keep this promise to myself, even on the hard days','Write down one win from today before you sleep'],
- ['Stay independent and active for the next 30 years, on my own two feet','Stand on one leg for 1 minute each side'],
- ['Burn the stubborn belly fat and see my waistline again','Skip sugary drinks and desserts today'],
- ['Build real muscle and feel proud of what I see in the mirror','Get protein in every meal, starting with breakfast'],
- ['Get toned, firm arms and legs I’m happy to show in summer','Give your last set everything, then stretch 5 minutes'],
- ['Lose fat without losing muscle, and look as strong as I feel','Eat a palm sized portion of protein at every meal'],
- ['Fix my posture and stop slouching at my desk','Stand up and roll your shoulders back every hour'],
- ['Sleep deeply and wake up with real energy','No caffeine after 2 PM'],
- ['Feel confident in my clothes again','Choose water over every sugary drink today'],
- ['Run, play and move with no knee or back pain','Warm up your knees and hips 5 minutes before training'],
- ['Get back in shape after my pregnancy, at my own pace','Do your 5 minute core and breathing routine'],
- ['Clear my head and handle stress better through training','Take 5 slow deep breaths before and after your session'],
- ['Beat my sugar cravings and take control of what I eat','Keep a protein snack with you so cravings don’t win'],
- ['Be the fittest version of me at 40, 50 and beyond','Stretch for 10 minutes after training'],
- ['Recover fully from my injury and come back stronger','Do the home exercises your physio gave you'],
- ['Prove to myself that I finish what I start','Book your next session before you leave the center']];
-var PROMISE_IDEAS=PROMISES.map(function(x){return x[0]});
 // today's 3 habits: training days and rest days are different
 function trainDay(a){return (a.upcoming||[]).concat(a.past||[]).some(function(s){return s.date===D.today&&!/cancel/i.test(s.att||'')})}
-function thirdHabit(a){var p=a.goal&&a.goal.promise,m=PROMISES.filter(function(x){return x[0]===p})[0];
+function thirdHabit(a){var p=a.goal&&a.goal.promise,m=CONTENT.promises.filter(function(x){return x[0]===p})[0];
   return m?m[1]:(a.goal&&a.goal.keys&&a.goal.keys[0])||'Do one thing today that brings you closer to your promise'}
-var REST_HABITS=['Eat right today: focus on clean, simple food','Keep moving: don’t stay seated more than an hour','Hit at least 10,000 steps'];
-function todayHabits(a){return trainDay(a)?['Show up to your session and give it full power','Hydrate and eat well all day long',thirdHabit(a)]:REST_HABITS.slice()}
+function todayHabits(a){return trainDay(a)?['Show up to your session and give it full power','Hydrate and eat well all day long',thirdHabit(a)]:CONTENT.restHabits.slice()}
 function onbView(a){var st=ONB||{step:'write',text:a.goal?a.goal.promise:''};ONB=st;
   if(st.step==='thinking')return '<div class="onb"><div class="brand">WELLBE</div><div class="thinking"><div class="orb2"></div><h2 style="font-size:28px">Building your daily habits…</h2><p class="muted">One plan for training days, one for rest days.</p></div></div>';
-  if(st.step==='done'){var g=st.goal;return '<div class="onb"><div class="brand">WELLBE</div><h1>Your promise, <em>'+esc(a.first)+'</em></h1><div class="promise" style="margin-top:8px"><div class="tag">I promise myself</div><blockquote>“'+esc(g.promise)+'”</blockquote>'+[['Training days',['Show up to your session and give it full power','Hydrate and eat well all day long',thirdHabit(a)]],['Rest days',REST_HABITS]].map(function(set,si){return '<div class="hlabel" style="margin-top:'+(si?14:0)+'px">'+set[0]+'</div><div class="keys">'+set[1].map(function(x,i){return '<div class="key" style="animation:rise .6s '+(0.2*(i+3*si)+.2)+'s both"><span class="n">'+(i+1)+'</span><span class="t">'+esc(x)+'</span></div>'}).join('')+'</div>'}).join('')+'</div>'+
-    '<p class="muted" style="margin-top:14px;font-size:15px">Every day your home screen shows the right 3 for that day. Tick all 3 every day for 30 days in a row and we add a free session to your plan. Watch your streak grow.</p><button class="btn block" style="margin-top:auto;background:var(--pink)" id="onbGo">Let’s go</button></div>'}
+  if(st.step==='done'){var g=st.goal;return '<div class="onb"><div class="brand">WELLBE</div><h1>Your promise, <em>'+esc(a.first)+'</em></h1><div class="promise" style="margin-top:8px"><div class="tag">I promise myself</div><blockquote>“'+esc(g.promise)+'”</blockquote>'+[['Training days',['Show up to your session and give it full power','Hydrate and eat well all day long',thirdHabit(a)]],['Rest days',CONTENT.restHabits]].map(function(set,si){return '<div class="hlabel" style="margin-top:'+(si?14:0)+'px">'+set[0]+'</div><div class="keys">'+set[1].map(function(x,i){return '<div class="key" style="animation:rise .6s '+(0.2*(i+3*si)+.2)+'s both"><span class="n">'+(i+1)+'</span><span class="t">'+esc(x)+'</span></div>'}).join('')+'</div>'}).join('')+'</div>'+
+    '<p class="muted" style="margin-top:14px;font-size:15px">Every day your home screen shows the right 3 for that day. Tick all 3 every day for '+cfg('streak.days')+' days in a row and we add a free session to your plan. Watch your streak grow.</p><button class="btn block" style="margin-top:auto;background:var(--pink)" id="onbGo">Let’s go</button></div>'}
   return '<div class="onb"><div class="brand">WELLBE</div><h1>'+(a.goal?'Change your promise':'Before we start, <em>'+esc(a.first)+'</em>')+'</h1><p class="muted" style="font-size:16px">What do you promise yourself to achieve with Wellbe? Say it in your own words.</p>'+
    '<textarea class="inp" id="onbT" maxlength="240" style="margin-top:16px;min-height:110px;font-size:18px" placeholder="I promise myself to…">'+esc(st.text||'')+'</textarea>'+
-   '<p class="muted" style="margin-top:18px;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Or swipe and pick one →</p><div class="pcar" id="pcar">'+PROMISES.map(function(x,i){return '<button class="pc" data-idea="'+esc(x[0])+'"'+(st.text===x[0]?' aria-pressed="true"':'')+'><span class="pn num">'+(i+1)+' / '+PROMISES.length+'</span><span class="pt">“'+esc(x[0])+'”</span><span class="pu">Tap to choose</span></button>'}).join('')+'</div>'+
+   '<p class="muted" style="margin-top:18px;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Or swipe and pick one →</p><div class="pcar" id="pcar">'+CONTENT.promises.map(function(x,i){return '<button class="pc" data-idea="'+esc(x[0])+'"'+(st.text===x[0]?' aria-pressed="true"':'')+'><span class="pn num">'+(i+1)+' / '+CONTENT.promises.length+'</span><span class="pt">“'+esc(x[0])+'”</span><span class="pu">Tap to choose</span></button>'}).join('')+'</div>'+
    (st.err?'<div class="note bad" style="margin-top:12px">'+ICON('i-alert')+'<span>'+esc(st.err)+'</span></div>':'')+
    '<button class="btn block" style="margin-top:22px;background:var(--pink)" id="onbMake">Make my promise</button><button class="btn ghost block" style="margin-top:10px" id="onbLater">'+(a.goal?'Cancel':'Later')+'</button></div>'}
 function bindOnb(a){var st=ONB;
@@ -1133,59 +1175,8 @@ function bindOnb(a){var st=ONB;
 /* ---------- views ---------- */
 var VIEWS={};
 function dayShortX(d){var r0=rel(d);return r0.length<10?r0:dOf(d).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'})}
-function nextHero(a,nx){var n=a.upcoming.filter(function(s){return s.at>Date.now()}).length;
-  if(!nx)return '<div class="nexthero none"><span class="ring2"></span><div class="tag"><i></i>No session booked</div><h3>Book your next session</h3><p>Pick a day and time. Romy confirms it with you.</p><div class="acts"><button class="btn block" data-act="session">'+ICON('i-plus','width:18px;height:18px')+'Book a session</button></div></div>';
-  return '<div class="nexthero"><span class="ring2"></span><div class="tag"><i></i>Next session</div><div class="when"><b class="num">'+hl(nx.start)+'</b><span>'+esc(dayShortX(nx.date))+'</span></div><p>'+tabName(nx.tab)+' with '+esc(nx.trainer)+(nx.tab==='1:3'&&nx.group>1?' · '+nx.group+' in the group':'')+'</p>'+
-   '<div class="acts"><button class="btn sm" data-resch="'+nx.id+'">'+ICON('i-swap','width:18px;height:18px')+'Reschedule</button><button class="btn sm ghost" data-cancel="'+nx.id+'">Cancel</button></div>'+
-   '<div class="more"><span>'+(n>1?n+' sessions booked':'1 session booked')+'</span><button data-act="session">+ Book another</button></div></div>'}
-VIEWS.home=function(){var a=ACC(),p=currentPkg(a),nx=a.upcoming.filter(function(s){return s.at>Date.now()})[0];
-  var h='<div class="hello"><p>'+dayLong(D.today)+'</p><h1>Hi <em>'+esc(a.first)+'</em></h1></div>';
-  var td=a.upcoming.filter(function(s){return s.date===D.today})[0];
-  if(td&&td===nx)nx=a.upcoming.filter(function(s){return s!==td&&s.at>Date.now()})[0];
-  // first thing on screen: today's session, or the next one, or a big book button
-  h+=td?todayCard(td):nextHero(a,nx);
-  if(td)h+=nx?'<div class="card row" style="margin-top:-2px"><div class="grow"><div class="muted" style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">After today</div><b>'+dayShortX(nx.date)+' · '+hl(nx.start)+'</b><div class="muted" style="font-size:14px">'+tabName(nx.tab)+' with '+esc(nx.trainer)+'</div></div><button class="btn sm sec2" data-act="session">Book</button></div>':'<div class="card row" style="margin-top:-2px"><div class="grow"><b>Nothing booked after today</b><div class="muted" style="font-size:14px">Lock in your next session now.</div></div><button class="btn sm" data-act="session">Book</button></div>';
-  h+='<div style="margin-top:14px">'+promiseCard(a)+'</div><div style="margin-top:14px">'+nutCard()+'</div><div style="margin-top:14px">'+quoteCard()+'</div>';
-  if(p)h+='<div class="sec"><h2>My package</h2><button class="link" data-nav="plan">Details</button></div>'+pkgCard(p,true);
-  var off=offerCards(a);if(off)h+='<div style="margin-top:14px">'+off+'</div>';
-  if(a.physio&&a.physio.show)h+='<div style="margin-top:14px">'+physioCard(a)+'</div>';
-  h+='<div style="margin-top:14px"><div class="madero"><span class="deco"></span><div class="tag">Maderotherapy with Melanie</div><h3>Cellulite Bothering You?</h3><button class="btn block" data-act="book|madero">BOOK MADEROTHERAPY</button></div></div>';
-  h+=spotsRow(a);
-  var feat=featured().slice(0,3);
-  if(feat.length)h+='<div class="sec"><h2>Fuel your training</h2><button class="link" data-nav="shop">Shop</button></div><div class="hscroll">'+feat.map(function(x){return '<button class="fuel" data-prod="'+esc(x.n)+'"><div class="fi">'+imgTag(x,80)+'</div><b>'+esc(x.n)+'</b><span class="fp num">'+money(x.price)+'</span><span class="fadd">'+ICON('i-plus','width:16px;height:16px')+'Add</span></button>'}).join('')+'</div>';
-  h+='<div style="margin-top:22px">'+friendCard()+'</div>';
-  if(a.past.filter(function(s){return /Present|Done/.test(s.att)}).length>=3&&!store('wbc_reviewed'))h+='<div style="margin-top:12px">'+reviewCard()+'</div>';
-  return h};
-VIEWS.sessions=function(){var a=ACC();
-  var h='<div class="hello"><h1>Sessions</h1><p>Cancel, reschedule, or grab an open spot.</p></div>';
-  h+='<button class="btn block" data-act="session">'+ICON('i-plus')+'Request a session</button>';
-  h+='<div class="sec"><h2>Coming up</h2><small>'+a.upcoming.length+'</small></div>'+(a.upcoming.length?'<div class="list">'+a.upcoming.map(function(s){return sessItem(s,true)}).join('')+'</div>':'<div class="empty">No sessions booked.</div>');
-  h+=spotsRow(a);
-  h+='<div class="note" style="margin-top:18px">'+ICON('i-alert')+'<span><b>Cancel rule:</b> a day or more before, your session is kept. On the same day it counts as done. Rescheduling is always free.</span></div>';
-  if(a.past.length)h+='<div class="sec"><h2>Last 30 days</h2><small>'+a.past.filter(function(s){return /Present|Done/.test(s.att)}).length+' done</small></div><div class="list">'+a.past.map(function(s){return sessItem(s,false)}).join('')+'</div>';
-  return h};
-VIEWS.shop=function(){var all=shopItems(),feat=featured();
-  var h='<div class="hello"><h1>Supplements</h1><p>Order now, pay and pick up at your next session. No delivery fee.</p></div>';
-  h+='<div class="grid">'+feat.map(prodCard).join('')+'</div>';
-  var rest=all.filter(function(x){return !x.rank});
-  h+='<div class="sec"><h2>Full list</h2><small>'+all.length+' product'+(all.length>1?'s':'')+'</small></div><div class="list plist">'+all.map(function(x){var q=CART[x.n]||0;
-    return '<div class="item">'+(x.img?'<img src="'+IMG[x.img]+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=ph2>'+esc(x.n[0])+'</span>\'">':'<span class="ph2">'+esc(x.n[0])+'</span>')+'<div class="grow"><div class="t">'+esc(x.n)+'</div><div class="s">'+money(x.price)+(x.left?'':' · we order it in')+'</div></div>'+
-     (q?'<div class="qty" style="margin:0;gap:4px"><button data-dec="'+esc(x.n)+'" aria-label="Less">−</button><b class="num">'+q+'</b><button data-inc="'+esc(x.n)+'" aria-label="More">+</button></div>':'<button class="btn sec2 sm" data-inc="'+esc(x.n)+'">Add</button>')+'</div>'}).join('')+'</div>';
-  h+='<div class="card" style="margin-top:16px"><b style="font-size:17px">Looking for something else?</b><div class="muted" style="font-size:14px;margin-bottom:10px">Tell us which supplement and we will get it for you.</div><button class="btn sec2 block" data-act="supp">Ask for another supplement</button></div>';
-  return h};
-VIEWS.plan=function(){var a=ACC(),cur=a.pkgs.filter(function(p){return p.phase==='current'}),fut=a.pkgs.filter(function(p){return p.phase==='future'}),past=a.pkgs.filter(function(p){return p.phase==='past'}).reverse();
-  var h='<div class="hello"><h1>My plan</h1><p>Your packages, dates and requests.</p></div>';
-  h+=offerCards(a);
-  h+='<div class="sec"><h2>Current</h2></div><div class="stack">'+(cur.length?cur.map(function(p){return pkgCard(p,true)}).join(''):'<div class="empty">No active package.</div>')+'</div>';
-  if(fut.length)h+='<div class="sec"><h2>Coming next</h2><small>'+fut.length+'</small></div><div class="stack">'+fut.map(function(p){return pkgCard(p)}).join('')+'</div>';
-  if(a.requests.length)h+='<div class="sec"><h2>My requests</h2></div><div class="list">'+a.requests.slice(0,12).map(reqItem).join('')+'</div>';
-  if(past.length)h+='<details style="margin-top:22px"><summary class="link" style="cursor:pointer;list-style:none">Show past packages ('+past.length+')</summary><div class="stack" style="margin-top:10px">'+past.slice(0,12).map(function(p){return pkgCard(p)}).join('')+'</div></details>';
-  if(0)h+='<div class="sec"><h2>Make it yours</h2></div><div class="card"><b>My promise</b><div class="muted" style="font-size:14px;margin-bottom:10px">'+(a.goal?'\u201C'+esc(a.goal.promise)+'\u201D':'Not written yet')+'</div><button class="btn sec2 block" data-act="goal">'+(a.goal?'Change my promise':'Write my promise')+'</button>'+
-   '<div style="margin-top:16px"><b>App color</b><div class="swatches">'+[['rose','#a3263f'],['mint','#1f6e5b'],['ocean','#1e5f8c'],['sunset','#c2571a'],['plum','#6b2d7a']].map(function(x){return '<button aria-label="'+x[0]+'" aria-pressed="'+((store('wbc_accent')||'rose')===x[0])+'" data-accent="'+x[0]+'" style="background:'+x[1]+'"></button>'}).join('')+'</div></div></div>';
-  h+='<div style="margin-top:22px">'+reviewCard(true)+'</div>';
-  if(0)h+='<div class="card" style="margin-top:12px"><div class="muted" style="font-size:14px">Signed in as</div><b>'+esc(D.email)+'</b><button class="btn ghost block" style="margin-top:12px" data-act="out">'+ICON('i-out')+'Sign out</button></div>';
-  return h};
-// Play: the Corniche Run (client/run.html) opens full screen on top of the app
+// Play: the Corniche Run (client/run.html) opens full screen on top of the app. GAME_V: bump when run.html changes
+var GAME_V='p4-1';
 var RUN_IMG='https://d2ol7oe51mr4n9.cloudfront.net/user_3FXl8unlEq04htattdPxfwi7yXL/';
 function runBest(){var b=+(store('cr_best')||0);return b||0}
 var RUNNERS=[['Runner','29d62ee4-0fab-4f8b-b082-9db1d3a8ac71','39bc2f6e-1dea-469d-8415-7db209e70589'],['All rounder','e59d7954-b2eb-4b33-a08a-1e6ed7e8e8a9','4464468f-0096-4732-a9b1-726423e7db55'],['Power legs','328f010c-8bfe-4264-811e-423940c58df0','af069ca3-4bfb-4c0c-87da-f61725d5dd07'],['Steady pacer','619911df-97ac-4ab8-8b8c-95848d115cbf','c37ff8b9-7e97-4296-bef1-0ee38d0f2a8e'],['Sprinter','1a6e4965-75a6-4c50-81e0-f8bbe6594a25','5dce9a6b-0992-41b2-aca2-c1a81a370d72'],['Powerlifter','68ddfed1-5224-4e37-acbb-962a7f39f1df','9af39ad1-016a-4b06-9bc8-9bc299a94c5c'],['Balanced','4333c723-77f0-4852-84d7-40b96a19b209','6f62310a-e756-4c77-847e-74e98d0cc7bd'],['The rock','34c1619a-c138-4384-b61b-c76e49f5506c','5d571d4a-0e0d-4496-ad3e-46120aae58ea']];
@@ -1193,12 +1184,12 @@ function SVGI(d,f){return '<svg viewBox="0 0 24 24" fill="'+(f?'currentColor':'n
 var SKY='<svg class="sky" viewBox="0 0 400 180" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="skg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2a31"/><stop offset="1" stop-color="#0a1013"/></linearGradient></defs><path fill="url(#skg)" d="M0 120h18v-26h10v-14h14v40h8v-58h22v58h10v-30h16v-22h8v52h12v-70h6v-10h8v10h6v70h14v-36h20v36h10v-48h24v48h8v-28h14v-34h12v62h10v-44h18v44h12v-22h20v-30h10v52h16v-40h18v40h20v-60h8v-12h6v12h8v60h22v60H0z"/><path d="M332 120c0-24 2-40 4-52m-14 8c6-6 12-8 14-8 2 0 9 2 15 8m-25-4c4-8 8-10 10-10s7 2 11 10" stroke="#1b2a31" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M0 132q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.10)" stroke-width="1.5" fill="none"/><path d="M0 148q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.07)" stroke-width="1.5" fill="none"/><path d="M0 164q50-8 100 0t100 0 100 0 100 0" stroke="rgba(255,255,255,.05)" stroke-width="1.5" fill="none"/></svg>';
 var RUNST=null,RUNLD=0,RUNTAB='week';
 function runLoad(){if(RUNLD||!ACC())return;var cid=ACC().cid,k='wbc_run_'+cid;if(!RUNST||RUNC!==cid){RUNST=null;try{RUNST=JSON.parse(store(k)||'null')}catch(e){}RUNC=cid}RUNLD=1;
-  api('app_cl_run',{op:'get',cid:cid}).then(function(j){RUNLD=0;if(RUNC!==cid)return;var ch=JSON.stringify(j)!==JSON.stringify(RUNST);RUNST=j;store(k,JSON.stringify(j));if(SEC==='play'&&ch){var y=scrollY;render();scrollTo(0,y)}}).catch(function(){RUNLD=0})}
+  api('app_cl_run',{op:'get',cid:cid,lbHide:store('wbc_lbhide')==='1'?1:0}).then(function(j){RUNLD=0;if(RUNC!==cid)return;var ch=JSON.stringify(j)!==JSON.stringify(RUNST);RUNST=j;store(k,JSON.stringify(j));if(SEC==='play'&&ch)bgRender()}).catch(function(){RUNLD=0})}
 var RUNC='';
 var BADGES_ALL=[['first','First run'],['km1','1 km in one run'],['km5','5 km in one run'],['km10','10 km in one run'],['runs10','10 runs'],['runs50','50 runs'],['runs100','100 runs'],['day1','#1 of the day'],['week10','Top 10 of the week'],['week1','#1 of the week'],['all3','All time top 3'],['all1','All time #1'],['rich','10,000 coins earned'],['boost','Trained and ran the same day']];
 VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=store('cr_char'),mine=(raw!==null&&raw!==''&&RUNNERS[+raw])?RUNNERS[+raw]:null,RS=RUNST,score=RS?RS.best:+(store('cr_best2')||0),coins=RS?RS.coins:+(store('cr_coins')||0),dist=RS?Math.max(RS.bestM,runBest()):runBest();if(!RS)runLoad();
   var h='<section class="lobby">'+SKY+''+
-   '<div class="stage"><div class="hero"><img alt="" src="'+(store('cr_avimg')||RUN_IMG+(mine||RUNNERS[0])[2]+'.png')+'"></div>'+
+   '<div class="stage"><div class="hero"><img alt="" src="'+esc(store('cr_avimg')||RUN_IMG+(mine||RUNNERS[0])[2]+'.png')+'"></div>'+
    '<h1 class="ttl"><span>Corniche</span><span>Run</span></h1>'+
    '<p class="tag">Four lanes along Beirut’s sea. Your coach is right behind you.</p></div>'+
    '<div class="stats"><div><b>'+(score?score.toLocaleString():'0')+'</b><small>Best</small></div><div><b class="gold">'+coins.toLocaleString()+'</b><small>🪙 Coins</small></div><div><b>'+(dist?dist.toLocaleString()+' m':'0 m')+'</b><small>Farthest</small></div></div>'+
@@ -1213,11 +1204,11 @@ VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=sto
     h+='<div class="gh"><h2>Leaderboard</h2><small>'+(rk?'You are #'+rk:'Not ranked yet')+'</small></div><div class="rcard"><div class="tabs3" style="margin-top:8px">'+[['day','Today'],['week','Week'],['all','All time']].map(function(t){return '<button data-act="rtab|'+t[0]+'" class="'+(RUNTAB===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('')+'</div>'+
       (L.length?L.map(function(r){return '<div class="lb'+(r.i<=3?' top':'')+(r.me?' mine':'')+'"><div class="n">'+(r.i===1?'🥇':r.i===2?'🥈':r.i===3?'🥉':r.i)+'</div><div class="nm">'+esc(r.n)+'</div><div class="sc">'+r.s.toLocaleString()+'</div></div>'}).join(''):'<div class="lbe">No runs yet. Be the first on the board.</div>')+
       (rk>10?'<div class="lb mine"><div class="n">'+rk+'</div><div class="nm">Your best</div><div class="sc">'+(RUNTAB==='all'?RS.best:'').toLocaleString()+'</div></div>':'')+'</div>';
-    var C=RS.cash||{bal:0,today:0,dayMax:50,minM:2000,cents:10,min:100,max:2000,trained:false,pending:0},usd=function(x){return '$'+(x/100).toFixed(2)},cp=Math.min(100,Math.round(C.today/C.dayMax*100)),use=Math.min(C.bal,C.max);
-    h+='<div class="gh"><h2>💵 Your Cash</h2><small>Real money off your renewal</small></div><div class="prize cashc"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' every run that passes 2 km, up to '+usd(C.dayMax)+' a day. Save it up and use up to '+usd(C.max)+' when you renew, at the center or for online workouts.</p>'+
-      '<div class="bar"><i style="width:'+cp+'%"></i></div><small>Today '+usd(C.today)+' of '+usd(C.dayMax)+(C.today<C.dayMax&&C.trained?' · '+Math.round((C.dayMax-C.today)/C.cents)+' more 2 km run'+((C.dayMax-C.today)/C.cents>1?'s':'')+' today':'')+'</small>'+
+    var GC=cfg('game.cash'),C=RS.cash||{bal:0,today:0,dayMax:GC.DAY_MAX,minM:GC.MIN_M,cents:GC.CENTS,min:GC.REDEEM_MIN,max:GC.REDEEM_MAX,trained:false,pending:0},km=(C.minM||GC.MIN_M)/1000+' km',usd=function(x){return '$'+(x/100).toFixed(2)},cp=Math.min(100,Math.round(C.today/C.dayMax*100)),use=Math.min(C.bal,C.max);
+    h+='<div class="gh"><h2>💳 Your Wellbe Credit</h2><small>Loyalty credit for your next package or online workout</small></div><div class="prize cashc"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' every run that passes '+km+', up to '+usd(C.dayMax)+' a day. Save it up and use up to '+usd(C.max)+' of Wellbe Credit on your next package or online workout.</p>'+
+      '<div class="bar"><i style="width:'+cp+'%"></i></div><small>Today '+usd(C.today)+' of '+usd(C.dayMax)+(C.today<C.dayMax&&C.trained?' · '+Math.round((C.dayMax-C.today)/C.cents)+' more '+km+' run'+((C.dayMax-C.today)/C.cents>1?'s':'')+' today':'')+'</small>'+
       
-      (C.pending?'<div class="cnote ok">'+usd(C.pending)+' is waiting for your next renewal.</div>':C.bal>=C.min?'<button class="btn block" data-act="rredeem">Use '+usd(use)+' at my next renewal</button>':'<div class="cnote">You can use Cash from '+usd(C.min)+'. Max '+usd(C.max)+' per renewal.</div>')+'</div>';
+      (C.pending?'<div class="cnote ok">'+usd(C.pending)+' is waiting for your next renewal.</div>':C.bal>=C.min?'<button class="btn block" data-act="rredeem">Use '+usd(use)+' at my next renewal</button>':'<div class="cnote">You can use Wellbe Credit from '+usd(C.min)+'. Max '+usd(C.max)+' per renewal.</div>')+'</div>';
     h+=hubRows(RS);
   }
   h+='<div class="gh"><h2>Controls</h2><small>Swipe anywhere</small></div><div class="moves">'+[
@@ -1227,20 +1218,9 @@ VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=sto
   return h};
 addEventListener('message',function(e){if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play')render()}});
 // Profile: everything about the person
-VIEWS.me=function(){var a=ACC(),b=runBest();
-  var h='<div class="prof"><div class="av">'+esc(initials(a.name))+'</div><h1>'+esc(a.name)+'</h1><p>'+esc(D.email)+'</p></div>';
-  h+='<div class="card"><b>My promise</b><div class="muted" style="font-size:14px;margin-bottom:10px">'+(a.goal?'“'+esc(a.goal.promise)+'”':'Not written yet')+'</div><button class="btn sec2 block" data-act="goal">'+(a.goal?'Change my promise':'Write my promise')+'</button></div>';
-  h+='<div class="pstats"><div class="card"><b class="num">'+(b?b+' m':'—')+'</b><span>Corniche Run best</span></div><div class="card"><b class="num">'+(a.pkgs||[]).filter(function(p){return p.phase==='current'}).length+'</b><span>Active packages</span></div></div>';
-  h+='<div style="margin-top:14px">'+nutCard()+'</div>';
-  h+='<div class="card" style="margin-top:14px"><b>App color</b><div class="swatches">'+[['rose','#a3263f'],['mint','#1f6e5b'],['ocean','#1e5f8c'],['sunset','#c2571a'],['plum','#6b2d7a']].map(function(x){return '<button aria-label="'+x[0]+'" aria-pressed="'+((store('wbc_accent')||'rose')===x[0])+'" data-accent="'+x[0]+'" style="background:'+x[1]+'"></button>'}).join('')+'</div></div>';
-  if(a.full&&!D.guest)h+='<button class="btn ghost block" style="margin-top:14px" data-nav="plan">'+ICON('i-card')+'My packages and requests</button>';
-  h+='<button class="btn ghost block" style="margin-top:10px" data-act="out">'+ICON('i-out')+'Sign out</button>';
-  return h};
 // ---------- not a client yet: why Wellbe, services, packages, and 3 ways in
-var GSERV=[['i-users','Small group 1:3','3 people, 1 coach. Private-level coaching at a group price.'],['i-users','Duo 1:2','Train with a partner, one coach for the two of you.'],['i-dumbbell','Private 1:1','The coach is all yours, every rep.'],
-  ['i-steth','Physiotherapy','Pain, injury or recovery: 60 minutes with Majd, physiotherapist.'],['i-heart','Prehab','10 sessions to fix the weak links before they become injuries.'],['i-spark','Osteopathy','Hands-on treatment with Jad.'],['i-madero','Maderotherapy','Wood therapy with Melanie to smooth, sculpt and drain.']];
 function gTrialCard(){var t=D.guest.trial;if(!t)return '';
-  return '<div class="gstat"><span class="wi">'+ICON('i-check')+'</span><div class="grow"><b>Your free trial'+(t.status==='Confirmed'?' is confirmed':' is booked')+'</b><span>'+dayLong(t.date)+' at '+esc(t.time)+(t.status==='Confirmed'?'':' · Romy will confirm on WhatsApp')+'</span></div></div>'}
+  return '<div class="gstat"><span class="wi">'+ICON('i-check')+'</span><div class="grow"><b>Your free trial'+(t.status==='Confirmed'?' is confirmed':' is booked')+'</b><span>'+dayLong(t.date)+' at '+esc(t.time)+(t.status==='Confirmed'?'':' · '+DESK()+' will confirm on WhatsApp')+'</span></div></div>'}
 VIEWS.wellbe=function(){var a=ACC(),G=D.guest,as=G.asked||{};
   var h='<div class="ghero"><div class="tag">Wellbe Health Center</div><h1>Physio-led training, in a group of 3</h1><p>Every program is built and checked by a physiotherapist. You get stronger, move better, and stay away from injuries, with the energy of a small group.</p>'+
     (G.trial?'':'<button class="btn block" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>';
@@ -1248,13 +1228,13 @@ VIEWS.wellbe=function(){var a=ACC(),G=D.guest,as=G.asked||{};
   h+='<div class="sec"><h2>3 ways to start</h2></div><div class="list">'+
     (G.trial?'':gWay('i-gift','Free trial session','Pick a real time slot. Train with us once, free.','gtrial'))+
     gWay('i-wa','Free 15 min coach call',as.call===D.today?'Requested. The coach will WhatsApp you.':'Tell a coach your goal, get a plan for it.','gcall')+
-    gWay('i-card','Get a package',as.pkg?'Requested: '+esc(as.pkg.replace(/\s*\(\$[^)]*\)/,''))+'. Romy will WhatsApp you.':'Pick it here, pay at the center.','gpkgs')+'</div>';
-  h+='<div class="sec"><h2>Why Wellbe</h2></div><div class="gwhy">'+[['i-steth','Backed by a physio','Majd, our physiotherapist, designs and checks every program.'],['i-users','Max 3 per coach','Coached like private training, priced like a group.'],['i-heart','Built around your body','Your injuries, pain and goals shape your plan.'],['i-spark','Train for life','Better health and more energy, without getting hurt.']]
+    gWay('i-card','Get a package',as.pkg?'Requested: '+esc(as.pkg.replace(/\s*\(\$[^)]*\)/,''))+'. '+DESK()+' will WhatsApp you.':'Pick it here, pay at the center.','gpkgs')+'</div>';
+  h+='<div class="sec"><h2>Why Wellbe</h2></div><div class="gwhy">'+CONTENT.why()
     .map(function(x){return '<div class="card"><span class="wi">'+ICON(x[0])+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></div>'}).join('')+'</div>';
-  h+='<div class="sec"><h2>What we do</h2></div><div class="list">'+GSERV.map(function(x){return '<div class="card gserv"><span class="wi">'+ICON(x[0])+'</span><div class="grow"><b>'+x[1]+'</b><span>'+x[2]+'</span></div></div>'}).join('')+'</div>';
+  h+='<div class="sec"><h2>What we do</h2></div><div class="list">'+CONTENT.services().map(function(x){return '<div class="card gserv"><span class="wi">'+ICON(x[0])+'</span><div class="grow"><b>'+x[1]+'</b><span>'+x[2]+'</span></div></div>'}).join('')+'</div>';
   h+='<div class="sec"><h2>Packages</h2><button class="link" data-act="gpkgs">All prices</button></div>'+gPkgList(G.packages.filter(function(p){return p.kind==='1:3'}));
   h+='<div class="sec"><h2>My promise</h2></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
-  h+='<div class="gfoot"><b>Questions?</b><span>Romy answers on WhatsApp.</span><a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi Romy, this is '+a.name+'. I have a question about Wellbe.')+'">'+ICON('i-wa')+'Message Romy</a></div>';
+  h+='<div class="gfoot"><b>Questions?</b><span>'+DESK()+' answers on WhatsApp.</span><a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. I have a question about Wellbe.')+'">'+ICON('i-wa')+'Message '+DESK()+'</a></div>';
   return h};
 function gWay(ic,t,sub,act){return '<button class="book" data-act="'+act+'"><span class="ic">'+ICON(ic)+'</span><div class="grow"><b>'+t+'</b><span>'+sub+'</span></div><span class="go">›</span></button>'}
 function gLabel(p){return /x\/month/.test(p.label)?tabName(p.kind)+' · '+p.n+' a month':p.label}
@@ -1263,50 +1243,48 @@ VIEWS.gwork=function(){return '<div class="hello"><h1>Your <em>workouts</em></h1
   (D.guest.trial?gTrialCard():'<button class="btn block" style="margin-top:14px" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>'}
 function gPhoneField(){return '<label class="flabel" for="gph" style="margin-top:16px">Your WhatsApp number</label><input class="inp" id="gph" type="tel" inputmode="tel" autocomplete="tel" placeholder="70 123 456" value="'+esc(D.guest.phone||'')+'">'}
 function gSend(op,data,btn,done){var ph=$('#gph')?$('#gph').value.trim():D.guest.phone;if(String(ph||'').replace(/\D/g,'').length<7){toast('Type your WhatsApp number');return}
-  busy(btn,true);data.op=op;data.phone=ph;api('app_cl_guest',Object.assign({cid:ACC().cid},data)).then(function(j){D.guest.phone=ph;if(j.asked)D.guest.asked=j.asked;if(j.trial)D.guest.trial=j.trial;store(cacheKey(),JSON.stringify(D));closeSheet();render();done(j);boot(true)}).catch(function(e){fail(btn,e)})}
+  busy(btn,true);data.op=op;data.phone=ph;api('app_cl_guest',Object.assign({cid:ACC().cid},data)).then(function(j){D.guest.phone=ph;if(j.asked)D.guest.asked=j.asked;if(j.trial)D.guest.trial=j.trial;cacheSave(D);closeSheet();render();done(j);boot(true)}).catch(function(e){fail(btn,e)})}
 function gActs(){ACT.gtrial=function(){var days=(D.guest.slots||[]).filter(function(d){return d.slots.some(function(x){return x.type!=='full'})});
-  if(!days.length){openSheet('Free trial','<p class="muted">No open morning slot this week. Message Romy and she will find you a time.</p>','<a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi Romy, I want to book my free trial at Wellbe.')+'">'+ICON('i-wa')+'Message Romy</a>');return}
+  if(!days.length){openSheet('Free trial','<p class="muted">No open morning slot this week. Message '+DESK()+' and she will find you a time.</p>','<a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', I want to book my free trial at Wellbe.')+'">'+ICON('i-wa')+'Message '+DESK()+'</a>');return}
   var sel=days[0].date,hr=null;
-  var paint=function(){var d=days.filter(function(x){return x.date===sel})[0];$('#gslots').innerHTML=d.slots.map(function(x){return '<button class="slot" aria-pressed="'+(x.hour===hr)+'" data-h="'+x.hour+'"'+(x.type==='full'?' disabled':'')+'><b>'+hl((x.hour<10?'0':'')+x.hour+':00')+'</b><span class="muted">'+(x.type==='full'?'Full':'Small group 1:3 with Joe')+'</span></button>'}).join('');
+  var paint=function(){var d=days.filter(function(x){return x.date===sel})[0];$('#gslots').innerHTML=d.slots.map(function(x){return '<button class="slot" aria-pressed="'+(x.hour===hr)+'" data-h="'+x.hour+'"'+(x.type==='full'?' disabled':'')+'><b>'+hl((x.hour<10?'0':'')+x.hour+':00')+'</b><span class="muted">'+(x.type==='full'?'Full':'Small group 1:3 with '+TRIALBY())+'</span></button>'}).join('');
     $$('#gslots [data-h]').forEach(function(b){b.onclick=function(){hr=+b.dataset.h;paint()}})};
   openSheet('Book your free trial','<p class="muted" style="margin-top:0">One free small group session, 60 minutes. Pick a day and a time.</p>'+dayChips(days.map(function(d){return d.date}),sel,'gdays')+'<div class="slots" id="gslots" style="margin-top:12px"></div>'+gPhoneField(),'<button class="btn block" id="gok">Book my free trial</button>');
   pickOne('#gdays',function(b){sel=b.dataset.d;hr=null;paint()});paint();
-  $('#gok').onclick=function(){if(hr==null){toast('Pick a time');return}gSend('trial',{date:sel,hour:hr},this,function(j){success('Your free trial is booked','<b>'+dayLong(j.trial.date)+' at '+esc(j.trial.time)+'</b><br>Romy will confirm on WhatsApp. Bring water and comfortable shoes.')})}};
+  $('#gok').onclick=function(){if(hr==null){toast('Pick a time');return}gSend('trial',{date:sel,hour:hr},this,function(j){success('Your free trial is booked','<b>'+dayLong(j.trial.date)+' at '+esc(j.trial.time)+'</b><br>'+DESK()+' will confirm on WhatsApp. Bring water and comfortable shoes.')})}};
 ACT.gcall=function(){openSheet('Free 15 min coach call','<p class="muted" style="margin-top:0">A coach WhatsApps you to understand your goal, your past injuries and your schedule, then tells you exactly how we would train you.</p><label class="flabel" for="gnote">Your goal (optional)</label><input class="inp" id="gnote" placeholder="e.g. lose 6 kg, back pain, get strong">'+gPhoneField(),'<button class="btn block" id="gok">Ask for my call</button>');
   $('#gok').onclick=function(){gSend('call',{note:$('#gnote').value.trim()},this,function(){success('Call requested','A coach will WhatsApp you soon. Keep your phone close.')})}};
 ACT.gpkgs=function(){var P=D.guest.packages,kinds=['1:3','1:2','1:1','Prehab','Physio','Osteo','Madero'];
   openSheet('Packages',kinds.map(function(k){var l=P.filter(function(p){return p.kind===k});return l.length?'<div class="sec" style="margin-top:14px"><h2>'+tabName(k)+'</h2></div>'+gPkgList(l):''}).join('')+'<p class="muted" style="font-size:14px">Pay at the center, cash or Whish. Not sure which one fits you? Ask for a free coach call.</p>');bind()};
 ACT.gpkg=function(name){var p=D.guest.packages.filter(function(x){return x.name===name})[0];if(!p)return;
-  openSheet('Get this package','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+esc(gLabel(p))+'</b><div class="muted">'+p.n+' session'+(p.n>1?'s':'')+' · '+money(p.price)+'</div></div><p class="muted">Romy WhatsApps you to choose your start date and times. You pay at the center (cash or Whish).</p>'+gPhoneField(),'<button class="btn block" id="gok">Request this package</button>');
-  $('#gok').onclick=function(){gSend('pkg',{pkg:p.name},this,function(){success('Package requested','Romy will WhatsApp you to set your start date. Welcome to Wellbe!')})}};
+  openSheet('Get this package','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+esc(gLabel(p))+'</b><div class="muted">'+p.n+' session'+(p.n>1?'s':'')+' · '+money(p.price)+'</div></div><p class="muted">'+DESK()+' WhatsApps you to choose your start date and times. You pay at the center (cash or Whish).</p>'+gPhoneField(),'<button class="btn block" id="gok">Request this package</button>');
+  $('#gok').onclick=function(){gSend('pkg',{pkg:p.name},this,function(){success('Package requested',''+DESK()+' will WhatsApp you to set your start date. Welcome to Wellbe!')})}};
 }
 function bindGuest(){}
 // clients without a package
 VIEWS.basic=function(){var a=ACC(),past=a.pkgs.slice().reverse();
   var h='<div class="hello"><h1>Hi <em>'+esc(a.first)+'</em></h1><p>Good to see you. Ready for your next step?</p></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
   h+='<div class="sec"><h2>Book with us</h2></div><div class="list">'+
-   bookBtn('physio','i-steth','Feeling Sore?','Book A Physio Session','60 minutes with Majd for pain, injury or recovery','book|physio')+
-   bookBtn('madero','i-madero','Fighting Cellulite?','Book A Madero Session','Wood therapy to smooth, sculpt and drain','book|madero')+
+   bookBtn('physio','i-steth','Feeling Sore?','Book A Physio Session','60 minutes with '+SVCNAME('Physio')+' for pain, injury or recovery','book|physio')+
+   bookBtn('madero','i-madero','Fighting Cellulite?','Book A Madero Session','Wood therapy massage for smoother looking skin','book|madero')+
    bookBtn('train','i-dumbbell','Ready To Get Strong?','Book A Training Session','Private 1:1, duo 1:2 or small group 1:3','book|train')+'</div>';
   if(past.length)h+='<div class="sec"><h2>My previous packages</h2></div><div class="stack">'+past.slice(0,8).map(function(p){return pkgCard(p)}).join('')+'</div>';
   h+='<div style="margin-top:22px">'+friendCard()+'</div>';
   h+='<div style="margin-top:22px">'+reviewCard(true)+'</div>';
   return h};
 function bookBtn(k,ic,q,t,s,act){return '<button class="book bk-'+k+'" data-act="'+act+'"><span class="ic">'+ICON(ic)+'</span><div class="grow"><small>'+q+'</small><b>'+t+'</b><span>'+s+'</span></div><span class="go">'+ICON('i-wa')+'</span></button>'}
-function bigBtn(ic,t,s,act){return '<button class="big" data-act="'+act+'"><span class="ic">'+ICON(ic)+'</span><div class="grow"><b>'+t+'</b><span>'+s+'</span></div>'+ICON('i-wa','color:var(--wa)')+'</button>'}
-function reqItem(q){var st=q.status==='New'?(/Cancelled|Joined/.test(q.type)?'<span class="pill mute">Logged</span>':'<span class="pill warn">Waiting</span>'):q.status==='Declined'?'<span class="pill bad">Not possible</span>':'<span class="pill">Done</span>';
-  return '<div class="item"><div class="grow"><div class="t">'+esc(q.type)+'</div><div class="s">'+esc(q.details.split(' · pay')[0]).slice(0,140)+'</div><div class="s" style="font-size:12.5px">'+esc(q.created)+'</div></div>'+st+'</div>'}
+// a request's status in words, and its kind: logged | wait | no | done
+function reqState(q){return q.status==='New'?(/Cancelled|Joined/.test(q.type)?['Logged','logged']:['Waiting','wait']):q.status==='Declined'?['Not possible','no']:['Done','done']}
+function reqItem(q){var r=reqState(q),st='<span class="pill'+{logged:' mute',wait:' warn',no:' bad',done:''}[r[1]]+'">'+r[0]+'</span>';
+  return '<div class="item"><div class="grow"><div class="t">'+esc(q.type)+'</div><div class="s">'+esc(String(q.details||'').split(' · pay')[0].slice(0,140))+'</div><div class="s" style="font-size:12.5px">'+esc(q.created)+'</div></div>'+st+'</div>'}
 
 /* ---------- shop ---------- */
-function shopItems(){return (D.shop||[]).map(function(x){var m=CATALOG.filter(function(c){return c[0].test(x.n)})[0];return {n:x.n,price:x.price,left:x.left,img:m?m[1]:'',desc:m?m[2]:'',rank:m?m[3]:0}})}
+function shopItems(){return (D.shop||[]).map(function(x){var m=CONTENT.catalog.filter(function(c){return c[0].test(x.n)})[0];return {n:x.n,price:x.price,left:x.left,img:m?m[1]:'',desc:m?m[2]:'',rank:m?m[3]:0}})}
 function featured(){return shopItems().filter(function(x){return x.rank}).sort(function(a,b){return a.rank-b.rank})}
-function imgTag(x,h){return x.img?'<img src="'+IMG[x.img]+'" alt="'+esc(x.n)+'" style="max-height:'+h+'px;max-width:100%" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=ph>'+esc(x.n[0])+'</span>\'">':'<span class="ph">'+esc(x.n[0])+'</span>'}
-function prodCard(x){var q=CART[x.n]||0;
-  return '<div class="prod"><div class="img">'+imgTag(x,200)+'</div><div class="b"><div class="n">'+esc(x.n)+'</div><div class="d">'+esc(x.desc)+'</div><div class="p num">'+money(x.price)+'</div><div class="d">'+(x.left?'In stock':'We order it in for you')+'</div>'+
-   (q?'<div class="qty"><button data-dec="'+esc(x.n)+'" aria-label="Less">−</button><b class="num">'+q+'</b><button data-inc="'+esc(x.n)+'" aria-label="More">+</button></div>':'<button class="add" data-inc="'+esc(x.n)+'">Add to order</button>')+'</div></div>'}
+function imgTag(x,h){return x.img?'<img src="'+CONTENT.img[x.img]+'" alt="'+esc(x.n)+'" style="max-height:'+h+'px;max-width:100%" loading="lazy" referrerpolicy="no-referrer" data-fb="'+esc(x.n[0])+'" data-fbc="ph">':'<span class="ph">'+esc(x.n[0])+'</span>'}
 function cartTotal(){var it=shopItems(),t=0,n=0;Object.keys(CART).forEach(function(k){var x=it.filter(function(y){return y.n===k})[0];if(x){t+=x.price*CART[k];n+=CART[k]}});return {t:t,n:n}}
 function cartBar(){var c=cartTotal();if(!D||!ACC().full)return '';return '<div class="cart'+(c.n&&(SEC==='shop'||SEC==='center')?' on':'')+'" id="cart"><button class="btn" data-act="order"><span>Pick up from center · '+c.n+' item'+(c.n>1?'s':'')+'</span><span class="num">'+money(c.t)+'</span></button></div>'}
-function setQty(n,d){CART[n]=Math.max(0,Math.min(10,(CART[n]||0)+d));if(!CART[n])delete CART[n];store('wbc_cart',JSON.stringify(CART));var y=scrollY;render();scrollTo(0,y)}
+function setQty(n,d){CART[n]=Math.max(0,Math.min(10,(CART[n]||0)+d));if(!CART[n])delete CART[n];store('wbc_cart',JSON.stringify(CART));softRender()}
 
 /* ---------- bind ---------- */
 function bind(){
@@ -1323,9 +1301,9 @@ function bind(){
   $$('[data-prod]').forEach(function(b){b.onclick=function(){prodSheet(b.dataset.prod)}});
   $$('[data-dec]').forEach(function(b){b.onclick=function(){setQty(b.dataset.dec,-1)}});
   $$('[data-late]').forEach(function(b){b.onclick=function(){lateSheet(findSess(b.dataset.late))}});
-  $$('[data-key]').forEach(function(b){b.onclick=function(){var a=ACC(),k=keyState(a),i=+b.dataset.key;k[i]=!k[i];store('wbc_keys_'+a.cid+'_'+D.today,JSON.stringify(k));if(STK[a.cid]&&!STK[a.cid].off)STK[a.cid].keys=k.slice();saveKeys(a,k);if(k.every(Boolean)){var st=streakDays(a);st[D.today]=1;store('wbc_streak_'+a.cid,JSON.stringify(st));toast('All 3 done today. That\u2019s how promises are kept.')}var y=scrollY;render();scrollTo(0,y)}});
-  $$('[data-accent]').forEach(function(b){b.onclick=function(){var v=b.dataset.accent;store('wbc_accent',v);if(v==='rose')document.documentElement.removeAttribute('data-accent');else document.documentElement.setAttribute('data-accent',v);var y=scrollY;render();scrollTo(0,y)}});
-  $$('[data-review]').forEach(function(b){b.onclick=function(){store('wbc_reviewed','1');window.open(D.review||'https://search.google.com/local/writereview?placeid=ChIJ35Nmu5s_HxURBmvCuEEY8U0','_blank')}});
+  $$('[data-key]').forEach(function(b){b.onclick=function(){var a=ACC(),k=keyState(a),i=+b.dataset.key;k[i]=!k[i];store('wbc_keys_'+a.cid+'_'+D.today,JSON.stringify(k));if(STK[a.cid]&&!STK[a.cid].off)STK[a.cid].keys=k.slice();saveKeys(a,k);if(k.every(Boolean)){var st=streakDays(a);st[D.today]=1;store('wbc_streak_'+a.cid,JSON.stringify(st));toast('All 3 done today. That\u2019s how promises are kept.')}softRender()}});
+  $$('[data-accent]').forEach(function(b){b.onclick=function(){var v=b.dataset.accent;store('wbc_accent',v);if(v==='rose')document.documentElement.removeAttribute('data-accent');else document.documentElement.setAttribute('data-accent',v);softRender()}});
+  $$('[data-review]').forEach(function(b){b.onclick=function(){store('wbc_reviewed','1');window.open(D.review||cfg('center.review',''),'_blank')}});
 }
 function findSess(id){return ACC().upcoming.filter(function(s){return s.id===id})[0]}
 
@@ -1334,6 +1312,7 @@ function openSheet(title,body,foot){$('#shTitle').textContent=title;$('#shBody')
 function closeSheet(){$('#scrim').classList.remove('on');$('#sheet').classList.remove('on')}
 $('#scrim').onclick=closeSheet;$('#shClose').onclick=closeSheet;addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
 var tt;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
+// msg is HTML: callers must esc() any user or server text inside it
 function success(title,msg){openSheet('',' <div class="done"><div class="ok">'+ICON('i-check')+'</div><h3>'+esc(title)+'</h3><p>'+msg+'</p></div>','<button class="btn block" id="okb">Done</button>');$('#okb').onclick=closeSheet;if(navigator.vibrate)try{navigator.vibrate([10,40,10])}catch(e){}}
 function busy(btn,on,txt){if(!btn)return;btn.disabled=on;if(on){btn.dataset.t=btn.innerHTML;btn.innerHTML=txt||'Sending...'}else if(btn.dataset.t)btn.innerHTML=btn.dataset.t}
 function fail(btn,e){busy(btn,false);toast(e.message||'Not sent, try again')}
@@ -1342,26 +1321,29 @@ function dayChips(days,sel,id){return '<div class="chips" id="'+id+'">'+days.map
 function nextDays(n,from){var out=[],d=from||D.today;while(out.length<n){if(dOf(d).getDay()!==0)out.push(d);d=addDays(d,1)}return out}
 function pickOne(sel,cb){$$(sel+' [aria-pressed]').forEach(function(b){b.onclick=function(){$$(sel+' [aria-pressed]').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');cb&&cb(b)}})}
 
-function cancelSheet(s){if(!s)return;var early=s.date>D.today;
+// messages from the center (e.g. your 1:2 partner cancelled): shown on top of Center until you tap Got it
+function noticeCards(){var n=(D&&D.notices)||[];if(!n.length)return '';
+  return '<div class="ntc">'+n.slice(0,5).map(function(x){return '<div class="note ntc-i">'+ICON('i-alert','width:20px;height:20px;flex:none;margin-top:2px')+'<span class="t"><b>'+esc(x.type)+'</b>'+esc(x.text)+'<small>'+esc(x.created)+'</small></span><button class="btn sm sec2" data-act="ntread|'+esc(x.id)+'">Got it</button></div>'}).join('')+'</div>'}
+function cancelSheet(s){if(!s)return;var early=s.date>D.today,pair=/1:2/.test(String(s.tab||''));
   openSheet('Cancel this session?',sessLine(s)+
-   (early?'<div class="note" style="margin-top:14px">'+ICON('i-check')+'<span><b>You are cancelling a day or more before.</b> This session is not counted. You keep it.</span></div>'
+   (early?'<div class="note" style="margin-top:14px">'+ICON('i-check')+'<span><b>You are cancelling a day or more before.</b> This session is not counted. You keep it.'+(pair?' This is a 1:2 session, so it is cancelled for your partner too. We let them and your coach know.':'')+'</span></div>'
          :'<div class="note bad" style="margin-top:14px">'+ICON('i-alert')+'<span><b>Late cancellation.</b> Your session is today, so cancelling now will be deducted from your passes (counts as done). Running late instead? Tell us and keep your session.</span></div>')+
    '<p class="muted" style="margin-top:12px;font-size:15px">Want another time instead? Rescheduling never costs a session.</p>',
    '<div class="btns"><button class="btn sec2" id="keep">Keep it</button><button class="btn '+(early?'ghost':'danger')+'" id="yes">'+(early?'Yes, cancel':'Cancel anyway')+'</button></div><button class="btn ghost block" style="margin-top:10px" id="rs">'+ICON('i-swap','width:18px;height:18px')+'Reschedule instead</button>');
   $('#keep').onclick=closeSheet;$('#rs').onclick=function(){reschSheet(s)};
   $('#yes').onclick=function(){var b=this;busy(b,true,'Cancelling...');send('app_cl_cancel',{ref:s.ref,id:s.id}).then(function(j){
     s.att=j.kind;ACC().upcoming=ACC().upcoming.filter(function(x){return x!==s});render();
-    success(j.kind==='Early Cancel'?'Done, it\u2019s cancelled':'Cancelled, 1 session used',j.kind==='Early Cancel'?'You cancelled in time, so nothing is deducted. Your session stays on your package.':'Because it was cancelled on the same day, this session is deducted from your passes (late cancellation).')}).catch(function(e){fail(b,e)})}}
+    success(j.kind==='Early Cancel'?'Done, it\u2019s cancelled':'Cancelled, 1 session used',j.kind==='Early Cancel'?'You cancelled in time, so nothing is deducted. Your session stays on your package.'+(j.whole?' Your 1:2 session is cancelled for your partner too, and we let them and your coach know.':''):'Because it was cancelled on the same day, this session is deducted from your passes (late cancellation).')}).catch(function(e){fail(b,e)})}}
 
 function reschSheet(s){if(!s)return;var days=nextDays(8,s.date>D.today?D.today:addDays(D.today,1)),sel='',part='';
-  openSheet('Reschedule',sessLine(s)+'<div class="note" style="margin-top:12px">'+ICON('i-check')+'<span>Rescheduling never costs a session. Romy finds the new time and confirms with you.</span></div>'+
+  openSheet('Reschedule',sessLine(s)+'<div class="note" style="margin-top:12px">'+ICON('i-check')+'<span>Rescheduling never costs a session. '+DESK()+' finds the new time and confirms with you.</span></div>'+
    '<div class="field"><span class="flabel">Which day suits you?</span>'+dayChips(days,'','rd')+'</div>'+
    '<div class="field"><span class="flabel">What time of day?</span><div class="seg" id="rp"><button aria-pressed="false" data-p="Morning">Morning</button><button aria-pressed="false" data-p="Afternoon">Afternoon</button><button aria-pressed="false" data-p="Evening">Evening</button></div></div>'+
    '<div class="field"><label for="rn">Anything else? (optional)</label><input class="inp" id="rn" placeholder="e.g. after 6 PM, or same time next week"></div>',
-   '<button class="btn block" id="go">Send to Romy</button>');
+   '<button class="btn block" id="go">Send to '+DESK()+'</button>');
   pickOne('#rd',function(b){sel=b.dataset.d});pickOne('#rp',function(b){part=b.dataset.p});
   $('#go').onclick=function(){var b=this,note=$('#rn').value.trim();if(!sel&&!note){toast('Pick a day or write a time');return}
-    busy(b,true);send('app_cl_request',{kind:'reschedule',sid:s.id,ref:s.ref,pkg:s.pkg,slabel:s.date+' '+s.start,when:(sel?dayShort(sel):'')+(part?' '+part:'')+(note&&!sel?note:''),note:sel?note:''}).then(function(){success('Request sent','Romy will message you with the new time. Your current session stays booked until she moves it.')}).catch(function(e){fail(b,e)})}}
+    busy(b,true);send('app_cl_request',{kind:'reschedule',sid:s.id,ref:s.ref,pkg:s.pkg,slabel:s.date+' '+s.start,when:(sel?dayShort(sel):'')+(part?' '+part:'')+(note&&!sel?note:''),note:sel?note:''}).then(function(){success('Request sent',''+DESK()+' will message you with the new time. Your current session stays booked until she moves it.')}).catch(function(e){fail(b,e)})}}
 
 function joinSheet(o){if(!o)return;
   openSheet('Join this session?','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+dayLong(o.date)+' · '+hl(o.start)+'</b><div class="muted">Small group 1:3 with '+esc(o.trainer)+' · '+o.spots+' spot'+(o.spots>1?'s':'')+' left</div></div><div class="note" style="margin-top:12px">'+ICON('i-alert')+'<span>Uses 1 session of your package. You get the calendar invite by email.</span></div>',
@@ -1373,18 +1355,23 @@ function freezeSheet(p){if(!p)return;var min=p.start>D.today?p.start:D.today;
    '<div class="note" style="margin-top:12px">'+ICON('i-snow')+'<span>Traveling or sick? Pause for <b>up to 1 week</b>. Your end date moves 7 days later. One freeze per package.</span></div>'+
    '<div class="field"><label for="ff">Freeze starts on</label><input class="inp" id="ff" type="date" min="'+min+'" max="'+(p.end||'')+'" value="'+min+'"></div>'+
    '<div class="field"><label for="fn">Reason (optional)</label><input class="inp" id="fn" placeholder="e.g. travel"></div>','<button class="btn block" id="go">Request the freeze</button>');
-  $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'freeze',pkg:p.id,from:$('#ff').value,note:$('#fn').value.trim()}).then(function(){success('Freeze requested','Romy will confirm it. Your new end date shows here once it’s done.')}).catch(function(e){fail(b,e)})}}
+  $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'freeze',pkg:p.id,from:$('#ff').value,note:$('#fn').value.trim()}).then(function(){success('Freeze requested',''+DESK()+' will confirm it. Your new end date shows here once it’s done.')}).catch(function(e){fail(b,e)})}}
 
 var ACT={};gActs();
-var w$=function(s,r){return (r||document).querySelector(s)},w$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+ACT.ntread=function(id){D.notices=(D.notices||[]).filter(function(x){return x.id!==id});try{cacheSave(D)}catch(e){}render();api('app_cl_notice_read',{ids:[id],cid:ACC().cid}).catch(function(){})};
+ACT.lbhide=function(){var off=store('wbc_lbhide')==='1';store('wbc_lbhide',off?'0':'1');toast(off?'You show on the leaderboards again':'You are hidden from the leaderboards');render()};
+ACT.delacc=function(){var a=ACC();openSheet('Delete my account','<p>This deletes your Wellbe app account and the data in it: your profile, photo, nutrition answers, game progress and Wellbe Credit. Your session and payment records stay with the center as the law requires.</p><p class="muted" style="margin-top:8px">This cannot be undone.</p>','<button class="btn block" id="delYes" style="background:var(--crimson)">Delete my account</button><button class="btn ghost block" style="margin-top:8px" id="delNo">Keep my account</button>');
+  $('#delNo').onclick=closeSheet;$('#delYes').onclick=function(){var b=this;b.disabled=true;b.textContent='Deleting…';
+    var done=function(msg){closeSheet();success('Request received',esc(msg));setTimeout(function(){signOut()},2500)};
+    api('app_cl_delete',{cid:a&&a.cid}).then(function(){done('Your account is deleted. Thank you for training with Wellbe.')}).catch(function(e){
+      if(/unknown/i.test(String(e&&e.message))){done('Your request was sent to Wellbe; we will delete your account within 7 days.');try{window.open(waLink('Hi '+DESK()+', please delete my Wellbe app account ('+(D&&D.email||'')+').'),'_blank')}catch(x){}}
+      else{b.disabled=false;b.textContent='Delete my account';toast(e.message)}})}};
 // Workouts: the program the client's coaches built. Nothing shows until a coach builds one.
 var WOS={},WOLD={},WODR={};
 function woLoad(a,force){var k=a.cid;if(!WOS[k]){try{var c=JSON.parse(store('wbc_wo_'+k)||'null');if(c){WOS[k]=c;force=1}}catch(e){}}if(WOLD[k]||(WOS[k]&&!force))return;WOLD[k]=1;
-  api('app_cl_wo',{op:'get',cid:k}).then(function(j){var ch=JSON.stringify(j)!==JSON.stringify(WOS[k]);WOS[k]=j;WOLD[k]=0;store('wbc_wo_'+k,JSON.stringify(j));if(SEC==='work'&&ch&&!woTyping()){var y=scrollY;render();scrollTo(0,y)}})
-   .catch(function(e){WOLD[k]=0;if(!WOS[k]||WOS[k].err){WOS[k]={err:e.message};if(SEC==='work')render()}})}
+  api('app_cl_wo',{op:'get',cid:k}).then(function(j){var ch=JSON.stringify(j)!==JSON.stringify(WOS[k]);WOS[k]=j;WOLD[k]=0;store('wbc_wo_'+k,JSON.stringify(j));if(SEC==='plan'&&PLANTAB==='wo'&&ch&&!woTyping())bgRender()})
+   .catch(function(e){WOLD[k]=0;if(!WOS[k]||WOS[k].err){WOS[k]={err:e.message};if(SEC==='plan'&&PLANTAB==='wo')bgRender()}})}
 function woTyping(){var el=document.activeElement;return !!(el&&/INPUT|TEXTAREA|SELECT/.test(el.tagName))}
-function woDay(d){return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}
-function woHour(t){var h=+t.split(':')[0],m=t.split(':')[1];return (h%12||12)+(m==='00'?'':':'+m)+(h<12?' AM':' PM')}
 function woExs(w){var out=[];(w.main||[]).forEach(function(b){b.moves.forEach(function(m){out.push(m)})});(w.abs||[]).forEach(function(m){out.push(m)});return out}
 // one exercise: what to do, last time, and set inputs when it can be logged
 function woExHtml(m,q,d,sid,canLog,tag){
@@ -1414,99 +1401,102 @@ VIEWS.work=function(){var a=ACC(),d=WOS[a.cid];
   else{
     var w=d.workout,ph=d.phase;
     if(w){var isToday=w.date===D.today||w.date===d.today;
-      h+='<div class="whero"><small>'+(isToday?'TODAY':'NEXT SESSION · '+esc(woDay(w.date).toUpperCase()))+' · '+esc(woHour(w.start))+'</small><h1>'+esc(w.name)+'</h1><span>Workout '+w.n+(ph?' of '+ph.workouts.length+' · '+esc(ph.name):'')+' · with '+esc(w.trainer)+'</span>'+(w.catchUp?'<em>Catch up: you missed this one, your coach moved it here.</em>':'')+'</div>';
+      h+='<div class="whero"><small>'+(isToday?'TODAY':'NEXT SESSION · '+esc(dayShort(w.date).toUpperCase()))+' · '+esc(hl(w.start))+'</small><h1>'+esc(w.name)+'</h1><span>Workout '+w.n+(ph?' of '+ph.workouts.length+' · '+esc(ph.name):'')+' · with '+esc(w.trainer)+'</span>'+(w.catchUp?'<em>Catch up: you missed this one, your coach moved it here.</em>':'')+'</div>';
       h+=woBody(w.w,d,w.sid,isToday);
       if(isToday&&woExs(w.w).length)h+='<button class="btn block" style="margin-top:16px" data-act="wosave|'+esc(w.sid)+'">Save my weights</button>';
       else if(!isToday)h+='<p class="wnote">You log your weights on the day of the session.</p>';
-    } else h+='<div class="soon" style="padding-top:20px"><h1>No session booked</h1><p>Your next workout shows here once your next session is booked.</p><a class="btn" href="'+waLink('Hi Romy, this is '+a.name+'. I would like to book my next session.')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+'Book with Romy</a></div>';
-    if(d.recent&&d.recent.length)h+='<div class="gh"><h2>Log a past workout</h2><small>Last 7 days</small></div><div class="list">'+d.recent.map(function(r){var any=Object.keys(d.logged||{}).some(function(k){return k.indexOf(r.sid+'|')===0});return '<button class="item" data-act="wopast|'+esc(r.sid)+'"><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s">'+esc(woDay(r.date))+'</div></div><span class="pill2'+(any?' ok':'')+'">'+(any?'Logged':'Log')+'</span></button>'}).join('')+'</div>';
-    if(ph)h+='<div class="gh"><h2>Your phase</h2><small>'+ph.n+' of '+ph.of+'</small></div><div class="wcard wph"><b>'+esc(ph.name)+'</b><span>'+esc(woDay(ph.start))+' to '+esc(woDay(ph.end))+' · '+ph.done+' session'+(ph.done===1?'':'s')+' done</span>'+(ph.note?'<em>'+esc(ph.note)+'</em>':'')+'<div class="wlist">'+ph.workouts.map(function(n,i){return '<span'+(w&&w.n===i+1?' class="on"':'')+'>W'+(i+1)+' '+esc(n)+'</span>'}).join('')+'</div></div>';
+    } else h+='<div class="soon" style="padding-top:20px"><h1>No session booked</h1><p>Your next workout shows here once your next session is booked.</p><a class="btn" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. I would like to book my next session.')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+'Book with '+DESK()+'</a></div>';
+    if(d.recent&&d.recent.length)h+='<div class="gh"><h2>Log a past workout</h2><small>Last 7 days</small></div><div class="list">'+d.recent.map(function(r){var any=Object.keys(d.logged||{}).some(function(k){return k.indexOf(r.sid+'|')===0});return '<button class="item" data-act="wopast|'+esc(r.sid)+'"><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s">'+esc(dayShort(r.date))+'</div></div><span class="pill2'+(any?' ok':'')+'">'+(any?'Logged':'Log')+'</span></button>'}).join('')+'</div>';
+    if(ph)h+='<div class="gh"><h2>Your phase</h2><small>'+ph.n+' of '+ph.of+'</small></div><div class="wcard wph"><b>'+esc(ph.name)+'</b><span>'+esc(dayShort(ph.start))+' to '+esc(dayShort(ph.end))+' · '+ph.done+' session'+(ph.done===1?'':'s')+' done</span>'+(ph.note?'<em>'+esc(ph.note)+'</em>':'')+'<div class="wlist">'+ph.workouts.map(function(n,i){return '<span'+(w&&w.n===i+1?' class="on"':'')+'>W'+(i+1)+' '+esc(n)+'</span>'}).join('')+'</div></div>';
     else if(d.ended)h+='<div class="wcard wph"><b>Program finished</b><span>Your coach will set your next phase.</span></div>';
   }
   return h};
-function woEntries(root,exs){var out=[];w$$('[data-wq]',root).forEach(function(box){var m=exs[+box.dataset.wq];if(!m)return;var sets=[];w$$('.wset',box).forEach(function(r){var kg=parseFloat(w$('[data-wk]',r).value),reps=parseInt(w$('[data-wr]',r).value,10);if(kg>=0&&reps>0)sets.push({kg:kg,reps:reps})});if(sets.length)out.push({ex:m.ex,sets:sets})});return out}
-function woBindSets(root,d){
-  w$$('[data-wsame]',root).forEach(function(b){b.onclick=function(){var box=w$('[data-wq="'+b.dataset.wsame+'"]',root),m=woCur[+b.dataset.wsame],last=((d.logs||{})[m.ex]||{}).last||'',sets=last.split(','),rows=w$$('.wset',box);
-    sets.forEach(function(s,i){var x=s.trim().split('x');if(!rows[i]){woAddSet(box);rows=w$$('.wset',box)}w$('[data-wk]',rows[i]).value=x[0];w$('[data-wr]',rows[i]).value=x[1]})}});
-  w$$('[data-wadd]',root).forEach(function(b){b.onclick=function(){woAddSet(w$('[data-wq="'+b.dataset.wadd+'"]',root))}});
-  w$$('[data-wkey]',root).forEach(function(box){box.addEventListener('input',function(){WODR[box.dataset.wkey]=w$$('.wset',box).map(function(r){return w$('[data-wk]',r).value+'x'+w$('[data-wr]',r).value}).join(', ')})})}
-function woAddSet(box){var n=w$$('.wset',box).length,d=document.createElement('div');d.className='wset';d.innerHTML='<span>'+(n+1)+'</span><input class="inp" inputmode="decimal" placeholder="kg" data-wk><input class="inp" inputmode="numeric" placeholder="reps" data-wr>';box.appendChild(d)}
-var woCur=[];
-function woSend(sid,exs,btn,done,root){var entries=woEntries(root||w$('main'),exs);if(!entries.length){toast('Type at least one set: kg and reps');return}
+function woEntries(root,exs){var out=[];$$('[data-wq]',root).forEach(function(box){var m=exs[+box.dataset.wq];if(!m)return;var sets=[];$$('.wset',box).forEach(function(r){var kg=parseFloat(String($('[data-wk]',r).value).replace(',','.')),reps=parseInt($('[data-wr]',r).value,10);if(kg>=0&&reps>0)sets.push({kg:kg,reps:reps})});if(sets.length)out.push({ex:m.ex,sets:sets})});return out}
+function woBindSets(root,d,exs){
+  $$('[data-wsame]',root).forEach(function(b){b.onclick=function(){var box=$('[data-wq="'+b.dataset.wsame+'"]',root),m=(exs||[])[+b.dataset.wsame];if(!m||!box)return;var last=((d.logs||{})[m.ex]||{}).last||'',sets=last.split(','),rows=$$('.wset',box);
+    sets.forEach(function(s,i){var x=s.trim().split('x');if(!rows[i]){woAddSet(box);rows=$$('.wset',box)}$('[data-wk]',rows[i]).value=x[0];$('[data-wr]',rows[i]).value=x[1]})}});
+  $$('[data-wadd]',root).forEach(function(b){b.onclick=function(){woAddSet($('[data-wq="'+b.dataset.wadd+'"]',root))}});
+  $$('[data-wkey]',root).forEach(function(box){box.addEventListener('input',function(){WODR[box.dataset.wkey]=$$('.wset',box).map(function(r){return $('[data-wk]',r).value+'x'+$('[data-wr]',r).value}).join(', ')})})}
+function woAddSet(box){var n=$$('.wset',box).length,d=document.createElement('div');d.className='wset';d.innerHTML='<span>'+(n+1)+'</span><input class="inp" inputmode="decimal" placeholder="kg" data-wk><input class="inp" inputmode="numeric" placeholder="reps" data-wr>';box.appendChild(d)}
+function woSend(sid,exs,btn,done,root){var entries=woEntries(root||$('main'),exs);if(!entries.length){toast('Type at least one set: kg and reps');return}
   if(btn){btn.disabled=true;btn.textContent='Saving…'}
   api('app_cl_wo',{op:'log',cid:ACC().cid,sid:sid,entries:entries}).then(function(j){WOS[ACC().cid]=j;Object.keys(WODR).forEach(function(k){if(k.indexOf(sid+'|')===0)delete WODR[k]});toast(entries.length===1?'1 exercise saved':entries.length+' exercises saved');if(done)done();render()})
    .catch(function(e){if(btn){btn.disabled=false;btn.textContent='Save my weights'}toast(e.message)})}
 ACT.woreload=function(){woLoad(ACC(),true);WOS[ACC().cid]=null;render()};
-ACT.wosave=function(sid){var d=WOS[ACC().cid];woSend(sid,woExs(d.workout.w),w$('[data-act^="wosave"]'),null,w$('main'))};
-function woBindView(){var d=WOS[ACC().cid];if(!d||!d.workout)return;woCur=woExs(d.workout.w);woBindSets(w$('main'),d)}
-ACT.wopast=function(sid){var d=WOS[ACC().cid],r=(d.recent||[]).filter(function(x){return x.sid===sid})[0];if(!r)return;woCur=woExs(r.w);
-  openSheet(r.name+' · '+woDay(r.date),'<div class="wsheet">'+woBody({main:r.w.main,abs:r.w.abs},d,sid,true)+'</div>','<button class="btn block" id="woPastSave">Save my weights</button>');
-  woBindSets(w$('#shBody'),d);w$('#woPastSave').onclick=function(){woSend(sid,woCur,this,closeSheet,w$('#shBody'))}};
+ACT.wosave=function(sid){var d=WOS[ACC().cid];woSend(sid,woExs(d.workout.w),$('[data-act^="wosave"]'),null,$('main'))};
+function woBindView(){var d=WOS[ACC().cid];if(!d||!d.workout)return;woBindSets($('main'),d,woExs(d.workout.w))}
+ACT.wopast=function(sid){var d=WOS[ACC().cid],r=(d.recent||[]).filter(function(x){return x.sid===sid})[0];if(!r)return;var exs=woExs(r.w);
+  openSheet(r.name+' · '+dayShort(r.date),'<div class="wsheet">'+woBody({main:r.w.main,abs:r.w.abs},d,sid,true)+'</div>','<button class="btn block" id="woPastSave">Save my weights</button>');
+  woBindSets($('#shBody'),d,exs);$('#woPastSave').onclick=function(){woSend(sid,exs,this,closeSheet,$('#shBody'))}};
 ACT.wobody=function(){var b=(WOS[ACC().cid]||{}).body||{};
-  openSheet('My body','<div class="field"><label>Weight (kg)</label><input class="inp" id="wbW" inputmode="decimal" value="'+(b.weight||'')+'"></div><div class="field"><label>Height (cm)</label><input class="inp" id="wbH" inputmode="numeric" value="'+(b.height||'')+'"></div>'+
+  openSheet('My body','<div class="field"><label>Weight (kg)</label><input class="inp" id="wbW" inputmode="decimal" value="'+esc(b.weight||'')+'"></div><div class="field"><label>Height (cm)</label><input class="inp" id="wbH" inputmode="numeric" value="'+esc(b.height||'')+'"></div>'+
     '<div class="field"><label>Birth year</label><input class="inp" id="wbY" inputmode="numeric" placeholder="e.g. 1990" value="'+(b.birth||'')+'"></div><div class="field"><label>Sex</label><div class="seg"><button data-sx="F" aria-pressed="'+(b.sex==='F')+'">Female</button><button data-sx="M" aria-pressed="'+(b.sex==='M')+'">Male</button></div></div>'+
     '<p class="wnote" style="text-align:left">Only you and your coaches see this. It is used to work out the calories your body burns.</p>','<button class="btn block" id="wbSave">Save</button>');
-  var sx=b.sex||'';w$$('[data-sx]').forEach(function(x){x.onclick=function(){sx=x.dataset.sx;w$$('[data-sx]').forEach(function(y){y.setAttribute('aria-pressed',String(y===x))})}});
-  w$('#wbSave').onclick=function(){var btn=this,body={op:'body',cid:ACC().cid,weight:parseFloat(w$('#wbW').value)||0,height:parseFloat(w$('#wbH').value)||0,birth:parseInt(w$('#wbY').value,10)||0,sex:sx};
+  var sx=b.sex||'';$$('[data-sx]').forEach(function(x){x.onclick=function(){sx=x.dataset.sx;$$('[data-sx]').forEach(function(y){y.setAttribute('aria-pressed',String(y===x))})}});
+  $('#wbSave').onclick=function(){var btn=this,body={op:'body',cid:ACC().cid,weight:parseFloat($('#wbW').value)||0,height:parseFloat($('#wbH').value)||0,birth:parseInt($('#wbY').value,10)||0,sex:sx};
     if(body.weight===b.weight&&body.height===b.height&&body.birth===b.birth&&sx===b.sex){closeSheet();return}
     if(body.weight===b.weight)body.weight=0;btn.disabled=true;btn.textContent='Saving…';
     api('app_cl_wo',body).then(function(j){WOS[ACC().cid]=j;closeSheet();toast('Saved');render()}).catch(function(e){btn.disabled=false;btn.textContent='Save';toast(e.message)})}};
 
 ACT.run=function(){var f=$('#gameFrame');if(!f){f=document.createElement('iframe');f.id='gameFrame';f.title='Corniche Run';f.allow='autoplay; fullscreen';document.body.appendChild(f)}
-  f.src='run.html?in=app'+(arguments[0]===1?'&pick=1':'')+'&v='+Date.now();f.classList.add('on');document.documentElement.style.overflow='hidden'};
+  f.src='run.html?in=app'+(arguments[0]===1?'&pick=1':'')+'&v='+GAME_V;f.classList.add('on');document.documentElement.style.overflow='hidden'};
 ACT.runpick=function(){ACT.run(1)};
 ACT.rtab=function(k){RUNTAB=k;render()};
-ACT.rbuy=function(k){api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){RUNST=j;toast(k==='life'?'Extra life ready for your next run ❤️':'Upgraded!');render()}).catch(function(e){toast(e.message)})};
-ACT.rredeem=function(){var C=RUNST.cash,u='$'+(Math.min(C.bal,C.max)/100).toFixed(2);if(!confirm('Use '+u+' Cash on your next package? Romy will take it off when you renew.'))return;api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){RUNST=j;render();success(u+' off is yours','Romy will take it off your next package when you renew.')}).catch(function(e){toast(e.message)})};
-addEventListener('message',function(e){var d=e.data;if(!d||d.wb!=='api')return;var f=$('#gameFrame'),reply=function(o){try{f&&f.contentWindow.postMessage(o,'*')}catch(x){}};
-  var body=d.body||{};if(!ACC()){reply({wb:'api-res',id:d.id,ok:false,err:'signin'});return}body.cid=ACC().cid;
-  api('app_cl_run',body).then(function(j){RUNST=j;if(body.op==='save'){store(runsKey(),String(runsToday()+1))}if(MODAL&&SEC==='play'){var y=scrollY;render();scrollTo(0,y)}reply({wb:'api-res',id:d.id,ok:true,res:j})}).catch(function(err){reply({wb:'api-res',id:d.id,ok:false,err:String(err&&err.message||err)})})});
+var RBUSY=0;function rbusy(on){RBUSY=on;$$('[data-act^="rbuy"],[data-act="rredeem"],#rdmYes').forEach(function(b){b.disabled=!!on})}
+ACT.rbuy=function(k){if(RBUSY)return;rbusy(1);api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){rbusy(0);RUNST=j;toast(k==='life'?'Extra life ready for your next run ❤️':'Upgraded!');render()}).catch(function(e){rbusy(0);toast(e.message)})};
+ACT.rredeem=function(){var C=RUNST&&RUNST.cash;if(!C||RBUSY)return;var u='$'+(Math.min(C.bal,C.max)/100).toFixed(2);
+  openSheet('Use your Wellbe Credit','<p class="muted">Use <b>'+u+'</b> Wellbe Credit on your next package or online workout? '+DESK()+' takes it off when you renew.</p>','<button class="btn block" id="rdmYes">Use '+u+'</button><button class="btn ghost block" style="margin-top:8px" id="rdmNo">Not now</button>');
+  $('#rdmNo').onclick=closeSheet;$('#rdmYes').onclick=function(){rbusy(1);api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){rbusy(0);RUNST=j;closeSheet();render();success(u+' Wellbe Credit saved',''+DESK()+' will take it off your next package or online workout when you renew.')}).catch(function(e){rbusy(0);toast(e.message)})}};
+addEventListener('message',function(e){var d=e.data;if(!d||d.wb!=='api')return;var f=$('#gameFrame');if(!f||e.source!==f.contentWindow)return;if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;
+  var reply=function(o){try{f.contentWindow.postMessage(o,location.origin==='null'?'*':location.origin)}catch(x){}};
+  var body=d.body||{};if(['get','save'].indexOf(body.op)<0){reply({wb:'api-res',id:d.id,ok:false,err:'not allowed'});return}if(store('wbc_lbhide')==='1')body.lbHide=1;if(!ACC()){reply({wb:'api-res',id:d.id,ok:false,err:'signin'});return}body.cid=ACC().cid;
+  api('app_cl_run',body).then(function(j){RUNST=j;if(body.op==='save'){store(runsKey(),String(runsToday()+1))}if(MODAL&&SEC==='play')bgRender();reply({wb:'api-res',id:d.id,ok:true,res:j})}).catch(function(err){reply({wb:'api-res',id:d.id,ok:false,err:String(err&&err.message||err)})})});
 ACT.goal=function(){ONB={step:'write',text:ACC().goal?ACC().goal.promise:''};render();scrollTo(0,0)};
 ACT.out=function(){signOut(false)};
 // friend invite: pick a contact (Android) or type it (iPhone), sent to Romy who invites them
 function normPhone(p){var raw=String(p||'').trim(),d=raw.replace(/\D/g,'');if(!d)return '';
   if(raw.charAt(0)==='+')return d;if(d.indexOf('00')===0)return d.slice(2);if(d.indexOf('961')===0&&d.length>=10)return d;
   if(d.charAt(0)==='0')d=d.slice(1);return d.length<=8?'961'+d:d}
-function inviteText(friend,from){return 'Hi '+friend+'! 🎉 This is Romy from Wellbe Health Center in Bsalim. '+from+' loves training with us and wanted you to be part of it, so here is your personal invite! 💪 When would you like to come by and meet the team?'}
+function inviteText(friend,from){return 'Hi '+friend+'! 🎉 This is '+DESK()+' from Wellbe Health Center in '+cfg('center.location','')+'. '+from+' loves training with us and wanted you to be part of it, so here is your personal invite! 💪 When would you like to come by and meet the team?'}
 ACT.friend=function(){
   if(navigator.contacts&&navigator.contacts.select){navigator.contacts.select(['name','tel'],{multiple:false}).then(function(r){var c=r&&r[0];if(!c)return;inviteSheet((c.name&&c.name[0])||'',(c.tel&&c.tel[0])||'')}).catch(function(){inviteSheet('','')})}
   else inviteSheet('','')};
 function inviteSheet(nm,ph){var a=ACC(),picker=!!(navigator.contacts&&navigator.contacts.select);
-  openSheet('Invite a friend','<p class="muted" style="margin-bottom:4px">Add their name and phone number. Romy will reach out with a warm welcome from you.</p>'+
+  openSheet('Invite a friend','<p class="muted" style="margin-bottom:4px">Add their name and phone number. '+DESK()+' will reach out with a warm welcome from you.</p>'+
    '<div class="field"><label for="fnm">Their name</label><input class="inp" id="fnm" autocomplete="off" value="'+esc(nm)+'" placeholder="e.g. Sara"></div>'+
    '<div class="field"><label for="fph">Their phone number</label><input class="inp" id="fph" type="tel" inputmode="tel" value="'+esc(ph)+'" placeholder="e.g. 03 123 456"></div>'+
    (picker?'<button class="btn ghost sm block" style="margin-top:10px" id="repick">'+ICON('i-users','width:18px;height:18px')+'Pick another contact</button>':''),
-   '<button class="btn block" id="go">'+ICON('i-heart')+'Send to Romy</button>');
+   '<button class="btn block" id="go">'+ICON('i-heart')+'Send to '+DESK()+'</button>');
   if($('#repick'))$('#repick').onclick=function(){ACT.friend()};
   $('#go').onclick=function(){var b=this,n=$('#fnm').value.trim(),p=normPhone($('#fph').value);
     if(!n){toast('Write their name');return}if(p.length<10||p.length>15){toast('Check the phone number');return}
     var first=n.split(' ')[0],msg=inviteText(first,a.first),link='https://wa.me/'+p+'?text='+encodeURIComponent(msg);
     busy(b,true);
-    send('app_cl_request',{kind:'invite',fname:n,phone:p,msg:msg}).then(function(){success('Invite on its way! 🎉','Romy will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.')})
+    send('app_cl_request',{kind:'invite',fname:n,phone:p,msg:msg}).then(function(){success('Invite on its way! 🎉',''+DESK()+' will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.')})
      .catch(function(){busy(b,false);
        // backend not updated yet: hand it to Romy on WhatsApp in one tap
-       var txt='Hi Romy! '+a.name+' here. I’d love to invite '+n+' to Wellbe. Their number: +'+p+'\n\nTap to send them the invite:\n'+link;
-       openSheet('',' <div class="done"><div class="ok">'+ICON('i-heart')+'</div><h3>Almost there!</h3><p>One tap sends '+esc(first)+'’s details to Romy so she can invite them.</p></div>','<a class="btn wa block" id="wgo" target="_blank" rel="noopener" href="'+waLink(txt)+'">'+ICON('i-wa')+'Send to Romy</a>');
+       var txt='Hi '+DESK()+'! '+a.name+' here. I’d love to invite '+n+' to Wellbe. Their number: +'+p+'\n\nTap to send them the invite:\n'+link;
+       openSheet('',' <div class="done"><div class="ok">'+ICON('i-heart')+'</div><h3>Almost there!</h3><p>One tap sends '+esc(first)+'’s details to '+DESK()+' so she can invite them.</p></div>','<a class="btn wa block" id="wgo" target="_blank" rel="noopener" href="'+waLink(txt)+'">'+ICON('i-wa')+'Send to '+DESK()+'</a>');
        $('#wgo').addEventListener('click',function(){setTimeout(closeSheet,400)})})}}
 ACT.book=function(k){var a=ACC();
-  if(k==='assess'){window.open(waLink('Hi Romy, this is '+a.name+'. I would like to book an assessment with Majd. When is he available?'),'_blank');return}
-  if(k==='physio'){window.open(waLink('Hi Romy, this is '+a.name+'. I\u2019m feeling sore and would like to book a physio session with Majd. What times are available?'),'_blank');return}
-  if(k==='madero'){window.open(waLink('Hi Romy, this is '+a.name+'. I would like to book a Madero session. What times are available?'),'_blank');return}
-  openSheet('Book a training session','<p class="muted" style="margin-bottom:12px">Pick the format you want. Romy replies on WhatsApp with the times.</p><div class="list">'+
+  if(k==='assess'){window.open(waLink('Hi '+DESK()+', this is '+a.name+'. I would like to book an assessment with '+SVCNAME('Physio')+'. When is he available?'),'_blank');return}
+  if(k==='physio'){window.open(waLink('Hi '+DESK()+', this is '+a.name+'. I\u2019m feeling sore and would like to book a physio session with '+SVCNAME('Physio')+'. What times are available?'),'_blank');return}
+  if(k==='madero'){window.open(waLink('Hi '+DESK()+', this is '+a.name+'. I would like to book a Madero session. What times are available?'),'_blank');return}
+  openSheet('Book a training session','<p class="muted" style="margin-bottom:12px">Pick the format you want. '+DESK()+' replies on WhatsApp with the times.</p><div class="list">'+
    [['1:1','Private 1:1','Just you and your coach'],['1:2','Duo 1:2','Train with a partner'],['1:3','Small group 1:3','Up to 3 people, best value']].map(function(x){return '<button class="big" data-fmt="'+x[0]+'"><span class="ic">'+ICON(x[0]==='1:1'?'i-dumbbell':'i-users')+'</span><div class="grow"><b>'+x[1]+'</b><span>'+x[2]+'</span></div>'+ICON('i-wa','color:var(--wa)')+'</button>'}).join('')+'</div>');
   $$('[data-fmt]').forEach(function(b){b.onclick=function(){var f=b.dataset.fmt,nm={'1:1':'private 1:1','1:2':'duo 1:2','1:3':'small group 1:3'}[f];
-    window.open(waLink('Hi Romy, this is '+a.name+'. I would like to book a '+nm+' training session. What times work this week?'),'_blank');closeSheet()}})};
+    window.open(waLink('Hi '+DESK()+', this is '+a.name+'. I would like to book a '+nm+' training session. What times work this week?'),'_blank');closeSheet()}})};
 ACT.session=function(){var a=ACC();if(a.grid&&a.grid.length)return gridSheet(a);return ACT.sessionForm()};
 function gridSheet(a){var days=[],by={};a.grid.forEach(function(g){if(!by[g.date]){by[g.date]=[];days.push(g.date)}by[g.date].push(g)});var sel=days[0];
-  var list=function(){return '<div class="slots">'+by[sel].map(function(g,i){return '<button class="slot '+g.state+'" data-g="'+i+'"><b>'+hl(g.start)+'</b><div class="grow">'+(g.trainer?'with '+esc(g.trainer):'Small group 1:3')+'<span>'+(g.state==='instant'?g.spots+' spot'+(g.spots>1?'s':'')+' left':g.state==='full'?'Full':'Romy confirms it with you')+'</span></div><span class="tagx">'+(g.state==='instant'?'Book instantly':g.state==='full'?'Full':'Request to book')+'</span></button>'}).join('')+'</div>'};
+  var list=function(){return '<div class="slots">'+by[sel].map(function(g,i){return '<button class="slot '+g.state+'" data-g="'+i+'"><b>'+hl(g.start)+'</b><div class="grow">'+(g.trainer?'with '+esc(g.trainer):'Small group 1:3')+'<span>'+(g.state==='instant'?g.spots+' spot'+(g.spots>1?'s':'')+' left':g.state==='full'?'Full':''+DESK()+' confirms it with you')+'</span></div><span class="tagx">'+(g.state==='instant'?'Book instantly':g.state==='full'?'Full':'Request to book')+'</span></button>'}).join('')+'</div>'};
   openSheet('Book a session','<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:4px"><span class="pill">Small group 1:3</span><span class="pill mute">'+a.canJoin+' session'+(a.canJoin===1?'':'s')+' to book</span></div>'+
    '<div class="field"><span class="flabel">Pick a day</span>'+dayChips(days,sel,'gd')+'</div><div class="field"><span class="flabel">Pick a time</span><div id="gl">'+list()+'</div></div>'+
-   '<p class="muted" style="font-size:13.5px;margin-top:12px"><b>Book instantly</b>: a group is already running, you are in straight away. <b>Request to book</b>: Romy opens the hour and confirms on WhatsApp.</p>',
-   '<button class="btn ghost block" id="gOther">Another type or time? Message Romy</button>');
+   '<p class="muted" style="font-size:13.5px;margin-top:12px"><b>Book instantly</b>: a group is already running, you are in straight away. <b>Request to book</b>: '+DESK()+' opens the hour and confirms on WhatsApp.</p>',
+   '<button class="btn ghost block" id="gOther">Another type or time? Message '+DESK()+'</button>');
   var bindL=function(){$$('[data-g]').forEach(function(b){b.onclick=function(){var g=by[sel][+b.dataset.g];
     if(g.state==='instant')return joinSheet({date:g.date,start:g.start,trainer:g.trainer,spots:g.spots});
-    openSheet('Request this time?','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+dayLong(g.date)+' · '+hl(g.start)+'</b><div class="muted">Small group 1:3</div></div><div class="note" style="margin-top:12px">'+ICON('i-check')+'<span>Romy confirms it with you on WhatsApp. It uses 1 session of your package once confirmed.</span></div>','<button class="btn block" id="go">Send request</button>');
-    $('#go').onclick=function(){var bb=this;busy(bb,true);send('app_cl_request',{kind:'session',what:'Small group 1:3',when:dayShort(g.date)+' '+hl(g.start)+' ('+g.date+' '+g.start+')',note:''}).then(function(){success('Request sent','Romy will confirm '+dayLong(g.date)+' at '+hl(g.start)+' on WhatsApp.')}).catch(function(e){fail(bb,e)})}}})};
+    openSheet('Request this time?','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+dayLong(g.date)+' · '+hl(g.start)+'</b><div class="muted">Small group 1:3</div></div><div class="note" style="margin-top:12px">'+ICON('i-check')+'<span>'+DESK()+' confirms it with you on WhatsApp. It uses 1 session of your package once confirmed.</span></div>','<button class="btn block" id="go">Send request</button>');
+    $('#go').onclick=function(){var bb=this;busy(bb,true);send('app_cl_request',{kind:'session',what:'Small group 1:3',when:dayShort(g.date)+' '+hl(g.start)+' ('+g.date+' '+g.start+')',note:''}).then(function(){success('Request sent',''+DESK()+' will confirm '+dayLong(g.date)+' at '+hl(g.start)+' on WhatsApp.')}).catch(function(e){fail(bb,e)})}}})};
   bindL();pickOne('#gd',function(b){sel=b.dataset.d;$('#gl').innerHTML=list();bindL()});
   $('#gOther').onclick=function(){ACT.sessionForm()}}
 ACT.sessionForm=function(){var a=ACC(),kinds=[];a.pkgs.forEach(function(p){if(p.phase!=='past'&&kinds.indexOf(p.kind)<0)kinds.push(p.kind)});if(!kinds.length)kinds=['1:3'];
@@ -1517,33 +1507,33 @@ ACT.sessionForm=function(){var a=ACC(),kinds=[];a.pkgs.forEach(function(p){if(p.
    '<div class="field"><label for="sn">Note (optional)</label><input class="inp" id="sn" placeholder="e.g. every Tuesday at 7 PM"></div>','<button class="btn block" id="go">Send request</button>');
   pickOne('#sk',function(b){what=b.dataset.k});pickOne('#sd',function(b){sel=b.dataset.d});pickOne('#sp',function(b){part=b.dataset.p});
   $('#go').onclick=function(){var b=this,note=$('#sn').value.trim();if(!sel&&!note){toast('Pick a day or write a note');return}
-    busy(b,true);send('app_cl_request',{kind:'session',what:tabName(what),when:(sel?dayShort(sel):'any day')+(part?' '+part:''),note:note}).then(function(){success('Request sent','Romy will book it and message you to confirm.')}).catch(function(e){fail(b,e)})}};
+    busy(b,true);send('app_cl_request',{kind:'session',what:tabName(what),when:(sel?dayShort(sel):'any day')+(part?' '+part:''),note:note}).then(function(){success('Request sent',''+DESK()+' will book it and message you to confirm.')}).catch(function(e){fail(b,e)})}};
 ACT.physio=function(){var days=[],by={};(D.slots||[]).forEach(function(s){if(!by[s.d]){by[s.d]=[];days.push(s.d)}by[s.d].push(s.t)});
-  if(!days.length){openSheet('Book your physio visit','<div class="note warn">'+ICON('i-alert')+'<span>Majd is fully booked for the next 2 weeks.</span></div>','<a class="btn wa block" target="_blank" href="'+waLink('Hi Romy, this is '+ACC().name+'. I want a physio visit with Majd but the app shows no free time. Can you find me one?')+'">'+ICON('i-wa')+'Ask Romy for a time</a>');return}
+  if(!days.length){openSheet('Book your physio visit','<div class="note warn">'+ICON('i-alert')+'<span>'+SVCNAME('Physio')+' is fully booked for the next '+Math.round(cfg('windows.physioDays')/7)+' weeks.</span></div>','<a class="btn wa block" target="_blank" href="'+waLink('Hi '+DESK()+', this is '+ACC().name+'. I want a physio visit with '+SVCNAME('Physio')+' but the app shows no free time. Can you find me one?')+'">'+ICON('i-wa')+'Ask '+DESK()+' for a time</a>');return}
   var sel=days[0],t='';
   var times=function(){return '<div class="times" id="pt">'+by[sel].map(function(x){return '<button aria-pressed="false" data-t="'+x+'">'+hl(x)+'</button>'}).join('')+'</div>'};
-  openSheet('Book your physio visit','<div class="row" style="gap:10px;margin-bottom:6px"><span class="pill">60 min with Majd</span></div>'+
+  openSheet('Book your physio visit','<div class="row" style="gap:10px;margin-bottom:6px"><span class="pill">60 min with '+SVCNAME('Physio')+'</span></div>'+
    '<div class="field"><span class="flabel">Pick a day</span>'+dayChips(days,sel,'pd')+'</div><div class="field"><span class="flabel">Pick a time</span><div id="ptw">'+times()+'</div></div>'+
-   '<div class="field"><label for="pn">What should Majd know? (optional)</label><input class="inp" id="pn" placeholder="e.g. lower back pain since last week"></div>'+
-   '<p class="muted" style="font-size:14px;margin-top:12px">This is a request. Romy confirms with Majd and messages you. Pay at the center.</p>','<button class="btn danger block" id="go" disabled>Choose a time</button>');
+   '<div class="field"><label for="pn">What should '+SVCNAME('Physio')+' know? (optional)</label><input class="inp" id="pn" placeholder="e.g. lower back pain since last week"></div>'+
+   '<p class="muted" style="font-size:14px;margin-top:12px">This is a request. '+DESK()+' confirms with '+SVCNAME('Physio')+' and messages you. Pay at the center.</p>','<button class="btn danger block" id="go" disabled>Choose a time</button>');
   var go=$('#go'),bt=function(){pickOne('#pt',function(b){t=b.dataset.t;go.disabled=false;go.textContent='Request '+dayShort(sel)+', '+hl(t)})};bt();
   pickOne('#pd',function(b){sel=b.dataset.d;t='';$('#ptw').innerHTML=times();go.disabled=true;go.textContent='Choose a time';bt()});
-  go.onclick=function(){busy(go,true);send('app_cl_request',{kind:'physio',d:sel,t:t,note:$('#pn').value.trim()}).then(function(){ACC().physio.pending=true;render();success('Physio request sent','Romy confirms '+dayLong(sel)+' at '+hl(t)+' with Majd and messages you on WhatsApp.')}).catch(function(e){fail(go,e);boot(true)})}};
+  go.onclick=function(){busy(go,true);send('app_cl_request',{kind:'physio',d:sel,t:t,note:$('#pn').value.trim()}).then(function(){ACC().physio.pending=true;render();success('Physio request sent',''+DESK()+' confirms '+dayLong(sel)+' at '+hl(t)+' with '+SVCNAME('Physio')+' and messages you on WhatsApp.')}).catch(function(e){fail(go,e);boot(true)})}};
 ACT.m3=function(){var o=ACC().offers.m3;
-  openSheet('3 months, 7% off','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+esc(o.type)+'</b><div class="row" style="align-items:baseline;gap:10px;margin-top:6px"><b style="font:800 34px var(--display)">'+money(o.p3)+'</b><s>'+money(o.t3)+'</s><span class="pill">Save '+money(o.save)+'</span></div><div class="muted">3 months, one payment. Starts when your current package ends ('+dmy(o.starts)+').</div></div>'+
+  openSheet('3 months, '+cfg('offers.m3Pct')+'% off','<div class="card" style="box-shadow:none;background:var(--bg)"><b style="font-size:18px">'+esc(o.type)+'</b><div class="row" style="align-items:baseline;gap:10px;margin-top:6px"><b style="font:800 34px var(--display)">'+money(o.p3)+'</b><s>'+money(o.t3)+'</s><span class="pill">Save '+money(o.save)+'</span></div><div class="muted">3 months, one payment. Starts when your current package ends ('+dmy(o.starts)+').</div></div>'+
    '<div class="note" style="margin-top:12px">'+ICON('i-check')+'<span>Same spot, same coach, price locked for 3 months.</span></div>','<button class="btn block" id="go">Yes, I want it</button>');
-  $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'offer3'}).then(function(){success('Great choice!','Romy will message you to set it up. Pay at the center.')}).catch(function(e){fail(b,e)})}};
+  $('#go').onclick=function(){var b=this;busy(b,true);send('app_cl_request',{kind:'offer3'}).then(function(){success('Great choice!',''+DESK()+' will message you to set it up. Pay at the center.')}).catch(function(e){fail(b,e)})}};
 ACT.m6=function(){var o=ACC().offers.m6;
-  openSheet('Upgrade to 6 months','<div class="card" style="box-shadow:none;background:var(--bg)"><div class="muted">You paid for months 1 to 3</div><b style="font-size:18px">'+esc(o.type)+'</b><div class="row" style="align-items:baseline;gap:10px;margin-top:6px"><span class="muted">Pay now</span><b style="font:800 34px var(--display)">'+money(o.due)+'</b></div><div class="muted">6 months for '+money(o.p6)+' instead of '+money(o.t6)+' (15% off all 6 months)</div></div>'+
+  openSheet('Upgrade to 6 months','<div class="card" style="box-shadow:none;background:var(--bg)"><div class="muted">You paid for months 1 to 3</div><b style="font-size:18px">'+esc(o.type)+'</b><div class="row" style="align-items:baseline;gap:10px;margin-top:6px"><span class="muted">Pay now</span><b style="font:800 34px var(--display)">'+money(o.due)+'</b></div><div class="muted">6 months for '+money(o.p6)+' instead of '+money(o.t6)+' ('+cfg('offers.m6Pct')+'% off all 6 months)</div></div>'+
    '<div class="list" style="margin-top:12px">'+[0,1,2].map(function(k){return '<div class="item"><div class="mini"><small>Month</small><b>'+(4+k)+'</b></div><div class="grow"><div class="t">From '+dmy(addDays(o.starts,30*k))+'</div><div class="s">'+money(k<2?o.each:o.due-o.each*2)+'</div></div>'+ICON('i-check','color:var(--mint-deep)')+'</div>'}).join('')+'</div>'+
    '<p class="muted" style="font-size:14px;margin-top:12px">Months 4, 5 and 6 are added to your plan right away. Pay '+money(o.due)+' at the center at your next session.</p>','<button class="btn block" id="go">Upgrade me to 6 months</button>');
-  $('#go').onclick=function(){var b=this;busy(b,true,'Upgrading...');send('app_cl_upgrade6',{}).then(function(j){success('You’re on 6 months!','Months 4 to 6 are in your plan. Pay '+money(j.due)+' at the center.')}).catch(function(e){fail(b,e)})}};
+  $('#go').onclick=function(){var b=this;busy(b,true,'Upgrading...');send('app_cl_upgrade6',{}).then(function(j){if(!j.ids||!j.ids.length)success('Request sent',''+DESK()+' will confirm your 6 months and add months 4 to 6. Pay '+money(j.due)+' at the center.');else success('You’re on 6 months!','Months 4 to 6 are in your plan. Pay '+money(j.due)+' at the center.')}).catch(function(e){fail(b,e)})}};
 ACT.order=function(){var it=shopItems(),c=cartTotal(),lines=Object.keys(CART).map(function(k){var x=it.filter(function(y){return y.n===k})[0];return x?{x:x,q:CART[k]}:null}).filter(Boolean);
   if(!lines.length)return;
-  openSheet('Your order','<div class="list">'+lines.map(function(l){return '<div class="item">'+(l.x.img?'<img src="'+IMG[l.x.img]+'" alt="" style="width:44px;height:44px;object-fit:contain" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=ph2 style=width:44px;height:44px>'+esc(l.x.n[0])+'</span>\'">':'<span class="ph2" style="width:44px;height:44px">'+esc(l.x.n[0])+'</span>')+'<div class="grow"><div class="t">'+esc(l.x.n)+'</div><div class="s">'+l.q+' x '+money(l.x.price)+(l.x.left<l.q?' · we order it in':'')+'</div></div><b class="num">'+money(l.x.price*l.q)+'</b></div>'}).join('')+'</div>'+
+  openSheet('Your order','<div class="list">'+lines.map(function(l){return '<div class="item">'+(l.x.img?'<img src="'+CONTENT.img[l.x.img]+'" alt="" style="width:44px;height:44px;object-fit:contain" referrerpolicy="no-referrer" data-fb="'+esc(l.x.n[0])+'" data-fbc="ph2" data-fbs="width:44px;height:44px">':'<span class="ph2" style="width:44px;height:44px">'+esc(l.x.n[0])+'</span>')+'<div class="grow"><div class="t">'+esc(l.x.n)+'</div><div class="s">'+l.q+' x '+money(l.x.price)+(l.x.left<l.q?' · we order it in':'')+'</div></div><b class="num">'+money(l.x.price*l.q)+'</b></div>'}).join('')+'</div>'+
    '<div class="row" style="justify-content:space-between;margin:16px 4px 4px"><b style="font-size:18px">Total</b><b class="num" style="font:800 30px var(--display)">'+money(c.t)+'</b></div>'+
    '<div class="note" style="margin-top:8px">'+ICON('i-bag')+'<span>We get it ready for you at Wellbe. Pay and pick it up at your next session.</span></div>','<button class="btn block" id="go">'+ICON('i-bag')+'Pick up from center · '+money(c.t)+'</button>');
-  $('#go').onclick=function(){var b=this;busy(b,true,'Ordering...');send('app_cl_request',{kind:'order',items:lines.map(function(l){return {n:l.x.n,q:l.q}})}).then(function(j){CART={};store('wbc_cart','{}');render();success('See you at the center!','Total '+money(j.total)+'. Romy gets your order ready, pick it up at your next session.')}).catch(function(e){fail(b,e)})}};
+  $('#go').onclick=function(){var b=this;busy(b,true,'Ordering...');send('app_cl_request',{kind:'order',items:lines.map(function(l){return {n:l.x.n,q:l.q}})}).then(function(j){CART={};store('wbc_cart','{}');render();success('See you at the center!','Total '+money(j.total)+'. '+DESK()+' gets your order ready, pick it up at your next session.')}).catch(function(e){fail(b,e)})}};
 function addedSheet(n){var c=cartTotal();
   openSheet('',' <div class="done"><div class="ok">'+ICON('i-bag')+'</div><h3>Added to your order</h3><p>'+esc(n)+'<br><b>'+c.n+' item'+(c.n>1?'s':'')+' · '+money(c.t)+'</b></p></div>',
    '<button class="btn block" id="aPick">'+ICON('i-bag')+'Pick up from center</button><button class="btn ghost block" style="margin-top:8px" id="aMore">Keep shopping</button>');
@@ -1554,9 +1544,9 @@ function prodSheet(n){var x=shopItems().filter(function(y){return y.n===n})[0];i
    '<p class="muted" style="font-size:14px;margin-top:10px">Pay and pick up at your next session. No delivery fee.</p>',
    '<button class="btn block" id="pAdd">'+ICON('i-plus')+(CART[x.n]?'Add one more ('+CART[x.n]+' in your order)':'Add to my order')+'</button><button class="btn ghost block" style="margin-top:8px" id="pShop">See all supplements</button>');
   $('#pAdd').onclick=function(){setQty(x.n,1);addedSheet(x.n)};
-  $('#pShop').onclick=function(){closeSheet();VIEW='shop';render();scrollTo(0,0)}}
+  $('#pShop').onclick=function(){closeSheet();SEC='shop';store('wbc_sec','shop');render();scrollTo(0,0)}}
 ACT.supp=function(){openSheet('Ask for a supplement','<div class="field" style="margin-top:0"><label for="sq">Which supplement or brand?</label><textarea class="inp" id="sq" placeholder="e.g. Omega 3, magnesium, a vegan protein"></textarea></div>','<button class="btn block" id="go">Send</button>');
-  $('#go').onclick=function(){var b=this,v=$('#sq').value.trim();if(!v){toast('Write the supplement name');return}busy(b,true);send('app_cl_request',{kind:'supp',note:v}).then(function(){success('Sent','Romy checks it and tells you the price.')}).catch(function(e){fail(b,e)})}};
+  $('#go').onclick=function(){var b=this,v=$('#sq').value.trim();if(!v){toast('Write the supplement name');return}busy(b,true);send('app_cl_request',{kind:'supp',note:v}).then(function(){success('Sent',''+DESK()+' checks it and tells you the price.')}).catch(function(e){fail(b,e)})}};
 
 /* ---------- NUTRITION PLANS (approved preview, 23 Oct) ----------
    SEC 'nut' page with sub views: home | q (questionnaire) | body | plan | grocery
@@ -1570,11 +1560,12 @@ function nGet(){var c=ACC().cid;if(!NUT[c]){try{var s=store(nKey());if(s)NUT[c]=
 function nLoad(op,data,btn){var c=ACC().cid;data=data||{};data.cid=c;data.op=op;if(btn)busy(btn,true,nL('Saving...','عم نحفظ...'));
   NLD[c]=1;return api('app_cl_nut',data).then(function(j){var old=NUT[c]||{};if(!j.questions&&old.questions)j.questions=old.questions;NUT[c]=j;NLD[c]=0;try{store(nKey(),JSON.stringify(j))}catch(e){}if(/center|plan|me/.test(SEC)){var y=scrollY,w=$('.rd-win'),wy=w?w.scrollTop:0;render();scrollTo(0,y);w=$('.rd-win');if(w)w.scrollTop=wy}return j})
    .catch(function(e){NLD[c]=0;if(btn)fail(btn,e);else toast(e.message);throw e})}
-function nWeekKey(){var d=new Date(D.today+'T12:00:00Z'),k=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-k);return d.toISOString().slice(0,10)}
-function nDayIdx(){var d=new Date(D.today+'T12:00:00Z');return (d.getUTCDay()+6)%7}
+function nWeekKey(){return addDays(D.today,-nDayIdx())}
+function nDayIdx(){return (dOf(D.today).getDay()+6)%7}
 var NDN={en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],ar:['اثنين','ثلاثا','أربعا','خميس','جمعة','سبت','أحد']};
-function nDate(ymd){if(!ymd)return '';var m=NLANG==='ar'?['كانون التاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين التاني','كانون الأول']:['January','February','March','April','May','June','July','August','September','October','November','December'];var p=String(ymd).split('-');return Number(p[2])+' '+m[Number(p[1])-1]}
-function nTop(back){if(back==='close'&&SEC==='plan')return '<div class="nt-top" style="justify-content:flex-end">'+nLangSw().replace(' style="margin:0 0 12px auto;width:max-content"','')+'</div>';return '<div class="nt-top"><button class="nt-back" data-nv="'+back+'">‹ '+(back==='close'?nL('Back','رجوع'):nL('My nutrition','تغذيتي'))+'</button><div class="nt-lang" role="group" aria-label="Language"><button data-nlang="en" aria-pressed="'+(NLANG==='en')+'">EN</button><button data-nlang="ar" aria-pressed="'+(NLANG==='ar')+'">عربي</button></div></div>'}
+var AR_MONTHS=['كانون التاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين التاني','كانون الأول'];
+function nDate(ymd){if(!ymd)return '';if(NLANG!=='ar')return WB.fmtDay(String(ymd).slice(0,10),{day:'numeric',month:'long'});var p=String(ymd).split('-');return Number(p[2])+' '+AR_MONTHS[Number(p[1])-1]}
+function nTop(back){if(back==='close'&&SEC==='plan')return '<div class="nt-top" style="justify-content:flex-end">'+nLangSw(1)+'</div>';return '<div class="nt-top"><button class="nt-back" data-nv="'+back+'">‹ '+(back==='close'?nL('Back','رجوع'):nL('My nutrition','تغذيتي'))+'</button>'+nLangSw(1)+'</div>'}
 function nSpark(dir){var down=dir!=='gain';return '<svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="'+(down?'M0 8 C 80 20, 160 34, 300 48 L300 52 C160 44 80 26 0 8Z':'M0 48 C 80 36, 160 22, 300 8 L300 4 C160 16 80 30 0 48Z')+'" fill="color-mix(in srgb,var(--mint) 22%,transparent)"/><path d="'+(down?'M0 8 C 80 18, 160 30, 300 42':'M0 48 C 80 38, 160 26, 300 12')+'" stroke="var(--mint)" stroke-width="2.5" fill="none"/><circle cx="296" cy="'+(down?42:12)+'" r="4" fill="var(--amber)"/></svg>'}
 function nCalcCard(c){
   if(!c)return '';
@@ -1585,11 +1576,11 @@ function nCalcCard(c){
   var P=c.projection||{},big=P.dir==='keep'?nL('Keep '+c.weight+' kg, build shape','حافظ عـ '+c.weight+' كيلو'):P.low+' '+nL('to','لـ')+' '+P.high+' kg · '+nDate(P.at);
   return '<div class="card nt-kc"><div class="nt-k">'+nL('Your daily target','هدفك اليومي')+'</div><div class="n num">'+Number(c.kcal).toLocaleString()+' <small>kcal</small></div>'+
     '<div class="nt-mac"><div class="p"><b class="num">'+c.p+' g</b><small>'+nL('Protein','بروتين')+'</small></div><div class="c"><b class="num">'+c.c+' g</b><small>'+nL('Carbs','نشويات')+'</small></div><div class="f"><b class="num">'+c.f+' g</b><small>'+nL('Fat','دهون')+'</small></div></div></div>'+
-    '<div class="nt-proj"><div class="nt-k">'+nL('Your projection','توقعاتك')+'</div><div class="nt-big">'+big+'</div>'+(P.dir==='keep'?'':nSpark(P.dir))+'<p>'+esc(nT(P.text))+'</p>'+(P.dir==='keep'?'':'<p style="margin-top:6px;font-size:12.5px;color:var(--ink-3)">'+nL('A range, not a promise: your weigh-ins keep it honest.','تقدير مش وعد: الوزن الأسبوعي بيصحح التوقع.')+'</p>')+'</div>'}
+    '<div class="nt-proj"><div class="nt-k">'+nL('Your projection','توقعاتك')+'</div><div class="nt-big">'+big+'</div>'+(P.dir==='keep'?'':nSpark(P.dir))+'<p>'+esc(nT(P.text))+'</p>'+(P.dir==='keep'?'':'<p style="margin-top:6px;font-size:12.5px;color:var(--ink-3)">'+nL('A range, not a promise: your weigh-ins keep it honest. Plans are written with AI and checked by your coach.','تقدير مش وعد: الوزن الأسبوعي بيصحح التوقع. الخطط بتنكتب بالذكاء الاصطناعي وبيشيكها مدربك.')+'</p>')+'</div>'}
 function nPlanBlock(N){
   var a=ACC(),pl=N.plan,c=N.calc||{};
-  if(!N.paid)return '<div class="nt-lock"><b>🔒 '+nL('Your full plan','خطتك الكاملة')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, and your weekly grocery list, checked by your coach.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، ولائحة مشتريات أسبوعية، بيشيكها مدربك.')+'</p><a class="btn block" target="_blank" rel="noopener" href="'+waLink(nL('Hi Romy, I want my Wellbe nutrition plan.','مرحبا رومي، بدي خطة التغذية من Wellbe.'))+'">'+nL('Get it with your Wellbe subscription','خدها مع اشتراكك بـ Wellbe')+'</a></div>';
-  if(pl&&pl.status==='Approved'&&pl.data)return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-check')+'</span><div><b>'+nL('Your plan is ready','خطتك جاهزة')+'</b><span>'+nL('Checked by your coach','مشيكة من مدربك')+(pl.note?' · '+esc(pl.note).slice(0,80):'')+'</span></div></div><div class="nt-two" style="margin-top:12px"><button class="btn" data-nv="plan">'+nL('Open my plan','افتح خطتي')+'</button><button class="btn sec2" data-nv="grocery">'+nL('Grocery list','لائحة المشتريات')+'</button></div></div>';
+  if(!N.paid)return '<div class="nt-lock"><b>🔒 '+nL('Your full plan','خطتك الكاملة')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, and your weekly grocery list, checked by your coach.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، ولائحة مشتريات أسبوعية، بيشيكها مدربك.')+'</p><a class="btn block" target="_blank" rel="noopener" href="'+waLink(nL('Hi '+DESK()+', I want my Wellbe nutrition plan.','مرحبا '+DESK_AR()+'، بدي خطة التغذية من Wellbe.'))+'">'+nL('Get it with your Wellbe subscription','خدها مع اشتراكك بـ Wellbe')+'</a></div>';
+  if(pl&&pl.status==='Approved'&&pl.data)return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-check')+'</span><div><b>'+nL('Your plan is ready','خطتك جاهزة')+'</b><span>'+nL('Written with AI, checked by your coach','مكتوبة بالذكاء الاصطناعي ومشيكة من مدربك')+(pl.note?' · '+esc(String(pl.note).slice(0,80)):'')+'</span></div></div><div class="nt-two" style="margin-top:12px"><button class="btn" data-nv="plan">'+nL('Open my plan','افتح خطتي')+'</button><button class="btn sec2" data-nv="grocery">'+nL('Grocery list','لائحة المشتريات')+'</button></div></div>';
   if(pl&&/Queued|Writing/.test(pl.status))return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+nL('Writing your plan','عم نكتب خطتك')+'</b><span>'+nL('Then your coach checks it. We tell you when it is ready.','بعدها المدرب بيشيكها ومنخبرك.')+'</span></div></div></div>';
   if(pl&&/Pending|Coach review|Failed/.test(pl.status))return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-heart')+'</span><div><b>'+nL('Waiting for your coach','ناطرين مدربك')+'</b><span>'+nL('Your coach checks every plan before you get it.','المدرب بيشيك كل خطة قبل ما توصلك.')+'</span></div></div></div>';
   if(!N.done)return '';
@@ -1602,8 +1593,7 @@ function nHome(N){
   if(!N.done)h+='<div class="card" style="margin-bottom:14px"><div class="nt-stat"><span class="ic">'+ICON('i-edit')+'</span><div><b>'+nL('Your 5 minute questionnaire','الاستبيان (5 دقايق)')+'</b><span>'+(N.step?nL('Step '+Math.min(N.step+1,nq)+' of '+nq+' · saved','خطوة '+Math.min(N.step+1,nq)+' من '+nq):nL('So your plan fits your life and the food you love.','لتكون خطتك على قياس حياتك وأكلك.'))+'</span></div></div><div class="nt-prog" style="margin-top:12px"><i style="width:'+Math.round((N.step||0)/nq*100)+'%"></i></div><button class="btn block" style="margin-top:10px" data-nq="'+Math.min(N.step||0,nq-1)+'">'+(N.step?nL('Continue','كمل'):nL('Start','ابدأ'))+'</button></div>';
   h+=nCalcCard(N.calc);
   h+=nPlanBlock(N);
-  if(N.calc&&N.calc.ok){var w=N.weighins||[],last=w[w.length-1];
-    h+='<div class="sec"><h2>'+nL('Weekly weigh-in','الوزن الأسبوعي')+'</h2></div><div class="card"><div class="muted" style="font-size:14px">'+(last?nL('Last: ','آخر وزن: ')+last.kg+' kg · '+nDate(last.date):nL('Weigh yourself once a week, same day, morning.','وزن حالك مرة بالأسبوع، نفس النهار، الصبح.'))+'</div><div class="nt-wrow"><input class="inp" id="ntW" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button class="btn sm" data-nweigh="1">'+nL('Save','احفظ')+'</button></div></div>'}
+  if(N.calc&&N.calc.ok)h+=nWeighCard(N)
   h+='<div class="nt-two" style="margin-top:14px"><button class="btn ghost" data-nv="body">'+ICON('i-edit')+nL('Body and target','الجسم والهدف')+'</button>'+(N.done?'<button class="btn ghost" data-nq="0">'+ICON('i-edit')+nL('My answers','أجوبتي')+'</button>':'')+'</div>';
   return h}
 function nQ(N){
@@ -1612,22 +1602,23 @@ function nQ(N){
   var h=nQHead()+'<div class="nt-prog"><i style="width:'+pct+'%"></i></div><div class="nt-ps"><span>'+nL('Step','خطوة')+' '+(NQS+1)+' '+nL('of','من')+' '+qs.length+' · '+esc(nT(s.t))+'</span><span>'+nL('about '+Math.max(1,Math.round((qs.length-NQS)*0.7))+' min left','بعد '+Math.max(1,Math.round((qs.length-NQS)*0.7))+' دقايق')+'</span></div>';
   h+='<div class="nt-h">'+esc(nT(s.t))+'</div>'+(s.note?'<div class="note good" style="margin-bottom:6px">'+ICON('i-heart')+'<span>'+esc(nT(s.note))+'</span></div>':'');
   s.q.forEach(function(q){h+='<div class="nt-q">'+esc(nT(q.t))+'</div>';var v=A[q.k];
-    if(q.type==='one'||q.type==='many')h+='<div class="nt-chips" role="group">'+q.opts.map(function(o){var on=q.type==='many'?(v||[]).indexOf(o.v)>-1:v===o.v;return '<button class="nt-chip" data-nk="'+q.k+'" data-nt="'+q.type+'" data-nvv="'+esc(o.v)+'" aria-pressed="'+on+'">'+esc(nT(o))+'</button>'}).join('')+'</div>';
+    if(q.type==='one'||q.type==='many')h+='<div class="nt-chips" role="group">'+q.opts.map(function(o){var on=q.type==='many'?(v||[]).indexOf(o.v)>-1:v===o.v;return '<button class="nt-chip" data-nk="'+esc(q.k)+'" data-nt="'+esc(q.type)+'" data-nvv="'+esc(o.v)+'" aria-pressed="'+on+'">'+esc(nT(o))+'</button>'}).join('')+'</div>';
     else if(q.type==='time')h+='<input class="inp" type="time" data-nin="'+q.k+'" value="'+esc(v||'')+'">';
     else h+='<textarea class="inp" data-nin="'+q.k+'" maxlength="'+(q.max||200)+'" rows="2" placeholder="'+nL('Type here (optional)','اكتب هون (اختياري)')+'">'+esc(v||'')+'</textarea>'});
   h+='<div class="nt-foot">'+(NQS?'<button class="btn ghost" data-nq="'+(NQS-1)+'">'+nL('Back','رجوع')+'</button>':'')+'<button class="btn" data-nqnext="1">'+(NQS===qs.length-1?nL('Finish','خلصت'):nL('Next','التالي'))+'</button></div>';
   return h}
 function nBody(N){var b=N.body||{},cp=NUPL||N.comp||{};
-  var f=function(id,lab,val,ph){return '<div class="field"><label for="'+id+'">'+lab+'</label><input class="inp" id="'+id+'" inputmode="decimal" value="'+(val||'')+'" placeholder="'+(ph||'')+'"></div>'};
+  var f=function(id,lab,val,ph){var v=NBD&&NBD[id]!=null?NBD[id]:val;return '<div class="field"><label for="'+id+'">'+lab+'</label><input class="inp" id="'+id+'" inputmode="decimal" value="'+esc(v==null?'':v)+'" placeholder="'+esc(ph||'')+'"></div>'};
   return nTop('home')+'<div class="nt-h">'+nL('Where you are <em>now</em>','وين انت <em>هلق</em>')+'</div><div class="nt-sub">'+nL('Your numbers stay private between you and your coach.','أرقامك بتضل بينك وبين مدربك.')+'</div>'+
    '<div class="card"><div class="nt-two">'+f('nbW',nL('Weight (kg)','الوزن (كيلو)'),b.weight)+f('nbH',nL('Height (cm)','الطول (سم)'),b.height)+f('nbY',nL('Birth year','سنة الميلاد'),b.age?(Number(D.today.slice(0,4))-b.age):'','1990')+
    '<div class="field"><label>'+nL('Sex','الجنس')+'</label><div class="seg"><button data-nsx="F" aria-pressed="'+(b.sex==='F')+'">'+nL('Female','أنثى')+'</button><button data-nsx="M" aria-pressed="'+(b.sex==='M')+'">'+nL('Male','ذكر')+'</button></div></div></div></div>'+
    '<div class="card" style="margin-top:12px">'+f('nbT',nL('Your target weight (kg)','وزنك المطلوب (كيلو)'),N.target,'')+'</div>'+
    '<button class="nt-up" id="nbUp"><span class="ic">'+ICON('i-plus')+'</span><span><b>'+nL('Upload your InBody (optional)','حمّل الـ InBody (اختياري)')+'</b><span>'+nL('Photo or PDF. We read it for you, for a more precise plan.','صورة أو PDF. منقرالك ياها لخطة أدق.')+'</span></span></button><input type="file" id="nbF" accept="image/*,application/pdf" hidden>'+
-   (cp.bf||cp.smm||cp.visceral||NUPL?'<div class="nt-read"><label>'+nL('Body fat %','دهون %')+'<input id="ncB" inputmode="decimal" value="'+(cp.bf||'')+'"></label><label>'+nL('Muscle kg','عضل كيلو')+'<input id="ncS" inputmode="decimal" value="'+(cp.smm||'')+'"></label><label>'+nL('Visceral','دهون داخلية')+'<input id="ncV" inputmode="decimal" value="'+(cp.visceral||'')+'"></label></div><div class="nt-ok">✓ '+(NUPL?nL('Read from your report. Tap a number to correct it.','قريناها من التقرير. صحح إذا لازم.'):nL('From your last report.','من آخر تقرير.'))+'</div>':'')+
+   (cp.bf||cp.smm||cp.visceral||NUPL?'<div class="nt-read"><label>'+nL('Body fat %','دهون %')+'<input id="ncB" inputmode="decimal" value="'+esc(NBD&&NBD.ncB!=null?NBD.ncB:(cp.bf||''))+'"></label><label>'+nL('Muscle kg','عضل كيلو')+'<input id="ncS" inputmode="decimal" value="'+esc(NBD&&NBD.ncS!=null?NBD.ncS:(cp.smm||''))+'"></label><label>'+nL('Visceral','دهون داخلية')+'<input id="ncV" inputmode="decimal" value="'+esc(NBD&&NBD.ncV!=null?NBD.ncV:(cp.visceral||''))+'"></label></div><div class="nt-ok">✓ '+(NUPL?nL('Read from your report. Tap a number to correct it.','قريناها من التقرير. صحح إذا لازم.'):nL('From your last report.','من آخر تقرير.'))+'</div>':'')+
    '<div class="nt-foot"><button class="btn" id="nbSave">'+nL('Confirm and continue','أكد وكمل')+'</button></div>'}
 function nPlan(N){var P=(N.plan||{}).data;if(!P)return nTop('home')+'<div class="empty">'+nL('No plan yet.','بعد ما في خطة.')+'</div>';
-  var di=NWEEK[NDAY]%P.days.length,d=P.days[di],t=d.totals||{};
+  if(!P||!P.days||!P.days.length)return '<div class="card muted">'+nL('Your plan is being prepared.','خطتك عم تتحضر.')+'</div>';
+  var di=NWEEK[NDAY]%P.days.length,d=P.days[di]||P.days[0],t=d.totals||{};
   var h=nTop('home')+'<div class="nt-days" role="tablist">'+NDN[NLANG].map(function(x,i){return '<button data-nday="'+i+'" aria-pressed="'+(i===NDAY)+'">'+x+'</button>'}).join('')+'</div>';
   h+='<div class="nt-tot"><span>'+nL('Day','نهار')+' '+'ABCD'.charAt(di)+' · <b class="num">'+Number(t.kcal||0).toLocaleString()+' kcal</b></span><span>P <b>'+(t.p||0)+'</b> · C <b>'+(t.c||0)+'</b> · F <b>'+(t.f||0)+'</b></span></div>';
   (d.meals||[]).forEach(function(m){var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0);
@@ -1648,7 +1639,7 @@ VIEWS.nut=function(){var N=nGet();
   if(!N)return nTop('close')+'<div class="skel" style="height:44px;width:60%;margin:10px 0 18px"></div><div class="skel" style="height:160px"></div><div class="skel" style="height:120px;margin-top:14px"></div>';
   var h=NV==='q'?nHome(N):NV==='body'?nBody(N):NV==='plan'?nPlan(N):NV==='grocery'?nGrocery(N):nHome(N);
   return (NLANG==='ar'?'<div class="nt-ar" dir="rtl">'+h+'</div>':h)+(NV==='q'?nQModal(N):'')};
-function nQHead(){return '<div class="rd-wh"><button class="rd-x" data-nv="home" aria-label="Close">'+ICON('i-x')+'</button><h3 style="font-size:20px">'+nL('5 minute questionnaire','استبيان 5 دقايق')+'</h3>'+nLangSw().replace(' style="margin:0 0 12px auto;width:max-content"','')+'</div>'}
+function nQHead(){return '<div class="rd-wh"><button class="rd-x" data-nv="home" aria-label="Close">'+ICON('i-x')+'</button><h3 style="font-size:20px">'+nL('5 minute questionnaire','استبيان 5 دقايق')+'</h3>'+nLangSw(1)+'</div>'}
 // small card on Center home / guest page / Me
 function nutCard(){var N=nGet(),a=ACC(),st='',btn=nL('Open','افتح');
   if(!N)st=nL('Your calories, macros and a timeline to your goal.','سعراتك، الماكروز، ووقت الوصول لهدفك.');
@@ -1674,26 +1665,25 @@ function nutBind(){var N=nGet()||{};
   var nx=$('[data-nqnext]');if(nx)nx.onclick=function(){var qs=N.questions||[],last=NQS===qs.length-1,ans=Object.assign({},NDRAFT);
     nLoad('intake_save',{answers:ans,step:NQS+1,done:last},nx).then(function(){NDRAFT={};if(last){NV='home';render();toast(nL('Saved. Your numbers are ready.','انحفظ. أرقامك جاهزة.'))}else{NQS++;render();var w=$('.rd-win');if(w)w.scrollTop=0}}).catch(function(){})};
   var up=$('#nbUp'),fi=$('#nbF');if(up&&fi){up.onclick=function(){fi.click()};fi.onchange=function(){var f=fi.files[0];if(!f)return;if(f.size>12e6){toast(nL('File too big','الملف كبير'));return}
-    busy(up,true,nL('Reading your report...','عم نقرا التقرير...'));nImg(f).then(function(x){return api('app_cl_nut',{cid:ACC().cid,op:'upload',b64:x.b64,mime:x.mime,name:f.name})}).then(function(j){busy(up,false);NUPL=Object.assign({file:j.file},j.read||{});if(!j.read)toast(nL('Saved. We could not read the numbers, type them in.','انحفظ. ما قدرنا نقرا الأرقام، اكتبها.'));if(j.read&&j.read.weight&&$('#nbW'))$('#nbW').value=j.read.weight;render()}).catch(function(e){fail(up,e)})}}
+    NBD={};['nbW','nbH','nbY','nbT','ncB','ncS','ncV'].forEach(function(id){var e=$('#'+id);if(e&&e.value!=='')NBD[id]=e.value});busy(up,true,nL('Reading your report...','عم نقرا التقرير...'));nImg(f).then(function(x){return api('app_cl_nut',{cid:ACC().cid,op:'upload',b64:x.b64,mime:x.mime,name:f.name})}).then(function(j){busy(up,false);NUPL=Object.assign({file:j.file},j.read||{});if(!j.read)toast(nL('Saved. We could not read the numbers, type them in.','انحفظ. ما قدرنا نقرا الأرقام، اكتبها.'));if(j.read&&j.read.weight)NBD.nbW=j.read.weight;['bf','smm','visceral'].forEach(function(k,i){if(j.read&&j.read[k])NBD[['ncB','ncS','ncV'][i]]=j.read[k]});render()}).catch(function(e){fail(up,e)})}}
   $$('[data-nsx]').forEach(function(b){b.onclick=function(){$$('[data-nsx]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
   var sv=$('#nbSave');if(sv)sv.onclick=function(){var g=function(id){var e=$('#'+id);return e?Number(String(e.value).replace(',','.'))||0:0},sx=$('[data-nsx][aria-pressed="true"]');
     var d={weight:g('nbW'),height:g('nbH'),birth:g('nbY'),sex:sx?sx.dataset.nsx:'',target:g('nbT')};
     if($('#ncB')||NUPL)d.comp={bf:g('ncB'),smm:g('ncS'),visceral:g('ncV'),file:(NUPL||{}).file||''};
-    nLoad('body',d,sv).then(function(){NUPL=null;NV='home';render();scrollTo(0,0)}).catch(function(){})};
+    nLoad('body',d,sv).then(function(){NUPL=null;NBD=null;NV='home';render();scrollTo(0,0)}).catch(function(){})};
   var gn=$('[data-ngen]');if(gn)gn.onclick=function(){nLoad('generate',{},gn).then(function(){toast(nL('We are writing your plan. Your coach checks it next.','عم نكتب خطتك، وبعدها بيشيكها المدرب.'))}).catch(function(){})};
   var wb=$('[data-nweigh]');if(wb)wb.onclick=function(){var kg=Number(String($('#ntW').value).replace(',','.'));if(!(kg>25)){toast(nL('Type your weight in kg','اكتب وزنك بالكيلو'));return}nLoad('weigh',{kg:kg},wb).then(function(j){toast(j.replan?nL('Big change: your coach gets a new plan for you.','تغيير كبير: عم نحضرلك خطة جديدة.'):nL('Saved. Projection updated.','انحفظ. التوقع تحدث.'))}).catch(function(){})};
-  $$('[data-ngi]').forEach(function(b){b.onclick=function(){var t=nTicks(),k=b.dataset.ngi;if(t[k])delete t[k];else t[k]=1;try{store(nGKey(),JSON.stringify(t))}catch(e){}render()}});
+  $$('[data-ngi]').forEach(function(b){b.onclick=function(){var t=nTicks(),k=b.dataset.ngi;if(t[k])delete t[k];else t[k]=1;try{store(nGKey(),JSON.stringify(t))}catch(e){}softRender()}});
 }
 
 
 /* ================= REDESIGN (approved previews, Oct 2026) =================
    Tabs: Center · My Plan · [Play dome] · Shop · Me. No top sub tabs.
    Every number below is a setting, change it here only. */
-var UI={UPCOMING_MAX:3,RUNS_PER_DAY:5,WATER_ML_PER_KG:35,WATER_MIN_L:1.5,WATER_MAX_L:4,WATER_GLASS_ML:250,PHOTO_PX:192,
+var UI={UPCOMING_MAX:3,get RUNS_PER_DAY(){return Math.round(cfg('game.cash.DAY_MAX')/cfg('game.cash.CENTS'))},WATER_ML_PER_KG:35,WATER_MIN_L:1.5,WATER_MAX_L:4,WATER_GLASS_ML:250,PHOTO_PX:192,
   BRAND_STORE:'https://shopwellbethebrand.com',BRAND_TTL_MS:864e5,BRAND_COUNT:8,
-  QUOTE_NOTIFY_AT:'10:00',   // TODO(native wrapper): schedule a local notification every day at this time that opens Center > Quote of the day
-  // cellulite card: profile sex first (nutrition body, workout body), these first names only when no sex is saved
-  FEMALE_NAMES:['lina','maria','nour','rita','joy','tania','julia','chloe','jeanine','anji','melanie','romy','ara','sara','sarah','rana','hala','maya','nadine','carla','rima','dana','lea','lara','yara','zeina','mira','tsoline','joelle','christelle','nathalie','cynthia','grace','layal','reem','rania','hiba','jana','tala','perla','pamela','stephanie','nancy','dina','diana','mona','samar','nada','ghada','maha','nisrine','rola','roula','mariam','myriam','sandra','jessica','patricia','vanessa','aline','yasmina','yasmine','marie','michelle','cherine','sirine','farah','ghina','lama','nayla','noura','raya','sally','tamara','zeina','alia']};
+  QUOTE_NOTIFY_AT:'10:00'   // TODO(native wrapper): schedule a local notification every day at this time that opens Center > Quote of the day
+};
 var PLANTAB=(function(){var v=store('wbc_ptab');return v==='nut'?'nut':'wo'})(),MODAL=null;
 function isDark(){var t=document.documentElement.getAttribute('data-theme');if(t)return t==='dark';try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
 function goSec(s){SEC=s;if(s!=='me')store('wbc_sec',s);render();scrollTo(0,0)}
@@ -1702,7 +1692,7 @@ var PLAYSVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 
 function tabsView(){
   var g=D&&D.guest,n=Object.keys(CART||{}).reduce(function(a,k){return a+CART[k]},0);
   var b=function(sec,ic,lb,dot){return '<button data-sec="'+sec+'"'+(SEC===sec?' aria-current="page"':'')+'>'+ICON(ic)+'<span>'+lb+'</span>'+(dot?'<span class="dot num">'+dot+'</span>':'')+'</button>'};
-  var shop=g?'<a class="tb" href="'+waLink('Hi Romy, I have a question about Wellbe.')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'<span>Romy</span></a>':b('shop','i-bag','Shop',n);
+  var shop=g?'<a class="tb" href="'+waLink('Hi '+DESK()+', I have a question about Wellbe.')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'<span>'+DESK()+'</span></a>':b('shop','i-bag','Shop',n);
   return '<nav class="tabs v3" aria-label="Main"><div class="in">'+b('center','i-home',g?'Wellbe':'Center')+b('plan','i-dumbbell','My Plan')+'<span aria-hidden="true"></span>'+shop+b('me','i-me','Me')+
    '<button class="dome" data-sec="play" aria-label="Play"'+(SEC==='play'?' aria-current="page"':'')+'><span class="pi">'+PLAYSVG+'</span><b>Play</b></button></div></nav>'}
 function rdH2(t,link,act){return '<div class="rd-h2"><h2>'+t+'</h2>'+(link?'<button data-act="'+act+'">'+link+'</button>':'')+'</div>'}
@@ -1724,11 +1714,11 @@ function rdPromise(a){
    '<div class="ft"><span>'+done+' of 3 today</span><span>'+(sk?'🔥 '+sk+' day'+(sk>1?'s':'')+' in a row':'Tick them as you go')+'</span></div></div>'}
 /* ---------- women only card ---------- */
 function clientSex(a){var n=NUT[a.cid],w=WOS[a.cid];return (n&&n.body&&n.body.sex)||(w&&w.body&&w.body.sex)||a.sex||''}
-function isWoman(a){var s=clientSex(a);if(s)return s==='F';return UI.FEMALE_NAMES.indexOf(String(a.first||'').toLowerCase())>-1}
+function isWoman(a){var s=clientSex(a);if(s)return s==='F';return CONTENT.femaleNames.indexOf(String(a.first||'').toLowerCase())>-1}
 /* ---------- nutrition on Center: next meal, countdown, water ---------- */
 function nWarm(force){if(!D||!ACC())return;var c=ACC().cid,N=nGet();if(NLD[c]||(!force&&N&&N._t&&Date.now()-N._t<6e5))return;NLD[c]=1;
-  api('app_cl_nut',{cid:c,op:N&&N.questions?'get':'intake_get'}).then(function(j){NLD[c]=0;var old=NUT[c]||{};if(!j.questions&&old.questions)j.questions=old.questions;j._t=Date.now();NUT[c]=j;try{store(nKey(),JSON.stringify(j))}catch(e){}if(/center|me|plan/.test(SEC)&&!document.querySelector('.rd-dim')){var y=scrollY;render();scrollTo(0,y)}}).catch(function(){NLD[c]=0})}
-function nowHm(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}
+  api('app_cl_nut',{cid:c,op:N&&N.questions?'get':'intake_get'}).then(function(j){NLD[c]=0;var old=NUT[c]||{};if(!j.questions&&old.questions)j.questions=old.questions;j._t=Date.now();NUT[c]=j;try{store(nKey(),JSON.stringify(j))}catch(e){}if(/center|me|plan/.test(SEC)&&!document.querySelector('.rd-dim'))bgRender()}).catch(function(){NLD[c]=0})}
+function nowHm(){return bHm()}
 function hmMin(t){var p=String(t||'').split(':');return (+p[0]||0)*60+(+p[1]||0)}
 function cdText(mins){mins=Math.max(0,Math.round(mins));var h=Math.floor(mins/60),m=mins%60;return h?h+'h '+pad(m)+'m':m+' min'}
 function nTodayDay(P,dayIdx){if(!P||!P.days||!P.days.length)return null;return P.days[NWEEK[dayIdx]%P.days.length]}
@@ -1753,21 +1743,21 @@ function rdNutCard(){var N=nGet(),a=ACC(),ic='<span class="ic">'+ICON('i-spark',
   if(pl&&/Queued|Writing|Pending|Coach review|Failed/.test(pl.status))return '<div class="rd-nut"><div class="hd">'+ic+'<b>Your nutrition plan</b></div><div class="muted" style="font-size:14px;margin:8px 0 12px">Your coach is checking your plan. We tell you when it is ready.</div><button class="btn sec2 block" data-act="nut">Open</button></div>';
   if(c.ok)return '<div class="rd-nut"><div class="hd">'+ic+'<b>Your nutrition plan</b><span class="rd-chip">'+Number(c.kcal).toLocaleString()+' kcal · P '+c.p+' g</span></div><div class="muted" style="font-size:14px;margin:8px 0 12px">'+(N.paid?'Your numbers are ready. Get your meals, portions and grocery list.':'Your daily numbers are ready.')+'</div><button class="btn block" data-act="nut">'+(N.paid?'Make my full plan':'Open')+'</button></div>';
   return build}
-setInterval(function(){if(SEC!=='center')return;$$('[data-cd]').forEach(function(el){var m=hmMin(el.dataset.cd)-hmMin(nowHm());if(el.dataset.cdt==='1')m+=24*60;if(m<=0){var y=scrollY;render();scrollTo(0,y);return}el.textContent=cdText(m)})},60000);
-ACT.water=function(n){var k=waterKey(),v=Math.max(0,(+(store(k)||0))+(+n||1));store(k,String(v));if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}var y=scrollY;render();scrollTo(0,y)};
+setInterval(function(){if(SEC!=='center')return;$$('[data-cd]').forEach(function(el){var m=hmMin(el.dataset.cd)-hmMin(nowHm());if(el.dataset.cdt==='1')m+=24*60;if(m<=0){bgRender();return}el.textContent=cdText(m)})},60000);
+ACT.water=function(n){var k=waterKey(),v=Math.max(0,(+(store(k)||0))+(+n||1));store(k,String(v));if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}softRender()};
 /* ---------- CENTER ---------- */
 VIEWS.home=function(){var a=ACC(),p=currentPkg(a),q=quoteOfDay(),up=a.upcoming.filter(function(s){return s.at>Date.now()-36e5&&!/cancel/i.test(s.att||'')});
   var h='<div class="hello"><p>'+dayLong(D.today)+'</p><h1>Hi <em>'+esc(a.first)+'</em></h1></div>';
   h+='<div class="rd-q"><span class="qi">'+ICON('i-spark','width:18px;height:18px')+'</span><div><small>Quote of the day</small><blockquote>“'+esc(q[0])+'”</blockquote><cite>'+esc(q[1])+'</cite></div></div>';
   h+=rdH2('Upcoming sessions',up.length?'See all':'','sessall');
   h+=up.length?'<div class="rd-up">'+up.slice(0,UI.UPCOMING_MAX).map(function(s,i){return rdSessRow(s,i===0?'<span class="rd-chip">Next</span>':'')}).join('')+'</div><button class="rd-book" data-act="session">'+ICON('i-plus','width:16px;height:16px')+'Book a session</button>':
-   '<div class="rd-up"><div class="r"><div class="t"><b>No session booked</b><span>Pick a day and time. Romy confirms it with you.</span></div><button class="btn sm" data-act="session">Book</button></div></div>';
+   '<div class="rd-up"><div class="r"><div class="t"><b>No session booked</b><span>Pick a day and time. '+DESK()+' confirms it with you.</span></div><button class="btn sm" data-act="session">Book</button></div></div>';
   h+='<div style="margin-top:14px">'+rdNutCard()+'</div>';
   h+='<div style="margin-top:14px">'+rdPromise(a)+'</div>';
   if(p)h+=rdH2('My package','Details','pkg|'+p.id)+pkgCard(p,true);
   var off=offerCards(a);if(off)h+='<div style="margin-top:14px">'+off+'</div>';
-  h+='<div style="margin-top:14px">'+physioCard(a)+'</div>';
-  if(isWoman(a))h+='<div style="margin-top:14px"><div class="madero"><span class="deco"></span><div class="tag">Maderotherapy with Melanie</div><h3>Cellulite Bothering You?</h3><button class="btn block" data-act="book|madero">BOOK MADEROTHERAPY</button></div></div>';
+  if(a.physio&&a.physio.show)h+='<div style="margin-top:14px">'+physioCard(a)+'</div>';
+  if(isWoman(a))h+='<div style="margin-top:14px"><div class="madero"><span class="deco"></span><div class="tag">Maderotherapy with '+SVCNAME('Madero')+'</div><h3>Cellulite Bothering You?</h3><button class="btn block" data-act="book|madero">BOOK MADEROTHERAPY</button></div></div>';
   h+=rdRate();
   h+='<div style="margin-top:22px">'+friendCard()+'</div>';
   return h};
@@ -1787,16 +1777,16 @@ ACT.pkg=function(id){var p=ACC().pkgs.filter(function(x){return x.id===id})[0];i
 ACT.color=function(){openSheet('App color','<div class="swatches">'+[['rose','#a3263f'],['mint','#1f6e5b'],['ocean','#1e5f8c'],['sunset','#c2571a'],['plum','#6b2d7a']].map(function(x){return '<button aria-label="'+x[0]+'" aria-pressed="'+((store('wbc_accent')||'rose')===x[0])+'" data-accent="'+x[0]+'" style="background:'+x[1]+'"></button>'}).join('')+'</div>');bind()};
 ACT.allpkgs=function(){var a=ACC(),P=D.packages||[],kinds=[];P.forEach(function(p){if(kinds.indexOf(p.kind)<0)kinds.push(p.kind)});
   openSheet('All Wellbe packages',kinds.map(function(k){return '<div class="sec" style="margin-top:14px"><h2>'+esc(tabName(k))+'</h2></div><div class="list">'+P.filter(function(p){return p.kind===k}).map(function(p){
-    return '<a class="card gpkg" target="_blank" rel="noopener" href="'+waLink('Hi Romy, this is '+a.name+'. I am interested in '+p.name+'.')+'"><div class="grow"><b>'+esc(gLabel(p))+'</b><span>'+p.n+' session'+(p.n>1?'s':'')+(p.n>1?' · '+money(Math.round(p.price/p.n*10)/10)+' per session':'')+'</span></div><span class="gp num">'+money(p.price)+'</span></a>'}).join('')+'</div>'}).join('')+'<p class="muted" style="font-size:14px;margin-top:12px">Tap a package and Romy sets it up with you. Pay at the center.</p>')};
+    return '<a class="card gpkg" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. I am interested in '+p.name+'.')+'"><div class="grow"><b>'+esc(gLabel(p))+'</b><span>'+p.n+' session'+(p.n>1?'s':'')+(p.n>1?' · '+money(Math.round(p.price/p.n*10)/10)+' per session':'')+'</span></div><span class="gp num">'+money(p.price)+'</span></a>'}).join('')+'</div>'}).join('')+'<p class="muted" style="font-size:14px;margin-top:12px">Tap a package and '+DESK()+' sets it up with you. Pay at the center.</p>')};
 ACT.rate=function(){var st=0;openSheet('Rate Wellbe','<p class="muted" style="margin-top:0">How are we doing? Your answer goes straight to the team.</p><div class="rd-stars" id="rst">'+[1,2,3,4,5].map(function(i){return '<button data-st="'+i+'" aria-label="'+i+' star'+(i>1?'s':'')+'">★</button>'}).join('')+'</div><label class="flabel" for="rnote" style="margin-top:14px">Anything to add? (optional)</label><textarea class="inp" id="rnote" rows="3" maxlength="400"></textarea>','<button class="btn block" id="rgo">Send</button>');
   $$('#rst [data-st]').forEach(function(b){b.onclick=function(){st=+b.dataset.st;$$('#rst [data-st]').forEach(function(x){x.classList.toggle('on',+x.dataset.st<=st)})}});
   $('#rgo').onclick=function(){if(!st){toast('Tap the stars first');return}var b=this,note=$('#rnote').value.trim();busy(b,true);
-    api('app_cl_profile',{cid:ACC().cid,op:'rate',stars:st,note:note}).then(function(){store('wbc_rated',D.today);if(st>=4){success('Thank you!','Would you share it on Google too? It helps people find us.');$('#okb').textContent='Review on Google';$('#okb').onclick=function(){closeSheet();window.open(D.review,'_blank')}}else success('Thank you','The team reads every answer. Romy will reach out to you.')})
-     .catch(function(){busy(b,false);window.open(waLink('Hi Romy, my Wellbe rating: '+st+'/5. '+note),'_blank');closeSheet()})}};
+    api('app_cl_profile',{cid:ACC().cid,op:'rate',stars:st,note:note}).then(function(){store('wbc_rated',D.today);if(st>=4){success('Thank you!','Would you share it on Google too? It helps people find us.');$('#okb').textContent='Review on Google';$('#okb').onclick=function(){closeSheet();window.open(D.review||cfg('center.review',''),'_blank')}}else success('Thank you','The team reads every answer. '+DESK()+' will reach out to you.')})
+     .catch(function(){busy(b,false);window.open(waLink('Hi '+DESK()+', my Wellbe rating: '+st+'/5. '+note),'_blank');closeSheet()})}};
 /* ---------- profile photo ---------- */
 ACT.photo=function(){var f=$('#rdPhoto');if(f)f.click()};
 function photoResize(file){return new Promise(function(res,rej){var r=new FileReader();r.onerror=rej;r.onload=function(){var im=new Image();im.onload=function(){var s=UI.PHOTO_PX,c=document.createElement('canvas'),m=Math.min(im.width,im.height);c.width=c.height=s;c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,s,s);res(c.toDataURL('image/jpeg',.82))};im.onerror=rej;im.src=r.result};r.readAsDataURL(file)})}
-function photoBind(){var f=$('#rdPhoto');if(!f)return;f.onchange=function(){var x=f.files[0];if(!x)return;var a=ACC();photoResize(x).then(function(u){a.photo=u;store(cacheKey(),JSON.stringify(D));render();return api('app_cl_profile',{cid:a.cid,op:'photo',photo:u})}).then(function(){toast('Photo saved')}).catch(function(e){toast(/unknown/i.test(String(e&&e.message))?'Photo shows on this phone. Saving online comes with the next update.':'Photo not saved, try again')})}}
+function photoBind(){var f=$('#rdPhoto');if(!f)return;f.onchange=function(){var x=f.files[0];if(!x)return;var a=ACC();photoResize(x).then(function(u){a.photo=u;cacheSave(D);render();return api('app_cl_profile',{cid:a.cid,op:'photo',photo:u})}).then(function(){toast('Photo saved')}).catch(function(e){toast(/unknown/i.test(String(e&&e.message))?'Photo shows on this phone. Saving online comes with the next update.':'Photo not saved, try again')})}}
 function avatar(a,big){return a.photo?'<img src="'+esc(a.photo)+'" alt="">':esc(initials(a.name))}
 /* ---------- profile % ---------- */
 function runsKey(){return 'wbc_runs_'+(ACC()?ACC().cid:'')+'_'+(D?D.today:'')}
@@ -1805,7 +1795,7 @@ function profileChecks(){var N=nGet()||{},RS=RUNST||{},C=RS.cash||{},used=(C.pen
   return [['Your info for nutrition (weight, height, goal)',!!(N.body&&N.body.weight&&N.body.height&&N.target),'Add','nutbody'],
    ['5 minute questionnaire',!!N.done,'Start','nutq'],
    ['Today: '+Math.min(r,UI.RUNS_PER_DAY)+' of '+UI.RUNS_PER_DAY+' runs',r>=UI.RUNS_PER_DAY,'Play','play'],
-   ['Use your game cash on a service',used,C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play']]}
+   ['Use your Wellbe Credit on a service',used,C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play']]}
 ACT.nutbody=function(){PLANTAB='nut';store('wbc_ptab','nut');NV='body';SEC='plan';render();scrollTo(0,0);nWarm(true)};
 ACT.nutq=function(){var N=nGet()||{};PLANTAB='nut';store('wbc_ptab','nut');NQS=Math.min(N.step||0,((N.questions||[]).length||7)-1);NV='q';NDRAFT={};SEC='plan';render();nWarm(true)};
 ACT.play=function(){goSec('play')};
@@ -1818,26 +1808,27 @@ VIEWS.me=function(){var a=ACC(),ck=profileChecks(),pc=Math.round(ck.filter(funct
   h+='<button class="rd-promise" data-act="goal"><small>My promise</small><p>'+(a.goal?esc(promiseSentence(a.goal.promise)):'Write the promise you make to yourself')+'</p></button>';
   if(!D.guest){var up=allSess(a);
     h+=rdH2('My sessions','See all','sessall')+'<div class="rd-up">'+(up.length||a.past.length?up.slice(0,2).map(function(s){return rdSessRow(s,'<span class="rd-chip">Booked</span>')}).join('')+a.past.slice(0,2).map(function(s){return rdSessRow(s,attChip(s),true)}).join(''):'<div class="r"><div class="t"><b>No sessions yet</b></div><button class="btn sm" data-act="session">Book</button></div>')+'</div>';
-    h+=rdH2('My requests',a.requests.length>2?'See all':'','reqall')+'<div class="rd-pk">'+(a.requests.length?a.requests.slice(0,2).map(function(q){var st=q.status==='New'?(/Cancelled|Joined/.test(q.type)?'<span class="st past">Logged</span>':'<span class="st nx">Waiting</span>'):q.status==='Declined'?'<span class="st past">Not possible</span>':'<span class="st cur">Done</span>';
+    h+=rdH2('My requests',a.requests.length>2?'See all':'','reqall')+'<div class="rd-pk">'+(a.requests.length?a.requests.slice(0,2).map(function(q){var r=reqState(q),st='<span class="st '+{logged:'past',wait:'nx',no:'past',done:'cur'}[r[1]]+'">'+r[0]+'</span>';
       return '<div class="r'+(q.status==='New'?'':' past')+'"><div class="t"><b>'+esc(q.type)+(q.slot?' · '+esc(String(q.slot).split(' · ')[0]):'')+'</b><span>'+esc(q.created)+'</span></div>'+st+'</div>'}).join(''):'<div class="r"><div class="t"><span>No requests yet.</span></div></div>')+'</div>';
     var o={current:0,future:1,past:2},pk=a.pkgs.slice().sort(function(x,y){return (o[x.phase]-o[y.phase])||((y.start||'')<(x.start||'')?-1:1)});
     if(pk.length)h+=rdH2('My packages')+'<div class="rd-pk">'+pk.slice(0,8).map(function(p){var lab=p.phase==='current'?'<span class="st cur">Current</span>':p.phase==='future'?'<span class="st nx">Starts '+dmy(p.start)+'</span>':'<span class="st past">'+(/cancel/i.test(p.status)?'Cancelled':'Ended')+'</span>';
       return '<button class="r'+(p.phase==='past'?' past':'')+'" data-act="pkg|'+esc(p.id)+'"><div class="t"><b>'+esc(p.label)+'</b><span>'+p.used+' of '+p.total+' done · '+dmy(p.start)+' → '+dmy(p.end)+'</span></div>'+lab+'</button>'}).join('')+'</div>'}
   var multi=!D.guest&&(D.packages||[]).length&&a.pkgs.some(function(p){return p.total>1});
-  h+='<div class="rd-rows" style="margin-top:14px">'+(multi?'<button class="rd-row" data-act="allpkgs">'+ICON('i-card')+'All Wellbe packages<span class="go">›</span></button>':'')+'<button class="rd-row" data-act="nut">'+ICON('i-spark')+'My nutrition<span class="go">›</span></button><button class="rd-row" data-act="color">'+ICON('i-heart')+'App color<span class="go">›</span></button><button class="rd-row" data-act="out">'+ICON('i-out')+'Sign out<span class="go">›</span></button></div>';
+  h+='<div class="rd-rows" style="margin-top:14px">'+(multi?'<button class="rd-row" data-act="allpkgs">'+ICON('i-card')+'All Wellbe packages<span class="go">›</span></button>':'')+'<button class="rd-row" data-act="nut">'+ICON('i-spark')+'My nutrition<span class="go">›</span></button><button class="rd-row" data-act="color">'+ICON('i-heart')+'App color<span class="go">›</span></button><button class="rd-row" data-act="lbhide">'+ICON('i-users')+'Show me on leaderboards<span class="go">'+(store('wbc_lbhide')==='1'?'Off':'On')+'</span></button><a class="rd-row" href="privacy.html" target="_blank" rel="noopener">'+ICON('i-lock')+'Privacy policy<span class="go">›</span></a><button class="rd-row" data-act="out">'+ICON('i-out')+'Sign out<span class="go">›</span></button><button class="rd-row" data-act="delacc" style="color:var(--crimson)">'+ICON('i-x')+'Delete my account<span class="go">›</span></button></div>';
   return h};
 /* ---------- MY PLAN: Workouts | Nutrition ---------- */
 function aboutCard(){var N=nGet()||{},b=N.body||((WOS[ACC().cid]||{}).body)||{},cp=N.comp||{};
   var f=function(v,u){return '<div><b>'+(v?esc(v):'–')+'</b><span>'+u+'</span></div>'};
   return '<div class="rd-about"><div class="nums">'+f(b.weight,'kg')+f(b.height,'cm')+f(N.target,'goal kg')+(cp.bf?f(cp.bf+'%','body fat'):'')+'</div><button class="ed" data-act="nutbody">Edit</button></div><div class="rd-about-note">'+ICON('i-users')+'Your coach sees this to build your workouts.</div>'}
+// weekly weigh-in card (home and today)
+function nWeighCard(N){var w=N.weighins||[],last=w[w.length-1];return '<div class="sec"><h2>'+nL('Weekly weigh-in','الوزن الأسبوعي')+'</h2></div><div class="card"><div class="muted" style="font-size:14px">'+(last?nL('Last: ','آخر وزن: ')+last.kg+' kg · '+nDate(last.date):nL('Weigh yourself once a week, same day, morning.','وزن حالك مرة بالأسبوع، نفس النهار، الصبح.'))+'</div><div class="nt-wrow"><input class="inp" id="ntW" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button class="btn sm" data-nweigh="1">'+nL('Save','احفظ')+'</button></div></div>'}
 function nToday(N){var P=N.plan.data,c=N.calc||{},di=nDayIdx(),d=nTodayDay(P,di)||{},nx=nNextMeal(N),nxn=nx&&!nx.tomorrow?nx.m:null;
   var h='<div class="rd-macro"><div><b class="num">'+Number(c.kcal||0).toLocaleString()+'</b><span>kcal</span></div><div><b class="num">'+(c.p||0)+'</b><span>'+nL('Protein','بروتين')+'</span></div><div><b class="num">'+(c.c||0)+'</b><span>'+nL('Carbs','نشويات')+'</span></div><div><b class="num">'+(c.f||0)+'</b><span>'+nL('Fat','دهون')+'</span></div></div>';
   h+=(d.meals||[]).map(function(m){var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0),isN=m===nxn;
     return '<div class="rd-meal'+(isN?' nx':'')+'"><div class="h"><small>'+esc({breakfast:nL('Breakfast','ترويقة'),lunch:nL('Lunch','غدا'),dinner:nL('Dinner','عشا'),snack:nL('Snack','سناك')}[m.slot]||m.slot||'')+(m.time?' · '+esc(m.time):'')+'</small><span>'+Math.round(k)+' kcal</span></div><b>'+esc(nT(m.name))+(isN?' <span class="rd-chip" style="vertical-align:2px">'+nL('Next','التالي')+' · '+cdText(nx.mins)+'</span>':'')+'</b>'+
      (m.items||[]).map(function(x){return '<div class="it"><span>'+esc(nT(x.food))+'</span><em>'+(x.g?Math.round(x.g)+' '+esc(x.unit||'g')+' · ':'')+esc(nT(x.measure))+'</em></div>'}).join('')+(m.swap&&nT(m.swap)?'<div class="nt-sw">↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap))+'</div>':'')+'</div>'}).join('');
   h+='<div class="nt-two"><button class="btn sec2" data-nv="grocery">'+ICON('i-bag')+nL('Grocery list','لائحة المشتريات')+'</button><button class="btn ghost" data-nv="plan">'+nL('Full week','كل الأسبوع')+'</button></div>';
-  var w=N.weighins||[],last=w[w.length-1];
-  h+='<div class="sec"><h2>'+nL('Weekly weigh-in','الوزن الأسبوعي')+'</h2></div><div class="card"><div class="muted" style="font-size:14px">'+(last?nL('Last: ','آخر وزن: ')+last.kg+' kg · '+nDate(last.date):nL('Weigh yourself once a week, same day, morning.','وزن حالك مرة بالأسبوع، نفس النهار، الصبح.'))+'</div><div class="nt-wrow"><input class="inp" id="ntW" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button class="btn sm" data-nweigh="1">'+nL('Save','احفظ')+'</button></div></div>';
+  h+=nWeighCard(N);
   h+='<div class="nt-two" style="margin-top:14px"><button class="btn ghost" data-nv="body">'+ICON('i-edit')+nL('Body and target','الجسم والهدف')+'</button><button class="btn ghost" data-nq="0">'+ICON('i-edit')+nL('My answers','أجوبتي')+'</button></div>';
   return h}
 VIEWS.myplan=function(){var a=ACC(),sub=PLANTAB==='nut'&&NV!=='home'&&NV!=='q';
@@ -1847,7 +1838,8 @@ VIEWS.myplan=function(){var a=ACC(),sub=PLANTAB==='nut'&&NV!=='home'&&NV!=='q';
   if(PLANTAB==='wo')h+=D.guest?VIEWS.gwork().replace(/^<div class="hello">[\s\S]*?<\/div>/,''):VIEWS.work();
   else{var N=nGet();h+=N&&N.plan&&N.plan.status==='Approved'&&N.plan.data&&NV==='home'?(NLANG==='ar'?'<div class="nt-ar" dir="rtl">'+nLangSw()+nToday(N)+'</div>':nLangSw()+nToday(N)):VIEWS.nut()}
   return h};
-function nLangSw(){return '<div class="nt-lang" role="group" aria-label="Language" style="margin:0 0 12px auto;width:max-content"><button data-nlang="en" aria-pressed="'+(NLANG==='en')+'">EN</button><button data-nlang="ar" aria-pressed="'+(NLANG==='ar')+'">عربي</button></div>'}
+// EN / عربي switch; inline: no own spacing (inside the top bar)
+function nLangSw(inline){return '<div class="nt-lang" role="group" aria-label="Language"'+(inline?'':' style="margin:0 0 12px auto;width:max-content"')+'><button data-nlang="en" aria-pressed="'+(NLANG==='en')+'">EN</button><button data-nlang="ar" aria-pressed="'+(NLANG==='ar')+'">عربي</button></div>'}
 /* questionnaire as a pop-up window: white window on the dark app, black window on the light app */
 function nQModal(N){return '<div class="rd-dim" data-rdclose="nq"><div class="rd-win '+(isDark()?'rd-white':'rd-black')+'" role="dialog" aria-modal="true" aria-label="5 minute questionnaire"'+(NLANG==='ar'?' dir="rtl"':'')+'>'+nQ(N)+'</div></div>'}
 /* ---------- SHOP ---------- */
@@ -1855,7 +1847,7 @@ var BRANDC=null,BRANDF=0;
 function brandList(){if(D&&D.brand&&D.brand.length)return D.brand;if(BRANDC)return BRANDC;
   try{var c=JSON.parse(store('wbc_brand')||'null');if(c&&c.t>Date.now()-UI.BRAND_TTL_MS&&c.l&&c.l.length){BRANDC=c.l;return BRANDC}}catch(e){}
   if(!BRANDF){BRANDF=1;fetch(UI.BRAND_STORE+'/products.json?limit='+UI.BRAND_COUNT*2).then(function(r){return r.json()}).then(function(j){var l=(j.products||[]).slice(0,UI.BRAND_COUNT).map(function(p){var v=(p.variants||[])[0]||{},im=((p.images||[])[0]||{}).src||'';return {t:p.title,d:p.product_type||'',p:+v.price||0,was:+v.compare_at_price||0,img:im?im+(im.indexOf('?')>-1?'&':'?')+'width=480':'',url:UI.BRAND_STORE+'/products/'+p.handle}});
-    if(l.length){BRANDC=l;try{store('wbc_brand',JSON.stringify({t:Date.now(),l:l}))}catch(e){}if(SEC==='shop'){var y=scrollY;render();scrollTo(0,y)}}}).catch(function(){})}
+    if(l.length){BRANDC=l;try{store('wbc_brand',JSON.stringify({t:Date.now(),l:l}))}catch(e){}if(SEC==='shop')bgRender()}}).catch(function(){})}
   return null}
 VIEWS.shop=function(){var B=brandList(),all=shopItems(),feat=featured();
   var h='<div class="hello"><h1>Shop</h1><p>Our products and supplements</p></div>';
@@ -1863,7 +1855,7 @@ VIEWS.shop=function(){var B=brandList(),all=shopItems(),feat=featured();
   h+=B?'<div class="rd-brand">'+B.map(function(p){return '<a class="p" href="'+esc(p.url)+'" target="_blank" rel="noopener"><div class="im">'+(p.img?'<img src="'+esc(p.img)+'" alt="'+esc(p.t)+'" loading="lazy" referrerpolicy="no-referrer">':'<span class="ph">'+esc(String(p.t||'W')[0])+'</span>')+'</div><div class="tx"><b>'+esc(p.t)+'</b>'+(p.d?'<span>'+esc(p.d)+'</span>':'')+'<div class="pr"><b>'+money(p.p)+(p.was>p.p?' <s>'+money(p.was)+'</s>':'')+'</b><em>View ›</em></div></div></a>'}).join('')+'</div><div class="rd-ext" style="margin-top:8px">Opens our online store to check out.</div>':
    '<a class="rd-row" href="'+esc(UI.BRAND_STORE)+'" target="_blank" rel="noopener">'+ICON('i-bag')+'Visit Wellbe The Brand<span class="go">›</span></a>';
   if(all.length)h+=rdH2('Supplements')+'<div class="muted" style="font-size:13px;margin:-4px 0 10px">Order now, pay and pick up at your next session.</div><div class="rd-sup">'+all.map(function(x){var q=CART[x.n]||0;
-    return '<div class="p"><button class="im" data-prod="'+esc(x.n)+'">'+(x.img?'<img src="'+IMG[x.img]+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span>'+esc(x.n[0])+'</span>\'">':'<span>'+esc(x.n[0])+'</span>')+'</button><b>'+esc(x.n)+'</b><span class="num">'+money(x.price)+'</span>'+
+    return '<div class="p"><button class="im" data-prod="'+esc(x.n)+'">'+(x.img?'<img src="'+CONTENT.img[x.img]+'" alt="" loading="lazy" referrerpolicy="no-referrer" data-fb="'+esc(x.n[0])+'" data-fbc="">':'<span>'+esc(x.n[0])+'</span>')+'</button><b>'+esc(x.n)+'</b><span class="num">'+money(x.price)+'</span>'+
      (q?'<div class="qty sm"><button data-dec="'+esc(x.n)+'" aria-label="Less">−</button><b class="num">'+q+'</b><button data-inc="'+esc(x.n)+'" aria-label="More">+</button></div>':'<button class="add" data-inc="'+esc(x.n)+'">Add</button>')+'</div>'}).join('')+'</div>';
   if(feat.length)h+=rdH2('Fuel your training')+'<div class="hscroll">'+feat.slice(0,6).map(function(x){return '<button class="fuel" data-prod="'+esc(x.n)+'"><div class="fi">'+imgTag(x,80)+'</div><b>'+esc(x.n)+'</b><span class="fp num">'+money(x.price)+'</span><span class="fadd">'+ICON('i-plus','width:16px;height:16px')+'Add</span></button>'}).join('')+'</div>';
   h+='<div class="card" style="margin-top:16px"><b style="font-size:17px">Looking for something else?</b><div class="muted" style="font-size:14px;margin-bottom:10px">Tell us which supplement and we will get it for you.</div><button class="btn sec2 block" data-act="supp">Ask for another supplement</button></div>';
@@ -1876,16 +1868,16 @@ function powersWin(){var RS=RUNST;if(!RS)return '';var mx=(RS.upCost||[]).length
   var row=function(k,name,em,col,desc,lvl,max,cost,buyWord){var isMax=cost==null;
     return '<div class="rd-pw"><span class="ic" style="background:'+col+'">'+em+'</span><div class="t"><b>'+esc(name)+'</b><span>'+esc(desc)+'</span><div class="dots">'+Array(max).fill(0).map(function(x,i){return '<i class="'+(i<lvl?'on':'')+'"></i>'}).join('')+'</div></div><div class="act">'+
      (isMax?'<span class="max">MAX POWER</span>':'<button data-act="rbuy|'+k+'"'+(RS.coins<cost?' disabled':'')+'><small>'+buyWord+'</small><span class="c">'+coinImg()+cost.toLocaleString()+'</span></button>')+'</div></div>'};
-  var h=POWERS.map(function(p){var l=RS.up[p[0]]||0,c=RS.upCost[l];return row(p[0],p[1],p[2],p[3],p[4](l),l,mx,c==null?null:c,'Upgrade for')}).join('');
-  var n=RS.up.life||0,lm=RS.lifeMax||3;h+=row('life','Extra life','❤️','#ff2d5a','Start your next run with 2 hearts · you have '+n,n,lm,n>=lm?null:(RS.lifeCost||1000),'Buy for');
-  return '<div class="rd-wh"><button class="rd-x" data-act="modal" aria-label="Close">'+ICON('i-x')+'</button><h3>Super Powers</h3><span class="coins">'+coinImg()+(RS.coins||0).toLocaleString()+'</span></div>'+h+(RS.lv?'<div class="rd-wnote">Level 2 opens the magnet, level 4 the shoes, level 6 the jetpack, for free.</div>':'')}
+  var h=POWERS.map(function(p){var l=(RS.up||{})[p[0]]||0,c=(RS.upCost||[])[l];return row(p[0],p[1],p[2],p[3],p[4](l),l,mx,c==null?null:c,'Upgrade for')}).join('');
+  var n=RS.up.life||0,lm=RS.lifeMax||cfg('game.lifeMax');h+=row('life','Extra life','❤️','#ff2d5a','Start your next run with 2 hearts · you have '+n,n,lm,n>=lm?null:(RS.lifeCost||cfg('game.lifeCost')),'Buy for');
+  return '<div class="rd-wh"><button class="rd-x" data-act="modal" aria-label="Close">'+ICON('i-x')+'</button><h3>Super Powers</h3><span class="coins">'+coinImg()+(RS.coins||0).toLocaleString()+'</span></div>'+h+(RS.lv?'<div class="rd-wnote">Level '+cfg('game.shop.magnet.lv')+' opens the magnet, level '+cfg('game.shop.shoes.lv')+' the shoes, level '+cfg('game.shop.jet.lv')+' the jetpack, for free.</div>':'')}
 function badgesWin(){var RS=RUNST||{},mine={};(RS.badges||[]).forEach(function(b){mine[b.id]=1});
   return '<div class="rd-wh"><button class="rd-x" data-act="modal" aria-label="Close">'+ICON('i-x')+'</button><h3>Badges</h3><span class="rd-wcount">'+Object.keys(mine).length+' of '+BADGES_ALL.length+'</span></div><div class="rd-bdg">'+BADGES_ALL.map(function(b){return '<div class="'+(mine[b[0]]?'':'off')+'"><i>'+(mine[b[0]]?(BADGE_IC[b[0]]||'★'):'🔒')+'</i><b>'+esc(b[1])+'</b></div>'}).join('')+'</div>'}
 ACT.modal=function(k){MODAL=k||null;var y=scrollY;render();scrollTo(0,y)};
 function modalView(){var body=MODAL==='powers'?powersWin():MODAL==='badges'?badgesWin():'';if(!body){MODAL=null;return ''}
   return '<div class="rd-dim" data-rdclose="modal"><div class="rd-win rd-white" role="dialog" aria-modal="true">'+body+'</div></div>'}
-function hubRows(RS){var mineB=(RS.badges||[]).length,up=RS.up||{};var n=POWERS.filter(function(p){return RS.upCost[up[p[0]]||0]==null}).length;
-  return '<div class="gh"><h2>Power up</h2><small>🪙 '+(RS.coins||0).toLocaleString()+' coins</small></div><div class="rd-rows"><button class="rd-row rd-hub" data-act="modal|powers"><span class="em">⚡</span>Super Powers<span class="go">'+(n?n+' maxed · ':'')+'4 powers ›</span></button><button class="rd-row rd-hub" data-act="modal|badges"><span class="em">🏅</span>Badges<span class="go">'+mineB+' of '+BADGES_ALL.length+' ›</span></button></div>'}
+function hubRows(RS){var mineB=(RS.badges||[]).length,up=RS.up||{},uc=RS.upCost||[];var n=POWERS.filter(function(p){return uc[up[p[0]]||0]==null}).length;
+  return '<div class="gh"><h2>Power up</h2><small>🪙 '+(RS.coins||0).toLocaleString()+' coins</small></div><div class="rd-rows"><button class="rd-row rd-hub" data-act="modal|powers"><span class="em">⚡</span>Super Powers<span class="go">'+(n?n+' maxed · ':'')+(POWERS.length+1)+' powers ›</span></button><button class="rd-row rd-hub" data-act="modal|badges"><span class="em">🏅</span>Badges<span class="go">'+mineB+' of '+BADGES_ALL.length+' ›</span></button></div>'}
 /* ---------- binding for the new parts ---------- */
 function rdBind(){
   $$('[data-ptab]').forEach(function(b){b.onclick=function(){goPlan(b.dataset.ptab)}});
@@ -1895,7 +1887,8 @@ function rdBind(){
 
 /* ---------- start ---------- */
 render();boot();
-document.addEventListener('visibilitychange',function(){if(!document.hidden&&TOKEN&&D)boot(true)});
+// offline copy of the app and its files (sw.js at the site root covers the staff app, this app and the game)
+if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',function(){try{navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(function(){})}catch(e){}});
 </script>
 </body>
 </html>

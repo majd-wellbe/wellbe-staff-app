@@ -1,0 +1,28 @@
+{
+  "name": "wellbe-client-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Wellbe client app for the App Store and Google Play: the web client app (../client) inside Capacitor",
+  "scripts": {
+    "web": "node scripts/copy-web.js",
+    "sync": "npm run web && npx cap sync",
+    "ios": "npm run sync && npx cap open ios",
+    "android": "npm run sync && npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "6.1.2",
+    "@capacitor/app": "6.0.1",
+    "@capacitor/preferences": "6.0.2",
+    "@capacitor/push-notifications": "6.0.2",
+    "@capacitor/local-notifications": "6.1.0",
+    "@capacitor/splash-screen": "6.0.2",
+    "@capacitor/status-bar": "6.0.1",
+    "@capgo/capacitor-health": "*",
+    "@revenuecat/purchases-capacitor": "*"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.1.2",
+    "@capacitor/ios": "6.1.2",
+    "@capacitor/android": "6.1.2"
+  }
+}
