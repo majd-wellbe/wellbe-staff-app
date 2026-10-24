@@ -83,3 +83,12 @@ YOUR ANSWERS (24 Oct)
  * Ad leads from 21:00 to 9:00 (Beirut) wait until 9:00 before showing as "call now" in Romy's To do.
    Day 1 and day 3 follow ups count from 9:00. Change the hours in SETTINGS leads.quietFrom / leads.quietTo
    (same number in both = switched off).
+
+SESSION EDITOR (24 Oct)
+ * Tap any session in Schedule, Today or My day: change day, time, trainer, room, attendance per client,
+   physio / prehab payment (Cash, Whish, Neo, Insurance, Not paid), remove a client, add one to a free seat.
+ * After saving, the app asks if you want to send a notification to the clients in the Wellbe app
+   (message prefilled, you can edit it). WhatsApp stays as a small backup link until phone notifications exist.
+ * New server actions: app_sess_edit (room, physio payment), app_sess_remove (take a client out, pass given back),
+   app_notify (in-app message to clients). Trainers cannot use them.
+ * Server file to paste again: App.gs only. Then Deploy > New version.

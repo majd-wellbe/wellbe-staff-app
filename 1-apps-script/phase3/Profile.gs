@@ -41,21 +41,25 @@ function profPackages_() {
 }
 // Wellbe The Brand products from the Shopify store, cached
 function profBrand_() {
-  var c = CacheService.getScriptCache(), hit = c.get('prof_brand');
+  var want = ((cfg_().shop || {}).brand || []).map(function (h) { return String(h).trim().toLowerCase(); }).filter(String);
+  var key = 'prof_brand|' + want.join(',').slice(0, 200), c = CacheService.getScriptCache(), hit = c.get(key);   // a new list in SETTINGS reloads at once
   if (hit) { try { return JSON.parse(hit); } catch (e) {} }
   var store = String(profProp_('BRAND_STORE', 'https://shopwellbethebrand.com')).replace(/\/+$/, ''), n = Number(profProp_('BRAND_COUNT', 8)) || 8, out = [];
   try {
-    var r = UrlFetchApp.fetch(store + '/products.json?limit=' + Math.min(30, n * 2), { muteHttpExceptions: true });
+    var r = UrlFetchApp.fetch(store + '/products.json?limit=250', { muteHttpExceptions: true });
     if (r.getResponseCode() === 200) {
-      (JSON.parse(r.getContentText()).products || []).forEach(function (p) {
-        if (out.length >= n) return;
+      var all = JSON.parse(r.getContentText()).products || [], by = {};
+      all.forEach(function (p) { by[String(p.handle || '').toLowerCase()] = p; });
+      // the chosen products in the chosen order; no list = the first n products, as before
+      var pick = want.length ? want.map(function (h) { return by[h]; }).filter(Boolean) : all.slice(0, n);
+      pick.forEach(function (p) {
         var v = (p.variants || [])[0] || {}, img = ((p.images || [])[0] || {}).src || '';
         if (img) img += (img.indexOf('?') > -1 ? '&' : '?') + 'width=480';
-        out.push({ t: String(p.title || ''), d: String(p.product_type || ''), p: Number(v.price) || 0, was: Number(v.compare_at_price) || 0, img: img, url: store + '/products/' + p.handle });
+        out.push({ t: String(p.title || ''), d: String(p.product_type || ''), p: Number(v.price) || 0, was: Number(v.compare_at_price) || 0, img: img, url: store + '/products/' + p.handle, h: String(p.handle || '') });
       });
     }
   } catch (e) { Logger.log('Brand catalog failed: ' + e); }
-  try { c.put('prof_brand', JSON.stringify(out), out.length ? PROF.BRAND_TTL : 600); } catch (e) {}
+  try { c.put(key, JSON.stringify(out), out.length ? PROF.BRAND_TTL : 600); } catch (e) {}
   return out;
 }
 // boot additions for every account: photo, price list, brand catalog

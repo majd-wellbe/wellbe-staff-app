@@ -135,7 +135,8 @@ button.row:hover{border-color:var(--ink-3)}
 .notebox b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
 .pick{max-height:240px;overflow-y:auto;display:grid;gap:6px;margin-top:6px}
 /* sessions */
-.sess{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.sess{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}.sess[data-sess]{cursor:pointer}
+.sxc{padding:12px 14px;margin-bottom:10px}.sxc .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.sxc .top .main{flex:1;min-width:0}.sxc .top b{display:block;font-size:16px}.sxc .top span.muted{font-size:13.5px}.sxc .payrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.sxc .att{padding:0}.sxmenu{display:grid;gap:6px;margin:-2px 0 10px}.sxnote{display:grid;gap:6px;margin-bottom:12px}.sxnote textarea{min-height:84px}
 .sess .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
 .sess .hd .main{flex:1;min-width:0}
 .sess .hd b{font-size:15px}
@@ -586,7 +587,7 @@ function sessCard(s,opts){
       row+='<div class="att" role="group" aria-label="Attendance for '+esc(c.name)+'">'+[['Present','a-present'],['Late Cancel','a-late'],['No Show','a-noshow'],['Early Cancel','a-early']].map(function(x){return '<button class="'+x[1]+'" aria-pressed="'+(a===x[0])+'" data-att="'+s.id+'|'+i+'|'+x[0]+'">'+x[0].replace(' Cancel',' cancel')+'</button>'}).join('')+'</div>';
     }
     return row}).join('');
-  return '<div class="sess">'+head+body+'</div>';
+  return '<div class="sess" data-sess="'+s.id+'">'+head+body+'</div>';
 }
 
 /* ---------------- views ---------------- */
@@ -731,6 +732,8 @@ function trainerPay(name,t){var r=payOf(name);if(r.rule==='tier')return t.sessio
 function bindView(){
   $$('[data-act]').forEach(function(b){b.onclick=function(){ACTIONS[b.dataset.act]&&ACTIONS[b.dataset.act]()}});
   $$('[data-change]').forEach(function(b){b.onclick=function(e){e.stopPropagation();changeSession(b.dataset.change)}});
+  // tap a session (not its buttons) to see and edit everything about it
+  $$('[data-sess]').forEach(function(el){el.onclick=function(e){if(e.target.closest('button,a,input,select,textarea'))return;sessSheet(el.dataset.sess)}});
   $$('[data-day]').forEach(function(b){b.onclick=function(){DAY=b.dataset.day;render()}});
   $$('[data-client]').forEach(function(b){b.onclick=function(){clientSheet(b.dataset.client)}});
   $$('[data-paycl]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.paycl)}});
@@ -788,6 +791,99 @@ ACTIONS.change=function(){
   $('#cq').oninput=function(){var v=this.value.toLowerCase().trim();var hit=!v?ALL.slice(0,40):ALL.filter(function(s){return (s.clients.map(function(c){return c.name}).join(' ')+' '+esc(s.tab)+' '+s.trainer).toLowerCase().indexOf(v)>-1}).slice(0,60);$('#clist').innerHTML=hit.map(rowOf).join('')||'<div class="empty">No session matches.</div>';bindPick()};
   bindPick();
 };
+/* ---------------- session editor: tap a session ---------------- */
+var ATTS=[['Present','a-present'],['Late Cancel','a-late'],['No Show','a-noshow'],['Early Cancel','a-early']];
+function sessRooms(){var r=[];svcKeys().forEach(function(k){var x=svc(k).room;if(x&&r.indexOf(x)<0)r.push(x)});return r}
+function sessPays(){var m=methods().slice();['Insurance','Not paid'].forEach(function(x){if(m.indexOf(x)<0)m.push(x)});return m}
+function sessPkgLine(p){return p?esc(p.type.split(' (')[0])+' · '+avail(p)+' of '+p.total+' left':'No package'}
+function sessPayPill(p,staff){if(!p)return '';if(!(p.price>0))return '<div class="payrow"><span class="pill p-mute">Free</span></div>';var due=Math.round((p.price-p.paid)*100)/100;
+  return due>0?'<div class="payrow"><span class="pill p-bad">Owes '+money(due)+'</span>'+(staff?'<button class="btn sm wa" data-sxpay="'+p.id+'">'+ICON('i-cash')+'Record payment</button>':'')+'</div>'
+   :'<div class="payrow"><span class="pill p-good">'+ICON('i-check')+'Paid '+money(p.price)+'</span><span class="muted" style="font-size:13px">Package fully paid</span></div>'}
+function sessSheet(id){
+  var s=SESS.filter(function(x){return x.id===id})[0];if(!s){toast('Session not found, refresh');return}
+  var staff=ME.role!=='trainer',fx=fixedTr(s.tab),cap=svc(s.tab).cap||s.clients.length,isPP=s.tab==='Physio'||s.tab==='Prehab',kind=cancelKind(s);
+  var att=s.clients.map(function(c){return c.att||(s.status==='Cancelled'?'':(s.date<=T?'Present':''))}),orig={date:s.date,start:s.start,trainer:s.trainer,room:s.room,pay:s.pay||'',att:att.slice()},cur=JSON.parse(JSON.stringify(orig)),why={};
+  var dis=staff?'':' disabled';
+  var pill=s.status==='Done'?'<span class="pill p-good">Done</span>':s.status==='Cancelled'?'<span class="pill p-mute">Cancelled</span>':'<span class="pill p-warn">'+esc(s.status||'Scheduled')+'</span>';
+  var rooms=sessRooms();if(s.room&&rooms.indexOf(s.room)<0)rooms.unshift(s.room);
+  var trs=trainerList();if(s.trainer&&trs.indexOf(s.trainer)<0)trs.unshift(s.trainer);
+  var body='<div id="sxErr"></div><div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'+pill+'<span class="muted" style="font-size:14px">'+dayLabel(s.date)+' · '+hl(s.start)+' to '+hl(s.end||endT(s.start))+'</span></div>'+
+   '<div class="two"><div class="field"><label for="sxD">Day</label><input id="sxD" type="date" value="'+s.date+'" min="'+ymd(addDays(TODAY,-C('windows.backfillDays')))+'"'+dis+'></div><div class="field"><label for="sxT">Time</label><input id="sxT" type="time" value="'+s.start+'" step="'+stepSec()+'"'+dis+'></div></div>'+
+   '<div class="two"><div class="field"><label for="sxTr">Trainer</label><select id="sxTr"'+(staff&&!fx?'':' disabled')+'>'+trs.map(function(t){return '<option'+(t===s.trainer?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'</select></div><div class="field"><label for="sxR">Room</label><select id="sxR"'+dis+'>'+rooms.map(function(r){return '<option'+(r===s.room?' selected':'')+'>'+esc(r)+'</option>'}).join('')+'</select></div></div>'+
+   '<div class="h" style="margin:4px 0 8px"><h2 style="font-size:18px">'+(cap>1?'Clients':'Client')+'</h2>'+(cap>1?'<small>'+s.clients.length+' of '+cap+' seats</small>':'')+'</div>'+
+   s.clients.map(function(c,i){var p=pkgById(c.pkg);
+     return '<div class="card sxc"><div class="top"><span class="avatar">'+esc((c.name||'?')[0])+'</span><div class="main"><b>'+esc(c.name)+'</b><span class="muted">'+sessPkgLine(p)+'</span></div>'+(staff?'<button class="iconbtn sm" aria-label="More for '+esc(c.name)+'" data-sxm="'+i+'">'+ICON('i-more')+'</button>':'')+'</div>'+
+      '<div class="sxmenu" id="sxm'+i+'" hidden><button class="btn sec full" data-sxmove="'+i+'">'+ICON('i-swap')+'Move this client</button><button class="btn sec full" data-sxnote="'+i+'">'+ICON('i-edit')+'Session notes</button><button class="btn sec full" data-sxrm="'+i+'" style="color:var(--bad)">'+ICON('i-x')+'Remove from session</button></div>'+
+      sessPayPill(p,staff)+(s.status==='Cancelled'&&!att[i]?'':'<div class="att" role="group" aria-label="Attendance for '+esc(c.name)+'">'+ATTS.map(function(x){return '<button class="'+x[1]+'" aria-pressed="'+(att[i]===x[0])+'" data-sxa="'+i+'|'+x[0]+'">'+x[0].replace(' Cancel',' cancel').replace('No Show','No show')+'</button>'}).join('')+'</div>')+
+      '<div id="sxw'+i+'"></div></div>'}).join('')+
+   (staff&&cap>s.clients.length&&s.status!=='Cancelled'?'<button class="btn sec full" id="sxAdd" style="margin-bottom:12px">'+ICON('i-plus')+'Add a client to the free seat</button>':'')+
+   (isPP?'<div class="field"><span class="flabel">Payment for this session</span><div class="seg" id="sxPay">'+sessPays().map(function(m){return '<button class="chip" aria-pressed="'+(m===(s.pay||''))+'"'+dis+'>'+esc(m)+'</button>'}).join('')+'</div></div>':'');
+  openSheet(s.tab+' session',body,'<button class="btn full" id="sxSave" disabled>Save changes</button>');
+  var btn=$('#sxSave');
+  var changed=function(){return JSON.stringify(cur)!==JSON.stringify(orig)};
+  var paintBtn=function(){btn.disabled=!changed();btn.textContent='Save changes'};
+  var paintWhy=function(i){var box=$('#sxw'+i);if(!box)return;var ex=staff&&cur.att[i]==='Early Cancel'&&orig.att[i]!=='Early Cancel'&&kind==='Late Cancel',pair=s.tab==='1:2'&&cur.att[i]==='Early Cancel'&&orig.att[i]!=='Early Cancel';
+    box.innerHTML=(ex?'<div class="field" style="margin:10px 0 0"><label for="sxy'+i+'">Reason for the exception (required)</label><input id="sxy'+i+'" type="text" placeholder="e.g. sick, urgent at work" value="'+esc(why[i]||'')+'"></div>':'')+(pair?'<div class="note warn" style="margin-top:10px">'+ICON('i-alert')+'<span>A 1:2 early cancel cancels the whole session for both clients.</span></div>':'');
+    var y=$('#sxy'+i);if(y)y.oninput=function(){why[i]=y.value}};
+  $('#sxD').onchange=function(){cur.date=this.value;paintBtn()};$('#sxT').onchange=function(){cur.start=this.value;paintBtn()};
+  $('#sxTr').onchange=function(){cur.trainer=this.value;paintBtn()};$('#sxR').onchange=function(){cur.room=this.value;paintBtn()};
+  $$('[data-sxa]').forEach(function(b){b.onclick=function(){var x=b.dataset.sxa.split('|'),i=+x[0];cur.att[i]=x[1];$$('[data-sxa^="'+i+'|"]').forEach(function(y){y.setAttribute('aria-pressed',String(y===b))});paintWhy(i);paintBtn()}});
+  $$('#sxPay button').forEach(function(b){b.onclick=function(){cur.pay=b.textContent;$$('#sxPay button').forEach(function(y){y.setAttribute('aria-pressed',String(y===b))});paintBtn()}});
+  $$('[data-sxpay]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.sxpay)}});
+  $$('[data-sxm]').forEach(function(b){b.onclick=function(){var m=$('#sxm'+b.dataset.sxm);m.hidden=!m.hidden}});
+  $$('[data-sxmove]').forEach(function(b){b.onclick=function(){var i=+b.dataset.sxmove;changeSession(s.id);var w=$('#who [data-i="'+i+'"]');if(w)w.click()}});
+  $$('[data-sxnote]').forEach(function(b){b.onclick=function(){noteSheet(s.id,+b.dataset.sxnote)}});
+  $$('[data-sxrm]').forEach(function(b){b.onclick=function(){var i=+b.dataset.sxrm,c=s.clients[i];
+    if(b.dataset.sure!=='1'){b.dataset.sure='1';b.innerHTML=ICON('i-x')+'Tap again to remove '+esc(first(c.name));return}
+    b.disabled=true;BUSY++;paintBusy();
+    api('app_sess_remove',{ref:s.ref,id:s.id,slot:c.slot}).then(function(){BUSY--;paintBusy();dirty();boot(true);
+      sessNotify([{cids:[c.cid],names:[c.name],text:'Hi '+first(c.name)+', you are no longer booked in the '+s.tab+' session on '+dayLabel(s.date)+' at '+hl(s.start)+'. No pass was used.'}],'Removed from the session')})
+     .catch(function(e){BUSY--;paintBusy();b.disabled=false;$('#sxErr').innerHTML='<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Not removed: '+esc(e.message)+'</span></div>'})}});
+  var add=$('#sxAdd');if(add)add.onclick=function(){ACTIONS.book();ssSet($('#bty'),s.tab);ssSet($('#btr'),s.trainer);$('#bd').value=s.date;$('#bt').value=s.start;['#bty','#btr','#bd'].forEach(function(q){var el=$(q);if(el)el.dispatchEvent(new Event('change'))})};
+  btn.onclick=function(){
+    var calls=[],moved=cur.date!==orig.date||cur.start!==orig.start,trd=cur.trainer!==orig.trainer;
+    if(moved){if(!cur.date||!cur.start){toast('Pick the day and time');return}calls.push(['app_change',{ref:s.ref,id:s.id,who:'all',what:'move',date:cur.date,time:cur.start}])}
+    if(trd)calls.push(['app_change',{ref:s.ref,id:s.id,who:'all',what:'trainer',trainer:cur.trainer}]);
+    var whole12=false;
+    for(var i=0;i<s.clients.length;i++){var a=cur.att[i];if(a===orig.att[i]||!a||whole12)continue;var c=s.clients[i];
+      if(staff&&/Cancel/.test(a)){var q={ref:s.ref,id:s.id,who:c.slot,what:'cancel',kind:a};
+        if(a==='Early Cancel'&&kind==='Late Cancel'){if(!(why[i]||'').trim()){toast('Add the reason for the exception');return}q.reason=why[i].trim()}
+        if(s.tab==='1:2'&&a==='Early Cancel')whole12=true;calls.push(['app_change',q])}
+      else calls.push(['app_att',{ref:s.ref,id:s.id,i:c.slot,att:a}])}
+    var ed={};if(staff&&cur.room!==orig.room)ed.room=cur.room;if(staff&&isPP&&cur.pay!==orig.pay)ed.pay=cur.pay;
+    if(Object.keys(ed).length)calls.push(['app_sess_edit',Object.assign({ref:s.ref,id:s.id},ed)]);
+    if(!calls.length){closeSheet();return}
+    btn.disabled=true;btn.textContent='Saving…';$('#sxErr').innerHTML='';BUSY++;paintBusy();
+    var done=0,run=calls.reduce(function(pr,x){return pr.then(function(){return api(x[0],x[1]).then(function(){done++})})},Promise.resolve());
+    run.then(function(){BUSY--;paintBusy();dirty();boot(true);sessNotify(sessMsgs(s,orig,cur,whole12),'Session update')})
+     .catch(function(e){BUSY--;paintBusy();dirty();if(done)boot(true);btn.disabled=false;btn.textContent='Save changes';
+       $('#sxErr').innerHTML='<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Not saved'+(done?' (the first '+done+' change'+(done>1?'s were':' was')+' saved)':'')+': '+esc(e.message)+'</span></div>';$('#shBody').scrollTop=0})};
+}
+// what each client should be told after a save (only what concerns them; marking Present is not news)
+function sessMsgs(s,o,c,whole12){
+  var out=[],when=function(d,t){return dayLabel(d)+' at '+hl(t)},all=s.clients.filter(function(x){return x.cid}),parts=[];
+  if(c.date!==o.date||c.start!==o.start)parts.push('it is moved to '+when(c.date,c.start));
+  if(c.trainer!==o.trainer)parts.push('your trainer will be '+c.trainer);
+  if(parts.length&&c.room!==o.room)parts.push('it takes place in the '+c.room);
+  if(parts.length&&all.length)out.push({cids:all.map(function(x){return x.cid}),names:all.map(function(x){return x.name}),text:'Hi, an update on your '+s.tab+' session of '+when(o.date,o.start)+': '+parts.join(', ')+'. See you there! '+C('center.name')});
+  s.clients.forEach(function(x,i){var a=c.att[i];if(!x.cid||a===o.att[i]||!a||a==='Present')return;if(whole12&&a!=='Early Cancel')return;
+    var t=a==='Early Cancel'?'your '+s.tab+' session of '+when(o.date,o.start)+' is cancelled. No pass was used.':a==='Late Cancel'?'your '+s.tab+' session of '+when(o.date,o.start)+' is cancelled on the same day, so it counts as a session.':'we missed you at your '+s.tab+' session of '+when(o.date,o.start)+'. As it was not cancelled, it counts as a session.';
+    out.push({cids:[x.cid],names:[x.name],text:'Hi '+first(x.name)+', '+t})});
+  return out}
+// after a save: ask before sending anything to clients
+function sessNotify(msgs,type){
+  if(!msgs.length){openSheet('Saved','<div class="note good">'+ICON('i-check')+'<span>Saved.</span></div>','<button class="btn full" id="sxOk">Done</button>');$('#sxOk').onclick=function(){closeSheet();render()};return}
+  var names=[];msgs.forEach(function(m){m.names.forEach(function(n){n=first(n);if(names.indexOf(n)<0)names.push(n)})});
+  openSheet('Saved','<div class="note good" style="margin-bottom:14px">'+ICON('i-check')+'<span>Saved. Send a notification to <b>'+esc(names.join(', '))+'</b> in the Wellbe app?</span></div>'+
+    msgs.map(function(m,i){return '<div class="sxnote"><label for="sxn'+i+'" class="flabel">To '+esc(m.names.map(first).join(', '))+'</label><textarea id="sxn'+i+'" maxlength="600">'+esc(m.text)+'</textarea>'+
+      // remove after Phase 5 push notifications: WhatsApp fallback while the app cannot buzz the phone
+      '<div class="muted" style="font-size:13px">Or send on WhatsApp: '+m.cids.map(function(cid,j){return '<a href="#" data-sxwa="'+i+'|'+j+'" style="color:var(--mint);font-weight:700">'+esc(first(m.names[j]))+'</a>'}).join(' · ')+'</div></div>'}).join(''),
+    '<button class="btn full" id="sxSend">Send notification</button><button class="btn sec full" id="sxNo">No thanks</button>');
+  $$('[data-sxwa]').forEach(function(a){a.onclick=function(e){e.preventDefault();var x=a.dataset.sxwa.split('|'),m=msgs[+x[0]],c=clientOf(m.cids[+x[1]]);window.open(wa(c.phone,$('#sxn'+x[0]).value),'_blank')}});
+  $('#sxNo').onclick=function(){closeSheet();render()};
+  $('#sxSend').onclick=function(){var b=this;b.disabled=true;b.textContent='Sending…';
+    Promise.all(msgs.map(function(m,i){var t=$('#sxn'+i).value.trim();return t?api('app_notify',{cids:m.cids,type:type,text:t}):null}))
+     .then(function(){closeSheet();render();toast('Notification sent')}).catch(function(e){b.disabled=false;b.textContent='Send notification';toast('Not sent: '+e.message)})}}
 function changeSession(id){
   var s=SESS.filter(function(x){return x.id===id})[0];if(!s){toast('Session not found, refresh');return} var kind=cancelKind(s);
   var body='<div class="card" style="padding:12px 14px;margin-bottom:14px"><b>'+dayLong(s.date)+' · '+hl(s.start)+'</b><div class="muted" style="font-size:14px">'+esc(s.tab)+' with '+esc(s.trainer)+' · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'+

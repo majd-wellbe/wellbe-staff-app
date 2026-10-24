@@ -106,6 +106,8 @@ var CFG_DEFAULTS = {
       o3: { n: 'Outfit 3', coins: 10000, lv: 40, kind: 'once' }
     }
   },
+  // Wellbe The Brand products shown in the client app Shop, in this order (Shopify product handles)
+  shop: { brand: ['necklux-2-0-the-ultimate-neck-massager', 'backlux-lower-back-massager', 'hypro-massage-gun', 'aloe-vera-gel', 'wellbe-anti-shock-case', 'knee-patella-support', 'the-ultimate-foot-stretcher'] },
   lists: {
     methods: ['Cash', 'Whish', 'Neo'],
     expenseCats: ['Rent', 'Utilities', 'Salaries', 'Supplies', 'Equipment', 'Software', 'Marketing', 'Other'],

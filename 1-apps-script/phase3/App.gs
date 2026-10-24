@@ -31,7 +31,7 @@ var AT = {
               slots: [{ pkg: 7, name: 8, pass: 12, gcal: 15 }, { pkg: 9, name: 10, pass: 13, gcal: 16 }] },
   '1:3':    { sheet: 'SESSIONS 1:3', pre: 'S13', trainer: 5, room: 6, status: 13, note: 17, width: 23,
               slots: [{ pkg: 7, name: 8, pass: 14, gcal: 18, att: 21 }, { pkg: 9, name: 10, pass: 15, gcal: 19, att: 22 }, { pkg: 11, name: 12, pass: 16, gcal: 20, att: 23 }] },
-  'PP':     { sheet: 'SESSIONS PHYSIO/PREHAB', pre: 'SPP', svc: 5, room: 6, status: 10, note: 12, width: 13, get fixed() { return cfgFixed_('Physio'); },
+  'PP':     { sheet: 'SESSIONS PHYSIO/PREHAB', pre: 'SPP', svc: 5, room: 6, pay: 9, status: 10, note: 12, width: 13, get fixed() { return cfgFixed_('Physio'); },
               slots: [{ pkg: 7, name: 8, pass: 11, gcal: 13 }] },
   'Osteo':  { sheet: 'SESSIONS OSTEO', pre: 'SOT', room: 5, status: 8, note: 10, width: 11, get fixed() { return cfgFixed_('Osteo'); },
               slots: [{ pkg: 6, name: 7, pass: 9, gcal: 11 }] },
@@ -108,7 +108,7 @@ function app_route_(b) {
 function appRoute_(b) {
   var me = appWho_(b.key);
   if (!me) return json_({ ok: false, error: 'auth' });
-  var staffOnly = { app_change: 1, app_book: 1, app_pay: 1, app_sell: 1, app_lead: 1, app_expense: 1, app_rec_add: 1, app_rec_stop: 1, app_pos: 1, app_week: 1, app_client: 1, app_flag: 1, app_req_done: 1, app_disc: 1, app_freeze: 1, app_cedit: 1, app_ins_set: 1, app_ins_submit: 1, app_ins_paid: 1, app_pkg_price: 1 };
+  var staffOnly = { app_change: 1, app_book: 1, app_pay: 1, app_sell: 1, app_lead: 1, app_expense: 1, app_rec_add: 1, app_rec_stop: 1, app_pos: 1, app_week: 1, app_client: 1, app_flag: 1, app_req_done: 1, app_disc: 1, app_freeze: 1, app_cedit: 1, app_ins_set: 1, app_ins_submit: 1, app_ins_paid: 1, app_pkg_price: 1, app_sess_edit: 1, app_sess_remove: 1, app_notify: 1 };
   var ownerOnly = { app_intake: 1, app_upload: 1 };
   if (ownerOnly[b.action] && me.role !== 'owner') return json_({ ok: false, error: 'not allowed' });
   if (staffOnly[b.action] && me.role === 'trainer') return json_({ ok: false, error: 'not allowed' });
@@ -133,13 +133,15 @@ function appRoute_(b) {
     var fn = {
       app_att: appAtt_, app_change: appChange_, app_book: appBook_, app_pay: walletPay_, app_sell: walletSell_,
       app_notes: appNotes_, app_expense: appExpense_, app_rec_add: appRecAdd_, app_rec_stop: appRecStop_,
-      app_pos: appPos_, app_week: appWeek_, app_client: appClient_, app_flag: appFlag_, app_intake: appIntake_, app_upload: appUpload_, app_req_done: appReqDone_, app_disc: appDisc_, app_freeze: appFreeze_, app_cedit: appClientEdit_, app_ins_set: insSet_, app_ins_submit: insSubmit_, app_ins_paid: insPaid_, app_pkg_price: pkgPrice_
+      app_pos: appPos_, app_week: appWeek_, app_client: appClient_, app_flag: appFlag_, app_intake: appIntake_, app_upload: appUpload_, app_req_done: appReqDone_, app_disc: appDisc_, app_freeze: appFreeze_, app_cedit: appClientEdit_, app_ins_set: insSet_, app_ins_submit: insSubmit_, app_ins_paid: insPaid_, app_pkg_price: pkgPrice_, app_sess_edit: appSessEdit_, app_sess_remove: appSessRemove_, app_notify: appNotify_
     , app_wo_list: woList_, app_wo_get: woGet_, app_wo_save: woSave_, app_wo_decide: woDecide_, app_wo_log: woLog_, app_wo_ex: woEx_, app_nut_list: nutList_, app_nut_get: nutGet_, app_nut_decide: nutDecide_, app_notice_read: appNoticeRead_ }[b.action];
 
     if (!fn) return json_({ ok: false, error: 'unknown action' });
     var out = fn(b, me) || {};
     if (/^app_(wo|nut)_/.test(b.action)) { out.ok = true; return json_(out); }                         // no client package or session changed
     if (b.action === 'app_notice_read') { appUnCache_('b|' + me.id); out.ok = true; return json_(out); }  // only this person's boot changes
+    if (b.action === 'app_notify') { appBumpClients_(out.cids || []); delete out.cids; out.ok = true; return json_(out); }   // only those clients' screens
+    if (b.action === 'app_sess_edit' || b.action === 'app_sess_remove') { appBumpStaff_(); appBumpClients_(out.cids || []); delete out.cids; out.ok = true; return json_(out); }   // staff + the clients of that session
     if (APP_STAFF_ONLY_WRITES_[b.action]) appBumpStaff_();   // nothing a client sees changed
     else if (b.action === 'app_ins_set') { appBumpStaff_(); appBumpClients_([b.cid]); }   // insurance shows on that client's packages only
     else appBump_();   // staff writes that change clients, packages or sessions: every cached boot reloads
@@ -1027,6 +1029,56 @@ function appPkgRow_(sh, id) {
   var v = sh.getRange(1, 1, sh.getLastRow(), 1).getValues();
   for (var i = 2; i < v.length; i++) if (String(v[i][0]).trim() === id) return i + 1;
   throw new Error('Package ' + id + ' not found');
+}
+
+// =====================================================================
+// SESSION EDITOR (tap a session in Schedule): room, payment, remove a client, notify clients
+// =====================================================================
+// client IDs of the filled slots of a session row (from their packages)
+function appSessCids_(ops, sh, cfg, row) {
+  var byPkg = {}; pkgsAll_(ops).forEach(function (x) { byPkg[x.id] = x.cid; });
+  return cfg.slots.map(function (sl) { return byPkg[String(sh.getRange(row, sl.pkg).getValue()).trim()] || ''; }).filter(String);
+}
+// action app_sess_edit { ref, id, room?, pay? }: room of any session; payment only on physio / prehab (the only tab with a payment column)
+function appSessEdit_(b, me) {
+  var ops = SpreadsheetApp.openById(CFG.OPS_ID), at = appFind_(ops, b.ref, b.id), cfg = AT[at.k], sh = at.sh, row = at.row, log = [];
+  if (b.room !== undefined && b.room !== null && b.room !== '') {
+    var rooms = {}; Object.keys(cfg_().services || {}).forEach(function (k) { var r = cfg_().services[k].room; if (r) rooms[r] = 1; });
+    if (!rooms[b.room]) throw new Error('Unknown room: ' + b.room);
+    sh.getRange(row, cfg.room).setValue(b.room); log.push('room ' + b.room);
+  }
+  if (b.pay !== undefined && b.pay !== null) {
+    if (!cfg.pay) throw new Error('This session type has no payment column');
+    var ok = appSessPays_(); if (ok.indexOf(String(b.pay)) < 0) throw new Error('Unknown payment: ' + b.pay);
+    sh.getRange(row, cfg.pay).setValue(b.pay === 'Not paid' ? 'Not paid' : String(b.pay)); log.push('payment ' + b.pay);
+  }
+  if (log.length) sh.getRange(row, cfg.note).setValue(appendNote_(String(sh.getRange(row, cfg.note).getValue() || ''), 'Changed ' + log.join(', ') + ' via app, ' + me.name));
+  return { cids: appSessCids_(ops, sh, cfg, row) };
+}
+// payment values allowed for one session: the center's payment methods + Insurance + Not paid
+function appSessPays_() { var m = ((cfg_().lists || {}).methods || []).slice(); ['Insurance', 'Not paid'].forEach(function (x) { if (m.indexOf(x) < 0) m.push(x); }); return m; }
+// action app_sess_remove { ref, id, slot }: takes one client out of a session (no pass used), removes their invite
+function appSessRemove_(b, me) {
+  var ops = SpreadsheetApp.openById(CFG.OPS_ID), at = appFind_(ops, b.ref, b.id), cfg = AT[at.k], sh = at.sh, row = at.row;
+  var i = Number(b.slot), sl = cfg.slots[i]; if (!sl) throw new Error('No client in that spot');
+  var pkg = String(sh.getRange(row, sl.pkg).getValue()).trim(), name = String(sh.getRange(row, sl.name).getValue()).trim();
+  if (!pkg && !name) throw new Error('No client in that spot');
+  var cid = (pkgsAll_(ops).filter(function (x) { return x.id === pkg; })[0] || {}).cid || '';
+  appDeleteEvent_(sh.getRange(row, sl.gcal).getValue());
+  [sl.pkg, sl.name, sl.pass].concat(sl.att ? [sl.att] : []).concat([sl.gcal]).forEach(function (c) { sh.getRange(row, c).setValue(''); });
+  var left = cfg.slots.some(function (s2) { return String(sh.getRange(row, s2.pkg).getValue()).trim() || String(sh.getRange(row, s2.name).getValue()).trim(); });
+  if (!left) sh.getRange(row, cfg.status).setValue('Cancelled');
+  sh.getRange(row, cfg.note).setValue(appendNote_(String(sh.getRange(row, cfg.note).getValue() || ''), name + ' removed from the session via app, ' + me.name));
+  if (pkg) appRecount_(ops, pkg);
+  return { pkg: pkg, used: pkg ? appUsed_(ops, pkg) : 0, cancelled: !left, cids: cid ? [cid] : [] };
+}
+// action app_notify { cids, type, text }: an in-app message to each client (shows in their Center until they tap Got it)
+function appNotify_(b, me) {
+  var ops = SpreadsheetApp.openById(CFG.OPS_ID), text = String(b.text || '').trim().slice(0, 600), type = String(b.type || 'Session update').slice(0, 60), seen = {}, n = 0, ids = [];
+  if (!text) throw new Error('Write the message first');
+  (b.cids || []).forEach(function (c) { c = String(c || '').trim().toUpperCase(); if (!/^[CG]\d+$/.test(c) || seen[c]) return; seen[c] = 1; noticeAdd_(ops, c, type, text); n++; ids.push(c); });
+  if (!n) throw new Error('No client to notify');
+  return { sent: n, cids: ids };
 }
 
 // finds a session row from "tab|row", double checked with the Session ID
