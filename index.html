@@ -167,7 +167,8 @@ button.row:hover{border-color:var(--ink-3)}
 .field>label,.flabel{font-weight:700;font-size:14px}
 .field input,.field select,.field textarea{min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);padding:0 12px;width:100%}
 .field textarea{padding:10px 12px;min-height:74px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.two>*{min-width:0}
+input[type=date],input[type=time]{min-width:0;width:100%;max-width:100%;-webkit-appearance:none;appearance:none}
 .note{font-size:13.5px;padding:10px 12px;border-radius:12px;display:flex;gap:8px;align-items:flex-start}
 .note svg{width:18px;height:18px;flex:none;margin-top:1px}
 .note.warn{background:var(--warn-soft);color:var(--warn)} .note.good{background:var(--good-soft);color:var(--good)} .note.bad{background:var(--bad-soft);color:var(--bad)}
@@ -1061,7 +1062,7 @@ ACTIONS.book=function(){
   var pick=function(id){st.cid=id;var c=clientById(id),p=pkgOf(id),r=p&&lateRule(p);$('#bq').value=c.name;$('#bpick').innerHTML='';
     $('#binfo').innerHTML=(c.notes?'<div class="note warn" style="margin-bottom:8px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+
       (c.program?'<div class="notebox"><b>Program</b>'+esc(c.program)+'</div>':'')+
-      (p?'<div class="notebox"><b>Package</b>'+esc(p.type)+' · '+avail(p)+' of '+p.total+' left'+(r?' · <span style="color:var(--bad);font-weight:700">'+(r.late?'payment late: ':'owes ')+money(r.due)+'</span>':'')+'</div>':'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No active package. Sell one below and book it in one tap.</span></div>');
+      '<div id="bpkg"></div>';
     if(p){var k=p.kind;if(C('services')[k]){ssSet($('#bty'),k);var f0=fixedTr(k);if(f0)ssSet($('#btr'),f0)}}
     $('#bform').hidden=false;var b=$('#doBook');b.disabled=false;b.textContent='Book '+first(c.name);cap();autoSell()};
   var cap=function(){if($('#bsell'))return;var tr=$('#btr').value;$('#bcap').innerHTML=overCap($('#bd').value,$('#bt').value,tr,1)?'<div class="note bad">'+ICON('i-alert')+'<span>'+esc(tr)+' already has '+capOf(tr)+' clients at that hour.</span></div>':''};
@@ -1075,7 +1076,11 @@ ACTIONS.book=function(){
     ssScan($('#bcap'));segBind('#bsm');
     var bs=function(){var x=PKG_TYPES[+$('#bsty').value],pr=Math.max(0,+$('#bspr').value||0),dc=x.p>0?Math.max(0,Math.round((1-pr/x.p)*10000)/100):0;$('#bsum').innerHTML=ICON('i-check')+'<span>List '+money(x.p)+' · you charge '+money(pr)+' · '+(dc?'<b>'+dc+'% discount</b>':'no discount')+' · '+money(Math.max(0,pr-Math.min(pr,+$('#bspd').value||0)))+' left to pay</span>'};
     $('#bsty').onchange=function(){$('#bspr').value=PKG_TYPES[+this.value].p;bs()};$('#bspr').oninput=bs;$('#bspd').oninput=bs;bs()};
-  var autoSell=function(){if(ME.role==='trainer'||!st.cid)return;var ty=$('#bty').value;if(bookPkg(st.cid,ty,$('#bd').value)){clearSell();cap();return}
+  // the package this session will use, for the type and day picked now
+  var paintPkg=function(){var box=$('#bpkg');if(!box||!st.cid)return;var ty=$('#bty').value,p=bookPkg(st.cid,ty,$('#bd').value),r=p&&lateRule(p);
+    box.innerHTML=p?'<div class="notebox"><b>Uses package</b>'+esc(p.type)+' · '+avail(p)+' of '+p.total+' left'+(r?' · <span style="color:var(--bad);font-weight:700">'+(r.late?'payment late: ':'owes ')+money(r.due)+'</span>':'')+'</div>'
+      :'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No '+esc(ty)+' package with passes left. '+(ME.role==='trainer'?'Ask '+esc(WB.deskName())+' to sell one first.':'Sell one below and book it in one tap.')+'</span></div>'};
+  var autoSell=function(){paintPkg();if(ME.role==='trainer'||!st.cid)return;var ty=$('#bty').value;if(bookPkg(st.cid,ty,$('#bd').value)){clearSell();cap();return}
     if(!$('#bsell')||$('#bsell').dataset.ty!==ty){$('#bcap').innerHTML='';bkSellPanel(ty,(singleType(ty)||{}).name);if($('#bsell'))$('#bsell').dataset.ty=ty}if($('#bsell'))$('#doBook').textContent='Sell and book '+first(clientById(st.cid).name)};
   var clearSell=function(){if($('#bsell')){$('#bcap').innerHTML='';var b=$('#doBook');if(st.cid)b.textContent='Book '+first(clientById(st.cid).name)}};
   var recompute=function(){var f=fixedTr($('#bty').value);if(f)ssSet($('#btr'),f);autoSell();cap()};   // every field change goes through here, so the sell panel always matches the type
