@@ -735,6 +735,16 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 .rd-bdg div i{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 6px;border-radius:50%;font-style:normal;font-size:24px;background:linear-gradient(135deg,#f2c46b,#e8a400);box-shadow:inset 0 0 0 3px #fff,0 4px 10px rgba(0,0,0,.15)}
 .rd-bdg div b{font-size:12.5px;line-height:1.2;display:block}
 .rd-bdg div.off{color:#9aa4a7}.rd-bdg div.off i{background:#e3e8e6;filter:grayscale(1);opacity:.6}
+.rd-lad{display:flex;flex-direction:column;gap:10px}
+.rd-lad .lad{background:#f5f7f6;border-radius:16px;padding:12px}
+.rd-lad .lh{display:flex;align-items:center;gap:10px}.rd-lad .li{flex:0 0 40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:20px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.rd-lad .lh b{display:block;font-size:15px;color:#151b1e}.rd-lad .lh small{display:block;font-size:12.5px;color:#6d787c}
+.rd-lad .tiers{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:10px}
+.rd-lad .tiers span{text-align:center;font-size:10.5px;font-weight:800;padding:6px 0;border-radius:99px;background:#e3e8e6;color:#9aa4a7;letter-spacing:.02em}
+.rd-lad .tiers .t1.on{background:#d9965b;color:#fff}.rd-lad .tiers .t2.on{background:#7d8a93;color:#fff}.rd-lad .tiers .t3.on{background:#e8a400;color:#3a2700}
+.rd-lad .tiers .t4.on{background:#7fc6c0;color:#0f3b38}.rd-lad .tiers .t5.on{background:linear-gradient(135deg,#7fd3ff,#b78cff);color:#1d1546}
+.rd-lad .lp{height:6px;border-radius:9px;background:#dfe5e3;overflow:hidden;margin-top:10px}.rd-lad .lp i{display:block;height:100%;background:#1f6e5b}
+.rd-lad .ln{font-size:12.5px;color:#47535a;font-weight:700;margin-top:5px}.rd-lad .ln.done{color:#1f6e5b}
 /* shop */
 .rd-brand{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .rd-brand .p{background:var(--card);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
@@ -830,7 +840,6 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="../core/wb-core.js?v=1"></script>
-<script src="../core/wb-backend.js?v=1"></script>
 <script>
 /* ---------- content: texts and lists the app shows (not business settings, those are in cfg) ---------- */
 var CONTENT={
@@ -1002,7 +1011,7 @@ var LASTB=0;document.addEventListener('visibilitychange',function(){if(!document
 setInterval(function(){if(TOKEN&&D&&D.guest&&!document.hidden)boot(true)},120000);
 var WARMT=0;function warm(){if(!D||!ACC()||Date.now()-WARMT<60000)return;WARMT=Date.now();if(!D.guest)woLoad(ACC(),1);runLoad();nWarm()}
 function send(action,data){data=data||{};data.cid=ACC().cid;return api(action,data).then(function(j){boot(true);return j})}
-function signOut(expired){var keep={};try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(accent|theme|cfg)/.test(k))keep[k]=localStorage.getItem(k)})}catch(e){}if(!expired&&TOKEN&&WB.backend&&WB.backend()==='supabase')WB.api('app_cl_signout',{},{token:TOKEN}).catch(function(){});WB.storeClear(['wbc_','cr_']);for(var kk in keep)store(kk,keep[kk]);store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
+function signOut(expired){var keep={};try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(accent|theme|cfg)/.test(k))keep[k]=localStorage.getItem(k)})}catch(e){}WB.storeClear(['wbc_','cr_']);for(var kk in keep)store(kk,keep[kk]);store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
 
 /* ---------- render ---------- */
 // PATCH: render() updates the page in place (same result as a full redraw, but unchanged parts, images and animations stay)
@@ -1448,7 +1457,7 @@ ACT.run=function(){var f=$('#gameFrame');if(!f){f=document.createElement('iframe
 ACT.runpick=function(){ACT.run(1)};
 ACT.rtab=function(k){RUNTAB=k;render()};
 var RBUSY=0;function rbusy(on){RBUSY=on;$$('[data-act^="rbuy"],[data-act="rredeem"],#rdmYes').forEach(function(b){b.disabled=!!on})}
-ACT.rbuy=function(k){if(RBUSY)return;rbusy(1);api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){rbusy(0);RUNST=j;toast(k==='life'?'Extra life ready for your next run ❤️':'Upgraded!');render()}).catch(function(e){rbusy(0);toast(e.message)})};
+ACT.rbuy=function(k){if(RBUSY)return;rbusy(1);api('app_cl_run',{op:'buy',item:k,cid:ACC().cid}).then(function(j){rbusy(0);RUNST=j;toast(k==='life'?'Extra life ready. Your next run starts with '+runLives(j,(j.up||{}).life||0)+' lives ❤️':'Upgraded!');render()}).catch(function(e){rbusy(0);toast(e.message)})};
 ACT.rredeem=function(){var C=RUNST&&RUNST.cash;if(!C||RBUSY)return;var u='$'+(Math.min(C.bal,C.max)/100).toFixed(2);
   openSheet('Use your Wellbe Credit','<p class="muted">Use <b>'+u+'</b> Wellbe Credit on your next package or online workout? '+DESK()+' takes it off when you renew.</p>','<button class="btn block" id="rdmYes">Use '+u+'</button><button class="btn ghost block" style="margin-top:8px" id="rdmNo">Not now</button>');
   $('#rdmNo').onclick=closeSheet;$('#rdmYes').onclick=function(){rbusy(1);api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){rbusy(0);RUNST=j;closeSheet();render();success(u+' Wellbe Credit saved',''+DESK()+' will take it off your next package or online workout when you renew.')}).catch(function(e){rbusy(0);toast(e.message)})}};
@@ -1897,20 +1906,34 @@ VIEWS.shop=function(){var B=brandList(),all=shopItems(),feat=featured();
 var POWERS=[['magnet','Coin magnet','🧲','#e0457a',function(l){return 'Pulls every coin to you · lasts '+(8+2*l)+' s'}],['jet','Jetpack','🚀','#2b7de0',function(l){return 'Fly above the Corniche · '+(6+l)+' s'}],['shoes','Super jump shoes','👟','#1f6e5b',function(l){return 'Jump over everything · '+(10+2*l)+' s'}]];
 var BADGE_IC={first:'🏁',km1:'🥉',km5:'🥈',km10:'🥇',runs10:'🔟',runs50:'⚡',runs100:'💯',day1:'☀️',week10:'🔝',week1:'👑',all3:'🏆',all1:'💎',rich:'💰',boost:'💪'};
 function coinImg(){return '<img src="coin-250.webp" alt="">'}
+function runLives(RS,n){var slot=!!(RS&&RS.lv&&RS.lv.have&&RS.lv.have.life2);return n>0?(slot&&n>1?3:2):1}
+// the Extra life row text: what the player starts with after buying (or now, when they cannot buy more)
+function lifeText(RS){var n=(RS.up||{}).life||0,lm=RS.lifeMax||cfg('game.lifeMax'),now=runLives(RS,n);
+  if(n>=lm)return 'Your next run starts with '+now+' lives';
+  var after=runLives(RS,n+1);if(after>now)return 'Start your next run with '+after+' lives';
+  return 'Your next run starts with '+now+' lives. More are saved for later runs'}
 function powersWin(){var RS=RUNST;if(!RS)return '';var mx=(RS.upCost||[]).length;
   var row=function(k,name,em,col,desc,lvl,max,cost,buyWord){var isMax=cost==null;
     return '<div class="rd-pw"><span class="ic" style="background:'+col+'">'+em+'</span><div class="t"><b>'+esc(name)+'</b><span>'+esc(desc)+'</span><div class="dots">'+Array(max).fill(0).map(function(x,i){return '<i class="'+(i<lvl?'on':'')+'"></i>'}).join('')+'</div></div><div class="act">'+
      (isMax?'<span class="max">MAX POWER</span>':'<button data-act="rbuy|'+k+'"'+(RS.coins<cost?' disabled':'')+'><small>'+buyWord+'</small><span class="c">'+coinImg()+cost.toLocaleString()+'</span></button>')+'</div></div>'};
   var h=POWERS.map(function(p){var l=(RS.up||{})[p[0]]||0,c=(RS.upCost||[])[l];return row(p[0],p[1],p[2],p[3],p[4](l),l,mx,c==null?null:c,'Upgrade for')}).join('');
-  var n=RS.up.life||0,lm=RS.lifeMax||cfg('game.lifeMax');h+=row('life','Extra life','❤️','#ff2d5a','Start your next run with 2 hearts · you have '+n,n,lm,n>=lm?null:(RS.lifeCost||cfg('game.lifeCost')),'Buy for');
+  var n=RS.up.life||0,lm=RS.lifeMax||cfg('game.lifeMax');h+=row('life','Extra life','❤️','#ff2d5a',lifeText(RS),n,lm,n>=lm?null:(RS.lifeCost||cfg('game.lifeCost')),'Buy for');
   return '<div class="rd-wh"><button class="rd-x" data-act="modal" aria-label="Close">'+ICON('i-x')+'</button><h3>Super Powers</h3><span class="coins">'+coinImg()+(RS.coins||0).toLocaleString()+'</span></div>'+h+(RS.lv?'<div class="rd-wnote">Level '+cfg('game.shop.magnet.lv')+' opens the magnet, level '+cfg('game.shop.shoes.lv')+' the shoes, level '+cfg('game.shop.jet.lv')+' the jetpack, for free.</div>':'')}
-function badgesWin(){var RS=RUNST||{},mine={};(RS.badges||[]).forEach(function(b){mine[b.id]=1});
-  return '<div class="rd-wh"><button class="rd-x" data-act="modal" aria-label="Close">'+ICON('i-x')+'</button><h3>Badges</h3><span class="rd-wcount">'+Object.keys(mine).length+' of '+BADGES_ALL.length+'</span></div><div class="rd-bdg">'+BADGES_ALL.map(function(b){return '<div class="'+(mine[b[0]]?'':'off')+'"><i>'+(mine[b[0]]?(BADGE_IC[b[0]]||'★'):'🔒')+'</i><b>'+esc(b[1])+'</b></div>'}).join('')+'</div>'}
+var LADDER_IC={dist:'🏃',tkm:'🗺️',play:'🔁',coin:'💰',jump:'⬆️',slide:'⬇️',clean:'✨',miss:'✅',word:'🔤',city:'🏙️',train:'💪',lb:'🏆'};
+function badgesWin(){var RS=RUNST||{},L=RS.ladders;
+  var head=function(have,all){return '<div class="rd-wh"><button class="rd-x" data-act="modal" aria-label="Close">'+ICON('i-x')+'</button><h3>Badges</h3><span class="rd-wcount">'+have+' of '+all+'</span></div>'};
+  if(!L){var mine={};(RS.badges||[]).forEach(function(b){mine[b.id]=1});   // older server: the old list
+    return head(Object.keys(mine).length,BADGES_ALL.length)+'<div class="rd-bdg">'+BADGES_ALL.map(function(b){return '<div class="'+(mine[b[0]]?'':'off')+'"><i>'+(mine[b[0]]?(BADGE_IC[b[0]]||'★'):'🔒')+'</i><b>'+esc(b[1])+'</b></div>'}).join('')+'</div>'}
+  var have=0;L.forEach(function(x){have+=x.tier||0});
+  return head(have,L.length*5)+'<div class="rd-lad">'+L.map(function(x){var nx=x.next,pc=nx?(nx.need>1?Math.min(100,Math.round((x.have||0)/nx.need*100)):0):100,top=null;(x.tiers||[]).forEach(function(t){if(t.on)top=t});
+    return '<div class="lad"><div class="lh"><span class="li">'+(LADDER_IC[x.ladder]||'🏅')+'</span><div><b>'+esc(x.title)+'</b><small>'+esc(top?top.n+': '+top.t:'Not started yet')+'</small></div></div>'+
+      '<div class="tiers">'+x.tiers.map(function(t,i){return '<span class="t'+(i+1)+(t.on?' on':'')+'" title="'+esc(t.t)+'">'+esc(t.n)+'</span>'}).join('')+'</div>'+
+      (nx?'<div class="lp"><i style="width:'+pc+'%"></i></div><div class="ln">'+esc(nx.label)+'</div>':'<div class="ln done">All 5 tiers done 💎</div>')+'</div>'}).join('')+'</div>'}
 ACT.modal=function(k){MODAL=k||null;var y=scrollY;render();scrollTo(0,y)};
 function modalView(){var body=MODAL==='powers'?powersWin():MODAL==='badges'?badgesWin():'';if(!body){MODAL=null;return ''}
   return '<div class="rd-dim" data-rdclose="modal"><div class="rd-win rd-white" role="dialog" aria-modal="true">'+body+'</div></div>'}
-function hubRows(RS){var mineB=(RS.badges||[]).length,up=RS.up||{},uc=RS.upCost||[];var n=POWERS.filter(function(p){return uc[up[p[0]]||0]==null}).length;
-  return '<div class="gh"><h2>Power up</h2><small>🪙 '+(RS.coins||0).toLocaleString()+' coins</small></div><div class="rd-rows"><button class="rd-row rd-hub" data-act="modal|powers"><span class="em">⚡</span>Super Powers<span class="go">'+(n?n+' maxed · ':'')+(POWERS.length+1)+' powers ›</span></button><button class="rd-row rd-hub" data-act="modal|badges"><span class="em">🏅</span>Badges<span class="go">'+mineB+' of '+BADGES_ALL.length+' ›</span></button></div>'}
+function hubRows(RS){var mineB=RS.badgeCount?RS.badgeCount.have:(RS.badges||[]).length,allB=RS.badgeCount?RS.badgeCount.all:BADGES_ALL.length,up=RS.up||{},uc=RS.upCost||[];var n=POWERS.filter(function(p){return uc[up[p[0]]||0]==null}).length;
+  return '<div class="gh"><h2>Power up</h2><small>🪙 '+(RS.coins||0).toLocaleString()+' coins</small></div><div class="rd-rows"><button class="rd-row rd-hub" data-act="modal|powers"><span class="em">⚡</span>Super Powers<span class="go">'+(n?n+' maxed · ':'')+(POWERS.length+1)+' powers ›</span></button><button class="rd-row rd-hub" data-act="modal|badges"><span class="em">🏅</span>Badges<span class="go">'+mineB+' of '+allB+' ›</span></button></div>'}
 /* ---------- binding for the new parts ---------- */
 function rdBind(){
   $$('[data-ptab]').forEach(function(b){b.onclick=function(){goPlan(b.dataset.ptab)}});

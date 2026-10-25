@@ -7,13 +7,15 @@
 //        or on an online workout, max $20 at a time.
 // Everything is saved here (CORNICHE RUN tab) so it cannot be faked on the phone.
 // Action app_cl_run with op: get | save | buy | redeem | shop
+//   save returns earned (total coins) and breakdown { picked, boost, missions, allBonus, wellbe, total }
+//   badges: 12 ladders x 5 tiers (RUN.LADDERS), returned as ladders; the old badges list stays for older phones
 //   lbHide (on get and save): true hides this player from the leaderboards (they still see their own rank)
 // =====================================================================
 var RUN = {
-  HEAD: ['Client ID', 'Name', 'Best score', 'Best m', 'Coins', 'Runs', 'Total m', 'Day', 'Day best', 'Week', 'Week best', 'Upgrades', 'Missions', 'Badges', 'Last run', 'Earned total', 'Updated', 'Cash (cents)', 'Cash earned (cents)', 'XP', 'Owned'],
+  HEAD: ['Client ID', 'Name', 'Best score', 'Best m', 'Coins', 'Runs', 'Total m', 'Day', 'Day best', 'Week', 'Week best', 'Upgrades', 'Missions', 'Badges', 'Last run', 'Earned total', 'Updated', 'Cash (cents)', 'Cash earned (cents)', 'XP', 'Owned', 'Stats'],   // V = Stats (Oct 25): totals for the badge ladders, JSON
   // costs and Wellbe Credit rules come from the settings (Config.gs: game)
   get UP_COST() { return cfg_().game.upCost; },
-  get LIFE_COST() { return cfg_().game.lifeCost; }, get LIFE_MAX() { return cfg_().game.lifeMax; },   // extra life: start a run with 2 hearts
+  get LIFE_COST() { return cfg_().game.lifeCost; }, get LIFE_MAX() { return cfg_().game.lifeMax; },   // extra life: start a run with 2 lives
   get CASH() { return cfg_().game.cash; },
   MISSIONS: [
     { k: 'coins', t: 'Collect 150 coins in one run', s: 'coins', m: 'max', n: 150, r: 200 },
@@ -29,8 +31,30 @@ var RUN = {
     { k: 'mult', t: 'Reach x3 score in a run', s: 'mult', m: 'max', n: 3, r: 200 }
   ],
   ALL_BONUS: 300,
-  BADGES: { first: 'First run', km1: '1 km in one run', km5: '5 km in one run', km10: '10 km in one run', runs10: '10 runs', runs50: '50 runs', runs100: '100 runs',
-    day1: '#1 of the day', week1: '#1 of the week', week10: 'Top 10 of the week', all3: 'All time top 3', all1: 'All time #1', rich: '10,000 coins earned', boost: 'Trained and ran the same day' }
+  CITY_M: 1750,   // metres per city (GAME.cityM in run.html)
+  // the badges before Oct 25. Old ids stay in the Badges cell and each one maps to a tier of a ladder, so nobody loses a badge.
+  OLD: { first: 'First run', km1: '1 km in one run', km5: '5 km in one run', km10: '10 km in one run', runs10: '10 runs', runs50: '50 runs', runs100: '100 runs',
+    day1: '#1 of the day', week1: '#1 of the week', week10: 'Top 10 of the week', all3: 'All time top 3', all1: 'All time #1', rich: '10,000 coins earned', boost: 'Trained and ran the same day' },
+  OLD_MAP: { first: 'play1', km1: 'dist2', km5: 'dist4', km10: 'dist5', runs10: 'play2', runs50: 'play3', runs100: 'play4', rich: 'coin2', boost: 'train1',
+    week10: 'lb1', day1: 'lb2', week1: 'lb3', all3: 'lb4', all1: 'lb5' },
+  TIERS: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+  // 12 ladders x 5 tiers = 60 badges. Badge id = ladder key + tier number (dist1 ... dist5).
+  // u: how the numbers show ('km' is stored in m). The lb tiers are leaderboard moments, not numbers.
+  // Stats column keys: j jumps, s slides, cb best clean m, mi missions done, w WELLBE words, td training days
+  LADDERS: [
+    { k: 'dist', t: 'Distance', d: 'in one run', u: 'm', need: [500, 1000, 2500, 5000, 10000] },
+    { k: 'tkm', t: 'Total distance', d: 'in all your runs', u: 'km', need: [5000, 25000, 100000, 250000, 500000] },
+    { k: 'play', t: 'Runs played', u: 'runs', need: [1, 10, 50, 100, 250] },
+    { k: 'coin', t: 'Coins earned', d: 'in total', u: 'coins', need: [2000, 10000, 50000, 150000, 500000] },
+    { k: 'jump', t: 'Jumps', d: 'in total', u: 'jumps', need: [100, 500, 2000, 5000, 15000] },
+    { k: 'slide', t: 'Slides', d: 'in total', u: 'slides', need: [100, 500, 2000, 5000, 15000] },
+    { k: 'clean', t: 'Clean run', d: 'without tripping', u: 'm', need: [300, 600, 1200, 2500, 5000] },
+    { k: 'miss', t: 'Missions', d: 'done in total', u: 'missions', need: [3, 15, 50, 150, 400] },
+    { k: 'word', t: 'WELLBE words', d: 'completed', u: 'words', need: [1, 3, 10, 25, 50] },
+    { k: 'city', t: 'Cities', d: 'in one run', u: 'cities', need: [2, 3, 4, 6, 8] },
+    { k: 'train', t: 'Training days', d: 'trained at Wellbe and ran', u: 'days', need: [1, 5, 15, 40, 100] },
+    { k: 'lb', t: 'Leaderboard', u: '', ev: ['Top 10 of the week', '#1 of the day', '#1 of the week', 'All time top 3', 'All time #1'] }
+  ]
 };
 
 function clRun_(b, cid) {
@@ -39,6 +63,10 @@ function clRun_(b, cid) {
   if (String(sh.getRange(1, 18).getValue()) !== RUN.HEAD[17] || String(sh.getRange(1, 20).getValue()) !== 'XP') roGuard_();
   if (String(sh.getRange(1, 18).getValue()) !== RUN.HEAD[17]) sh.getRange(1, 18, 1, 2).setValues([[RUN.HEAD[17], RUN.HEAD[18]]]).setFontWeight('bold').setBackground('#1f2a2e').setFontColor('#ffffff');
   if (String(sh.getRange(1, 20).getValue()) !== 'XP') sh.getRange(1, 20, 1, 2).setValues([['XP', 'Owned']]).setFontWeight('bold').setBackground('#1f2a2e').setFontColor('#ffffff');
+  if (sh.getMaxColumns() < RUN.HEAD.length || String(sh.getRange(1, 22).getValue()) !== RUN.HEAD[21]) {   // the Stats column (V), added once
+    roGuard_(); if (sh.getMaxColumns() < RUN.HEAD.length) sh.insertColumnsAfter(sh.getMaxColumns(), RUN.HEAD.length - sh.getMaxColumns());
+    sh.getRange(1, 22).setValue(RUN.HEAD[21]).setFontWeight('bold').setBackground('#1f2a2e').setFontColor('#ffffff');
+  }
   var opIn = String(b.op || 'get'), v, at = -1, src = null;
   if (opIn === 'get' && n > 1) src = runLbSrc_();
   if (src) {
@@ -56,9 +84,12 @@ function clRun_(b, cid) {
     var atRow = at;
     if (opIn === 'get') runLbPut_(v);
   }
-  var rec = at < 0 ? [cid, runName_(cid), 0, 0, 0, 0, 0, '', 0, '', 0, '{}', '{}', '[]', '', 0, '', 0, 0, 0, '{}'] : v[at].slice();
+  var rec = at < 0 ? [cid, runName_(cid), 0, 0, 0, 0, 0, '', 0, '', 0, '{}', '{}', '[]', '', 0, '', 0, 0, 0, '{}', '{}'] : v[at].slice();
+  while (rec.length < RUN.HEAD.length) rec.push('');   // rows from before the Stats column
   rec[17] = Number(rec[17]) || 0; rec[18] = Number(rec[18]) || 0; rec[19] = Number(rec[19]) || 0; var owned = lvMigrate_(runJ_(rec[20], {}), runJ_(rec[11], {}));
-  var up = runJ_(rec[11], {}), ms = runJ_(rec[12], {}), badges = runJ_(rec[13], []);
+  var up = runJ_(rec[11], {}), ms = runJ_(rec[12], {}), badges = runJ_(rec[13], []), st = runJ_(rec[21], {});
+  if (!Array.isArray(badges)) badges = [];
+  if (!st || typeof st !== 'object' || Array.isArray(st)) st = {};
   if (ms.d !== today) ms = { d: today, st: {}, done: [], bonus: 0 };
   var dk = 'D' + today, wk = 'W' + week;   // text keys so Sheets never turns them into dates
   if (String(rec[7]) !== dk) { rec[7] = dk; rec[8] = 0; }
@@ -72,22 +103,24 @@ function clRun_(b, cid) {
     var tk = r.ev || {}, head = tk.t1500 ? 1500 : 0, ran = Math.max(0, m - head);   // meters actually run: a head start never counts for Cash or XP
     if (tk.t1500 && !(Number(owned.t1500) > 0)) throw new Error('No start at 1,500 m ticket left.');
     if (tk.t500 && !(Number(owned.t500) > 0)) throw new Error('No 500 coin run ticket left.');
-    var last = Number(String(rec[14] || '').replace(/^T/, '')) || 0;
+    var last = runLastT_(rec[14]);
     if (secs < 3 || secs > 3600) throw new Error('That run is not possible.');
     if (ran > secs * 17.5 + 30 || coins > ran * 0.35 * (tk.t500 ? 2 : 1) + 80 || score > m * 5 + coins * 5 + 50) throw new Error('That run is not possible.');
     if (last && now.getTime() - last < secs * 700) throw new Error('Slow down, one run at a time.');
     var ev = r.ev || {}, cap = function (k, max) { return Math.max(0, Math.min(Math.round(Number(ev[k]) || 0), max)); };
     var got = { coins: coins, m: m, score: score, jumps: cap('jumps', secs * 3), slides: cap('slides', secs * 3), roof: cap('roof', m), runs: 1, powers: cap('powers', Math.floor(m / 40) + 2), clean: cap('clean', m), mult: cap('mult', 5) };
-    var earned = coins * (boost ? 2 : 1);
+    var earned = coins * (boost ? 2 : 1), bd = { picked: coins, boost: boost ? coins : 0, missions: 0, allBonus: 0, wellbe: 0, total: 0 };
+    var had = runBadgeSet_(badges, rec, st);   // badges already earned before this run (old ids, and totals from before): no "New badge" line for them
+    st.j = (Number(st.j) || 0) + got.jumps; st.s = (Number(st.s) || 0) + got.slides; st.cb = Math.max(Number(st.cb) || 0, got.clean);
     // daily missions
     runToday_(today).forEach(function (mi) {
       var cur = Number(ms.st[mi.k]) || 0;
       ms.st[mi.k] = mi.m === 'sum' ? cur + got[mi.s] : Math.max(cur, got[mi.s]);
-      if (ms.done.indexOf(mi.k) < 0 && ms.st[mi.k] >= mi.n) { ms.done.push(mi.k); earned += mi.r; out.mdone.push({ t: mi.t, r: mi.r }); }
+      if (ms.done.indexOf(mi.k) < 0 && ms.st[mi.k] >= mi.n) { ms.done.push(mi.k); earned += mi.r; bd.missions += mi.r; st.mi = (Number(st.mi) || 0) + 1; out.mdone.push({ t: mi.t, r: mi.r }); }
     });
-    if (ms.done.length >= 3 && !ms.bonus) { ms.bonus = 1; earned += RUN.ALL_BONUS; out.mdone.push({ t: 'All 3 missions done', r: RUN.ALL_BONUS }); }
+    if (ms.done.length >= 3 && !ms.bonus) { ms.bonus = 1; earned += RUN.ALL_BONUS; bd.allBonus = RUN.ALL_BONUS; out.mdone.push({ t: 'All 3 missions done', r: RUN.ALL_BONUS }); }
     var lt = Math.max(0, Math.min(Math.round(Number(ev.letters) || 0), m >= 800 ? 2 : m >= 350 ? 1 : 0));
-    if (lt) { ms.wl = Math.min(7, (Number(ms.wl) || 0) + lt); if (ms.wl >= 7 && !ms.wb) { ms.wb = 1; earned += 1000; out.mdone.push({ t: 'WELLBE complete', r: 1000 }); } }
+    if (lt) { ms.wl = Math.min(7, (Number(ms.wl) || 0) + lt); if (ms.wl >= 7 && !ms.wb) { ms.wb = 1; earned += 1000; bd.wellbe = 1000; st.w = (Number(st.w) || 0) + 1; out.mdone.push({ t: 'WELLBE complete', r: 1000 }); } }
     // Wellbe Credit: $0.10 for a run that passes 2,000 m (once per run), max $0.50 a day
     out.cashEarned = 0;
     if (ran >= RUN.CASH.MIN_M) {   // every player earns Wellbe Credit (clients and guests)
@@ -96,7 +129,7 @@ function clRun_(b, cid) {
     }
     // levels: XP for meters run, missions, and training at the center today (once a day)
     var xpg = Math.floor(ran * LV.XP.PER_M) + out.mdone.length * LV.XP.MISSION;
-    if (!ms.trx && lvTrainedToday_(ops, cid, today)) { ms.trx = 1; xpg += LV.XP.TRAINED; out.trainedXp = LV.XP.TRAINED; }
+    if (!ms.trx && lvTrainedToday_(ops, cid, today)) { ms.trx = 1; xpg += LV.XP.TRAINED; out.trainedXp = LV.XP.TRAINED; st.td = (Number(st.td) || 0) + 1; }   // a training day: trained at the center today and ran
     if (tk.t1500) owned.t1500 = Number(owned.t1500) - 1;
     if (tk.t500) owned.t500 = Number(owned.t500) - 1;
     out.xpGain = xpg; out.levelUps = lvAdd_(rec, owned, xpg);
@@ -108,12 +141,10 @@ function clRun_(b, cid) {
     if (out.record) rec[2] = score;
     rec[3] = Math.max(Number(rec[3]) || 0, m);
     rec[8] = Math.max(Number(rec[8]) || 0, score); rec[10] = Math.max(Number(rec[10]) || 0, score);
-    rec[14] = 'T' + now.getTime(); out.earned = earned; out.boosted = boost;
-    var add = function (id) { if (badges.indexOf(id) < 0) { badges.push(id); out.newBadges.push(RUN.BADGES[id]); } };
-    add('first'); if (m >= 1000) add('km1'); if (m >= 5000) add('km5'); if (m >= 10000) add('km10');
-    if (rec[5] >= 10) add('runs10'); if (rec[5] >= 50) add('runs50'); if (rec[5] >= 100) add('runs100');
-    if (rec[15] >= 10000) add('rich'); if (boost) add('boost');
-    out._badgeAdd = add; changed = true;
+    rec[14] = 'T' + now.getTime() + runCause_(ev, m); out.earned = earned; out.boosted = boost;   // Last run: time, then what ended the run (JSON) to check reports
+    bd.total = earned; out.breakdown = bd;   // picked + boost + missions + allBonus + wellbe = earned
+    out._had = had;
+    out._badgeAdd = true; changed = true;
   }
   if (op === 'shop') { out.bought = lvBuy_(rec, owned, String(b.item || '')); changed = true; }
   if (op === 'buy') {
@@ -144,15 +175,17 @@ function clRun_(b, cid) {
     out.redeemed = amt; changed = true;
   }
 
-  rec[11] = JSON.stringify(up); rec[12] = JSON.stringify(ms); rec[20] = JSON.stringify(owned); rec[16] = Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm');
+  rec[11] = JSON.stringify(up); rec[12] = JSON.stringify(ms); rec[20] = JSON.stringify(owned); rec[21] = JSON.stringify(st); rec[16] = Utilities.formatDate(now, tz, 'dd/MM/yyyy HH:mm');
   if (at < 0) v.push(rec); else v[at] = rec;
   var boards = runBoards_(v, cid, dk, wk);
+  var bset = runBadgeSet_(badges, rec, st);
   if (out._badgeAdd) {
-    var add2 = out._badgeAdd;
-    var T = boards.lists.totals;   // rank badges only count once enough people are playing
-    if (boards.rank.day === 1 && T.day >= 3) add2('day1'); if (boards.rank.week === 1 && T.week >= 5) add2('week1'); if (boards.rank.week && boards.rank.week <= 10 && T.week >= 12) add2('week10');
-    if (boards.rank.all && boards.rank.all <= 3 && T.all >= 10) add2('all3'); if (boards.rank.all === 1 && T.all >= 10) add2('all1');
-    delete out._badgeAdd;
+    var T = boards.lists.totals, lb = function (n) { bset['lb' + n] = 1; };   // rank badges only count once enough people are playing
+    if (boards.rank.week && boards.rank.week <= 10 && T.week >= 12) lb(1); if (boards.rank.day === 1 && T.day >= 3) lb(2); if (boards.rank.week === 1 && T.week >= 5) lb(3);
+    if (boards.rank.all && boards.rank.all <= 3 && T.all >= 10) lb(4); if (boards.rank.all === 1 && T.all >= 10) lb(5);
+    runLadderOrder_().forEach(function (id) { if (bset[id] && !out._had[id]) out.newBadges.push(runBadgeName_(id)); });
+    badges = badges.filter(function (id) { return RUN.OLD[id]; }).concat(runLadderOrder_().filter(function (id) { return bset[id]; }));   // old ids stay, so an older phone still shows them
+    delete out._badgeAdd; delete out._had;
   }
   rec[13] = JSON.stringify(badges);
   if (changed) {
@@ -166,12 +199,65 @@ function clRun_(b, cid) {
     min: RUN.CASH.REDEEM_MIN, max: RUN.CASH.REDEEM_MAX, trained: true, pending: pend || 0 };
   out.missions = runToday_(today).map(function (mi) { return { k: mi.k, t: mi.t, n: mi.n, p: Math.min(mi.n, Number(ms.st[mi.k]) || 0), done: ms.done.indexOf(mi.k) >= 0, r: mi.r, s: mi.s, m: mi.m }; });
   out.allBonus = RUN.ALL_BONUS; out.bonusDone = !!ms.bonus; out.word = Number(ms.wl) || 0; out.wordBonus = 1000;
-  out.badges = badges.map(function (id) { return { id: id, t: RUN.BADGES[id] }; });
+  // badges: the old list with old ids (for phones that still have the older app) · ladders: the 12 ladders with progress (new app)
+  out.badges = Object.keys(RUN.OLD).filter(function (id) { return badges.indexOf(id) > -1 || bset[RUN.OLD_MAP[id]]; }).map(function (id) { return { id: id, t: RUN.OLD[id] }; });
+  out.ladders = runLadders_(bset, rec, st); out.badgeCount = { have: Object.keys(bset).length, all: RUN.LADDERS.length * 5 };
   out.boost = boost; out.boards = boards.lists; out.rank = boards.rank; out.lv = lvOut_(rec, owned); out.lbHide = !!owned.lbHide;
   return out;
 }
 
 function runJ_(s, d) { return nutJ_(s, d); }   // safe JSON read (Nutrition.gs)
+// ---------- BADGE LADDERS ----------
+// the number a ladder counts, from the row and the Stats column
+function runLadderVal_(L, rec, st) {
+  var bm = Number(rec[3]) || 0;
+  return { dist: bm, tkm: Number(rec[6]) || 0, play: Number(rec[5]) || 0, coin: Number(rec[15]) || 0, jump: Number(st.j) || 0, slide: Number(st.s) || 0,
+    clean: Number(st.cb) || 0, miss: Number(st.mi) || 0, word: Number(st.w) || 0, city: bm > 0 ? Math.floor(bm / RUN.CITY_M) + 1 : 0, train: Number(st.td) || 0 }[L.k] || 0;
+}
+// every badge id earned: saved ids, old ids mapped to their tier, and tiers the totals already reach (a higher tier fills the lower ones)
+function runBadgeSet_(badges, rec, st) {
+  var set = {};
+  (badges || []).forEach(function (id) { id = String(id); if (RUN.OLD_MAP[id]) set[RUN.OLD_MAP[id]] = 1; else if (/^[a-z]+[1-5]$/.test(id)) set[id] = 1; });
+  RUN.LADDERS.forEach(function (L) {
+    if (!L.need) return;
+    var v = runLadderVal_(L, rec, st), top = 0;
+    for (var i = 0; i < 5; i++) if (v >= L.need[i] || set[L.k + (i + 1)]) top = i + 1;
+    for (var j = 1; j <= top; j++) set[L.k + j] = 1;
+  });
+  return set;
+}
+function runLadderOrder_() { var o = []; RUN.LADDERS.forEach(function (L) { for (var i = 1; i <= 5; i++) o.push(L.k + i); }); return o; }
+function runNum_(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function runKm_(n) { var k = n / 1000; return k >= 100 || k === Math.floor(k) ? runNum_(Math.floor(k)) : (Math.floor(k * 10) / 10).toFixed(1); }
+function runAmt_(L, n) { return L.u === 'km' ? runKm_(n) + ' km' : runNum_(n) + ' ' + (n === 1 ? L.u.replace(/s$/, '') : L.u); }   // 2,500 m · 5 km · 40 jumps
+function runTierText_(L, i) { return L.ev ? L.ev[i] : runAmt_(L, L.need[i]) + (L.d ? ' ' + L.d : ''); }
+function runBadgeName_(id) {
+  var k = id.slice(0, -1), i = Number(id.slice(-1)) - 1, L = RUN.LADDERS.filter(function (x) { return x.k === k; })[0];
+  return L ? L.t + ' ' + RUN.TIERS[i] + ': ' + runTierText_(L, i) : id;
+}
+// [{ ladder, title, tier (how many of 5), have (the number now), tiers: [{ n, t, on }], next: { need, label } or null at the top }]
+function runLadders_(set, rec, st) {
+  return RUN.LADDERS.map(function (L) {
+    var tiers = [], n = 0, nx = -1;
+    for (var i = 0; i < 5; i++) { var on = !!set[L.k + (i + 1)]; if (on) n++; else if (nx < 0) nx = i; tiers.push({ n: RUN.TIERS[i], t: runTierText_(L, i), on: on }); }
+    var have = L.ev ? n : runLadderVal_(L, rec, st), next = null;
+    if (nx > -1) {
+      if (L.ev) next = { need: 1, label: 'Next: ' + L.ev[nx] };
+      else { var h = Math.min(have, L.need[nx]); next = { need: L.need[nx], label: (L.u === 'km' ? runKm_(h) : runNum_(h)) + ' of ' + runAmt_(L, L.need[nx]) }; }
+    }
+    return { ladder: L.k, title: L.t, tier: n, have: have, tiers: tiers, next: next };
+  });
+}
+// the Last run cell: 'T' + time, then a space and what ended the run as JSON (older cells are just 'T' + time)
+function runLastT_(cell) { var m = /^T(\d+)/.exec(String(cell || '')); return m ? Number(m[1]) : 0; }
+function runCause_(ev, m) {
+  if (!ev || !ev.cause) return '';
+  var w = function (x, n) { return String(x == null ? '' : x).replace(/[\u0000-\u001f]/g, '').slice(0, n); }, id = function (x) { return w(x, 24).replace(/[^A-Za-z0-9_]/g, ''); };
+  var o = { cause: id(ev.cause), text: w(ev.causeText, 90), lane: Math.max(0, Math.min(3, Math.round(Number(ev.lane) || 0))), m: Math.max(0, Math.round(Number(ev.atM) || m || 0)), hits: [] };
+  if (Array.isArray(ev.hits)) ev.hits.slice(-5).forEach(function (h) { if (h) o.hits.push({ k: id(h.k), m: Math.max(0, Math.round(Number(h.m) || 0)) }); });
+  return ' ' + JSON.stringify(o);
+}
+
 // LEADERBOARD ROWS in the cache (1 minute): opening the game screen no longer reads every player's full row.
 // Any write to CORNICHE RUN changes the version, so the next screen reads fresh rows.
 function runLbVer_() { return verGet_(['run']).run; }

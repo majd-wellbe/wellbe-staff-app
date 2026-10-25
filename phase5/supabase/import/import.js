@@ -4,7 +4,6 @@
 // Usage:
 //   node import.js --in <folder of CSV files> --out import.sql --report report.md [--gs <folder with the .gs files>]
 // Put one CSV per tab in the folder (File > Download > CSV in Google Sheets, one tab at a time).
-// Or put the whole spreadsheets there as .xlsx (File > Download > Microsoft Excel): every tab is read (xlsx2csv.js).
 // File names only need to END with the tab name: "Wellbe Operations - PACKAGES.csv", "SESSIONS 1_3.csv" are fine.
 // Old rows are read with the Apps Script's own functions (appSessObj_, appYmd_, cfgKind_, appTrainer_),
 // so every row means exactly what it means in the live app today.
@@ -15,8 +14,8 @@ const fs = require('fs'), path = require('path'), crypto = require('crypto');
 
 // ---------- args ----------
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].replace(/^--/, '')] = process.argv[i + 1];
-let IN = A.in; const OUT = A.out || 'import.sql', REPORT = A.report || 'import-report.md';
-const GS = A.gs || (fs.existsSync(path.join(__dirname, '../tests/.gs/Config.gs')) ? path.join(__dirname, '../tests/.gs') : path.join(__dirname, '../../server'));
+const IN = A.in, OUT = A.out || 'import.sql', REPORT = A.report || 'import-report.md';
+const GS = A.gs || path.join(__dirname, '../tests/.gs');
 
 // ---------- load the Apps Script rules (with the node mock of the Google services) ----------
 function loadGs(dir) {
@@ -85,7 +84,7 @@ function run(dir, gsDir) {
   const warn = m => P.warn.push(m), count = (k, n) => { P.counts[k] = (P.counts[k] || 0) + (n || 1); };
   const ins = (table, cols, vals) => sql.push(`insert into public.${table} (${cols.join(', ')}) values (${vals.map(v => v && v.__raw ? v.__raw : q(v)).join(', ')});`);
   const raw = s => ({ __raw: s });
-  const byLegacy = { client: {}, pkg: {}, sess: {}, lead: {}, req: {} }, guestLead = [];
+  const byLegacy = { client: {}, pkg: {}, sess: {}, lead: {}, req: {} };
   const seen = (map, id, what) => { if (map[id]) { warn(`Duplicate ${what} ${id}: second copy renamed ${id}-dup`); return id + '-dup'; } return id; };
 
   // ---- CLIENTS (Client Portal) ----
@@ -113,9 +112,6 @@ function run(dir, gsDir) {
     ins('clients', ['id', 'legacy_id', 'kind', 'name', 'email', 'phone', 'created_at', 'verified_at'],
       [u, id, 'guest', S(r[2]) || id, clEmail_(r[1]) || null, phone(r[3], cc), stamp(r[4]) || raw('now()'), yes(r[5]) ? stamp(r[4]) || raw('now()') : null]);
     if (S(r[8])) count('guests already converted to a client (kept as history)');
-    const asked = json(r[7], null); if (S(r[7]) && asked === null) warn(`APP GUESTS ${id}: "Asked" is not valid JSON, saved empty`);
-    if (asked) sql.push(`update public.clients set guest_asked = ${qj(asked)} where id = ${q(u)};`);
-    if (S(r[6])) guestLead.push([u, S(r[6])]);
     count('guests');
   });
   const cid = (legacy, where) => { const id = S(legacy).toUpperCase(); if (!id) return null; const u = byLegacy.client[id]; if (!u) warn(`${where}: unknown client ${id}, row skipped`); return u || null; };
@@ -126,7 +122,6 @@ function run(dir, gsDir) {
     const u = cid(r[0], 'CLIENT NOTES row ' + (i + 2)); if (!u) return;
     ins('client_notes', ['client_id', 'always_show', 'program', 'updated_by'], [u, S(r[2]), S(r[3]), S(r[4]) || null]);
     if (yes(r[6])) sql.push(`update public.clients set is_mel = true where id = ${q(u)};`);
-    if (num(r[7])) sql.push(`update public.clients set discount_pct = ${num(r[7])} where id = ${q(u)};`);
     count('client notes');
   });
 
@@ -183,7 +178,6 @@ function run(dir, gsDir) {
   // used counts: the database recounts from the Y flags; differences are reported
   // Used is kept as it is in the sheet (what clients see today). The Apps Script recounts a package from its Y flags
   // each time one of its sessions is marked, and so does the database: packages where the two differ are listed at the end.
-  sql.push(`drop table if exists _used_flags;`);
   sql.push(`create temp table _used_flags as select p.id, p.legacy_id, p.used, (select count(*) from public.session_clients sc where sc.package_id = p.id and sc.pass = 'Y')::int as flags from public.packages p;`);
 
   // ---- LEADS W40 ----
@@ -198,7 +192,6 @@ function run(dir, gsDir) {
     if (S(r[L.PKG]) && !byLegacy.pkg[S(r[L.PKG])]) warn(`LEADS ${id}: package ${S(r[L.PKG])} not found`);
     count('leads');
   });
-  guestLead.forEach(([u, l]) => { if (byLegacy.lead[l]) sql.push(`update public.clients set lead_id = ${q(byLegacy.lead[l])} where id = ${q(u)};`); else warn(`APP GUESTS: lead ${l} not found`); });
 
   // ---- CLIENT REQUESTS ----
   const rq = tab('CLIENT REQUESTS');
@@ -226,7 +219,7 @@ function run(dir, gsDir) {
   const gr = tab('CORNICHE RUN');
   if (gr) gr.slice(1).forEach((r, i) => {
     const u = cid(r[0], 'CORNICHE RUN row ' + (i + 2)); if (!u) return;
-    const dk = S(r[7]).replace(/^D/, ''), wk = S(r[9]).replace(/^W/, ''), last = Number(S(r[14]).replace(/^T/, '')) || 0;
+    const dk = S(r[7]).replace(/^D/, ''), wk = S(r[9]).replace(/^W/, ''), last = Number((/^T(\d+)/.exec(S(r[14])) || [])[1]) || 0;   // 'T' + time, then maybe the cause JSON
     ins('game_players', ['client_id', 'name', 'best_score', 'best_m', 'coins', 'runs', 'total_m', 'day_key', 'day_best', 'week_key', 'week_best', 'upgrades', 'missions', 'badges', 'last_run_at', 'earned_total', 'credit_cents', 'credit_earned_cents', 'xp', 'owned', 'created_at'],
       [u, S(r[1]), num(r[2]) || 0, num(r[3]) || 0, Math.max(0, num(r[4]) || 0), num(r[5]) || 0, num(r[6]) || 0, /^\d{4}-\d{2}-\d{2}$/.test(dk) ? dk : null, num(r[8]) || 0,
        /^\d{4}-\d{2}-\d{2}$/.test(wk) ? wk : null, num(r[10]) || 0, raw(qj(json(r[11], {}))), raw(qj(json(r[12], {}))), raw(qj(json(r[13], []))),
@@ -259,7 +252,7 @@ function run(dir, gsDir) {
   const gl = tab('CLIENT GOALS');
   if (gl) gl.slice(1).forEach((r, i) => {
     const u = cid(r[0], 'CLIENT GOALS row ' + (i + 2)); if (!u) return;
-    ins('client_goals', ['client_id', 'promise', 'key1', 'key2', 'key3', 'made_by', 'updated_at'], [u, S(r[2]), S(r[3]), S(r[4]), S(r[5]), S(r[7]), stamp(r[6]) || raw('now()')]);
+    ins('client_goals', ['client_id', 'promise', 'key1', 'key2', 'key3', 'made_by'], [u, S(r[2]), S(r[3]), S(r[4]), S(r[5]), S(r[7])]);
     count('goals');
   });
 
@@ -268,14 +261,14 @@ function run(dir, gsDir) {
   if (wp) wp.slice(1).forEach((r, i) => {
     const u = cid(r[0], 'WORKOUT PROGRAMS row ' + (i + 2)); if (!u) return; const pj = json(r[2], null);
     if (S(r[2]) && pj === null) warn(`WORKOUT PROGRAMS ${S(r[0])}: program is not valid JSON, saved empty`);
-    ins('wo_programs', ['client_id', 'program', 'version', 'updated_by', 'updated_at'], [u, raw(qj(pj || {})), num(r[5]) || 1, S(r[4]), stamp(r[3]) || raw('now()')]);
+    ins('wo_programs', ['client_id', 'program', 'version', 'updated_by'], [u, raw(qj(pj || {})), num(r[5]) || 1, S(r[4])]);
     count('workout programs');
   });
   const wlog = tab('WORKOUT LOG');
   if (wlog) wlog.slice(1).forEach((r, i) => {
     const u = cid(r[2], 'WORKOUT LOG row ' + (i + 2)); if (!u) return;
-    const sets = S(r[7]).replace(/^'/, '').split(/[,;]\s*/).filter(Boolean).map(x => { const m = /([\d.]+)\s*x\s*(\d+)/i.exec(x); return m ? { kg: Number(m[1]), reps: Number(m[2]) } : { raw: x }; });
-    ins('wo_logs', ['logged_at', 'day', 'client_id', 'session_id', 'session_ref', 'workout', 'exercise', 'sets', 'by_who'], [stamp(r[0]) || raw('now()'), ymd(r[1]) || raw('current_date'), u, byLegacy.sess[S(r[4])] || null, S(r[4]) || null, S(r[5]), S(r[6]) || '?', raw(qj(sets)), S(r[8])]);
+    const sets = S(r[7]).split(/[,;]\s*/).filter(Boolean).map(x => { const m = /([\d.]+)\s*x\s*(\d+)/i.exec(x); return m ? { kg: Number(m[1]), reps: Number(m[2]) } : { raw: x }; });
+    ins('wo_logs', ['logged_at', 'day', 'client_id', 'session_id', 'workout', 'exercise', 'sets', 'by_who'], [stamp(r[0]) || raw('now()'), ymd(r[1]) || raw('current_date'), u, byLegacy.sess[S(r[4])] || null, S(r[5]), S(r[6]) || '?', raw(qj(sets)), S(r[8])]);
     count('workout log lines');
   });
   const body = tab('CLIENT BODY');
@@ -284,26 +277,12 @@ function run(dir, gsDir) {
     ins('client_body', ['day', 'client_id', 'weight_kg', 'height_cm', 'birth_year', 'sex', 'by_who'], [ymd(r[0]) || raw('current_date'), u, num(r[3]), num(r[4]), num(r[5]), S(r[6]) || null, S(r[7])]);
     count('body lines');
   });
-  const wd = tab('WORKOUT DECISIONS'), wdSeen = {};
-  if (wd) wd.slice(1).forEach((r, i) => {
-    const sid = byLegacy.sess[S(r[0])], u = cid(r[1], 'WORKOUT DECISIONS row ' + (i + 2)); if (!u) return;
-    if (!sid) { warn(`WORKOUT DECISIONS row ${i + 2}: session ${S(r[0])} not found, skipped`); return; }
-    const k = sid + u; if (wdSeen[k]) return; wdSeen[k] = 1;
-    ins('wo_decisions', ['session_id', 'client_id', 'choice', 'missed_workout', 'decided_by', 'decided_at'], [sid, u, S(r[2]) === 'catch' ? 'catch' : 'keep', S(r[3]), S(r[4]), stamp(r[5]) || raw('now()')]);
-    count('workout decisions');
-  });
-  const wx = tab('EXERCISES'), wxSeen = {};
-  if (wx) wx.slice(1).forEach(r => {
-    const g = S(r[0]), e = S(r[1]); if (!g || !e || wxSeen[g + '|' + e]) return; wxSeen[g + '|' + e] = 1;
-    ins('wo_exercises', ['group_name', 'exercise', 'added_by', 'day'], [g, e, S(r[2]), ymd(r[3])]);
-    count('added exercises');
-  });
 
   // ---- NUTRITION ----
   const ni = tab('NUTRITION INTAKE');
   if (ni) ni.slice(1).forEach((r, i) => {
     const u = cid(r[0], 'NUTRITION INTAKE row ' + (i + 2)); if (!u) return;
-    ins('nutrition_intake', ['client_id', 'answers', 'step', 'done', 'version', 'target_kg', 'body_comp', 'flags', 'updated_at'], [u, raw(qj(json(r[2], {}))), num(r[3]) || 0, yes(r[4]), num(r[5]) || 0, num(r[6]), raw(qj(json(r[7], null))), S(r[8]), stamp(r[9]) || raw('now()')]);
+    ins('nutrition_intake', ['client_id', 'answers', 'step', 'done', 'version', 'target_kg', 'body_comp', 'flags'], [u, raw(qj(json(r[2], {}))), num(r[3]) || 0, yes(r[4]), num(r[5]) || 1, num(r[6]), raw(qj(json(r[7], null))), S(r[8])]);
     count('nutrition intakes');
   });
   const np = tab('NUTRITION PLANS');
@@ -340,6 +319,14 @@ function run(dir, gsDir) {
   });
 
   // ---- MONEY OUT and POS ----
+  const ex = tab('EXPENSES');
+  if (ex) ex.slice(1).forEach((r, i) => {
+    if (!S(r[0]) && !S(r[2])) return; const a = cents(r[4]);
+    if (a === null) { warn(`EXPENSES ${S(r[0])}: amount "${S(r[4])}" not a number, skipped`); return; }
+    if (!ymd(r[1])) { warn(`EXPENSES ${S(r[0])}: no date, skipped`); return; }
+    ins('expenses', ['day', 'what', 'category', 'amount_cents', 'by_who'], [ymd(r[1]), S(r[2]) || '?', S(r[3]), a, S(r[5])]);
+    count('expenses');
+  });
   const re = tab('RECURRING EXPENSES');
   if (re) re.slice(1).forEach(r => {
     if (!S(r[0])) return;
@@ -347,62 +334,22 @@ function run(dir, gsDir) {
       [S(r[0]), S(r[1]), S(r[2]), cents(r[3]) || 0, S(r[4]) || 'Monthly', ymd(r[5]) || raw('current_date'), ymd(r[6]), S(r[7]) === '' ? true : yes(r[7]), ymd(r[8])]);
     count('recurring expenses');
   });
-  const ex = tab('EXPENSES'), exSeen = {};
-  if (ex) ex.slice(1).forEach((r, i) => {
-    if (!S(r[0]) && !S(r[2])) return; const a = cents(r[4]);
-    if (a === null) { warn(`EXPENSES ${S(r[0])}: amount "${S(r[4])}" not a number, skipped`); return; }
-    if (!ymd(r[1])) { warn(`EXPENSES ${S(r[0])}: no date, skipped`); return; }
-    let lid = S(r[0]) || null; if (lid && exSeen[lid]) { warn(`EXPENSES: ID ${lid} used twice, second copy has no ID`); lid = null; } if (lid) exSeen[lid] = 1;
-    const rec = (/\b(REC-\d+)/i.exec(S(r[6])) || [])[1];
-    ins('expenses', ['legacy_id', 'day', 'what', 'category', 'amount_cents', 'by_who', 'recurring_id'],
-      [lid, ymd(r[1]), S(r[2]) || '?', S(r[3]), a, S(r[5]), rec ? raw(`(select id from public.recurring_expenses where legacy_id = ${q(rec.toUpperCase())})`) : null]);
-    count('expenses');
-  });
   const inv = tab('POS INVENTORY'), invSeen = {};
   if (inv) inv.slice(1).forEach(r => {
     const item = S(r[3]); if (!item || invSeen[item]) return; invSeen[item] = 1;
-    ins('inventory', ['item', 'price_cents', 'stock', 'cost_cents', 'sold'], [item, cents(r[10]) || 0, num(r[8]) || 0, cents(r[5]), num(r[7]) || 0]);
+    ins('inventory', ['item', 'price_cents', 'stock', 'cost_cents'], [item, 0, num(r[8]) || 0, cents(r[5])]);
     count('inventory items');
   });
-  const pos = tab('POS SALES'), posSeen = {};
+  if (inv) warn('POS INVENTORY: the sale price column is not known from the code; prices were set to 0, fill them in after the import.');
+  const pos = tab('POS SALES');
   if (pos) pos.slice(1).forEach(r => {
     if (!S(r[0])) return;
-    let lid = S(r[0]); if (posSeen[lid]) { warn(`POS SALES: ID ${lid} used twice, second copy has no ID`); lid = null; } else posSeen[lid] = 1;
-    const by = (/via app \((.*)\)/.exec(S(r[9])) || [])[1] || null;
-    ins('pos_sales', ['legacy_id', 'at', 'item', 'to_name', 'buyer', 'qty', 'amount_cents', 'cost_cents', 'profit_cents', 'status', 'note', 'by_who'],
-      [lid, stamp(r[1]) || raw('now()'), S(r[2]), S(r[3]), S(r[3]) || null, num(r[4]) || 1, cents(r[5]) || 0, cents(r[6]), cents(r[7]) || 0, S(r[8]) || null, S(r[9]) || null, by]);
+    ins('pos_sales', ['at', 'item', 'qty', 'amount_cents', 'method', 'by_who'], [stamp(r[1]) || raw('now()'), S(r[2]), num(r[4]) || 1, cents(r[5]) || 0, S(r[8]), S(r[9])]);
     count('POS sales');
   });
 
-  // ---- SESSION NOTES, PHYSIO INTAKE, CLIENT FILES, profile photos ----
-  const sn = tab('SESSION NOTES');
-  if (sn) sn.slice(1).forEach((r, i) => {
-    if (!S(r[2])) return; const u = cid(r[2], 'SESSION NOTES row ' + (i + 2)); if (!u) return;
-    ins('session_notes', ['day', 'session_id', 'client_id', 'by_staff', 'note', 'logged_at'], [ymd(r[0]) || raw('current_date'), byLegacy.sess[S(r[1])] || null, u, S(r[4]), S(r[5]), stamp(r[6]) || raw('now()')]);
-    count('session notes');
-  });
-  const pi = tab('PHYSIO INTAKE');
-  if (pi) pi.slice(1).forEach((r, i) => {
-    if (!S(r[1])) return; const u = cid(r[1], 'PHYSIO INTAKE row ' + (i + 2)); if (!u) return;
-    ins('physio_intake', ['day', 'client_id', 'by_staff', 'body_area', 'complaint', 'pain_now', 'red_flags', 'impression', 'plan', 'form'],
-      [ymd(r[0]) || raw('current_date'), u, S(r[3]), S(r[4]), S(r[5]), num(r[6]), S(r[7]), S(r[8]), S(r[9]), raw(qj(json(r[10], {}) || {}))]);
-    count('physio intakes');
-  });
-  const cf = tab('CLIENT FILES');
-  if (cf) cf.slice(1).forEach((r, i) => {
-    if (!S(r[0])) return; const u = cid(r[0], 'CLIENT FILES row ' + (i + 2)); if (!u) return;
-    ins('client_files', ['client_id', 'file_name', 'storage_path', 'file_type', 'uploaded_by', 'day'], [u, S(r[2]) || '?', S(r[3]), S(r[4]), S(r[5]), ymd(r[6]) || raw('current_date')]);
-    count('client files (links kept as they are)');
-  });
-  const ph = tab('CLIENT PROFILE');
-  if (ph) ph.slice(1).forEach((r, i) => {
-    if (!S(r[0]) || !S(r[2])) return; const u = cid(r[0], 'CLIENT PROFILE row ' + (i + 2)); if (!u) return;
-    sql.push(`insert into public.client_photos (client_id, storage_path) values (${q(u)}, ${q(S(r[2]))}) on conflict (client_id) do update set storage_path = excluded.storage_path;`);
-    count('profile photos');
-  });
-
   // ---- what is NOT imported automatically ----
-  if (cf && cf.length > 1) P.info.push(`CLIENT FILES: ${cf.length - 1} rows imported with their Google Drive links. The files stay in Drive until they are moved to Storage.`);
+  ['CLIENT PROFILE', 'CLIENT FILES', 'PHYSIO INTAKE', 'SESSION NOTES'].forEach(n => { const t = tab(n); if (t && t.length > 1) P.info.push(`${n}: ${t.length - 1} rows NOT imported by this script (photos and files must be uploaded to Storage first, see README).`); });
 
   return { sql, P };
 }
@@ -410,8 +357,6 @@ function run(dir, gsDir) {
 // ---------- write ----------
 if (require.main === module) {
   if (!IN) { console.error('Usage: node import.js --in <csv folder> --out import.sql --report report.md [--gs <.gs folder>]'); process.exit(1); }
-  const xl = fs.readdirSync(IN).filter(f => /\.xlsx$/i.test(f));
-  if (xl.length) { const dir = path.join(IN, '_csv'); fs.rmSync(dir, { recursive: true, force: true }); require('./xlsx2csv.js').convert(xl.map(f => path.join(IN, f)), dir); IN = dir; console.log(xl.length + ' xlsx files read'); }
   const { sql, P } = run(IN, GS);
   fs.writeFileSync(OUT, ['-- generated by import/import.js on ' + new Date().toISOString(), 'begin;', 'set constraints all immediate;'].concat(sql, [
     `-- packages whose Used in the sheet is not the number of Y flags (check them; the next mark recounts from the flags)`,

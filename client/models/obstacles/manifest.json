@@ -1,0 +1,791 @@
+[
+ {
+  "id": "cone",
+  "file": "cone.glb",
+  "role": "jump",
+  "replaces": "traffic cone",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/construction-cone.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 34916,
+  "bbox": {
+   "w": 0.6,
+   "h": 0.75,
+   "d": 0.6
+  },
+  "scale": 1,
+  "baked_scale": 8,
+  "forward": "none (radial)",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "cone_line",
+  "file": "cone_line.glb",
+  "role": "jump",
+  "replaces": "cone line",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/construction-cone.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/construction-cone.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/construction-cone.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 38648,
+  "bbox": {
+   "w": 2.52,
+   "h": 0.75,
+   "d": 0.6
+  },
+  "scale": 1,
+  "baked_scale": 8,
+  "forward": "none (row spans X)",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "jersey_barrier",
+  "file": "jersey_barrier.glb",
+  "role": "jump",
+  "replaces": "road barrier / jersey barrier",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/construction-barrier.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 34600,
+  "bbox": {
+   "w": 1.39,
+   "h": 0.81,
+   "d": 0.84
+  },
+  "scale": 1,
+  "baked_scale": 6.2,
+  "forward": "long side spans X",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "hurdle",
+  "file": "hurdle.glb",
+  "role": "jump",
+  "replaces": "hurdle",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/construction-fence.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 36252,
+  "bbox": {
+   "w": 1.88,
+   "h": 0.89,
+   "d": 0.37
+  },
+  "scale": 1,
+  "baked_scale": 5,
+  "forward": "spans X",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "low_fence",
+  "file": "low_fence.glb",
+  "role": "jump",
+  "replaces": "low fence",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/nature-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/nature-kit/fence-simple.glb"
+  ],
+  "pack": "Kenney Nature Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 4156,
+  "bbox": {
+   "w": 2.4,
+   "h": 0.83,
+   "d": 0.17
+  },
+  "scale": 1,
+  "baked_scale": 2.4,
+  "forward": "spans X",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "crate",
+  "file": "crate.glb",
+  "role": "jump",
+  "replaces": "crates",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/pirate-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/pirate-kit/crate.glb"
+  ],
+  "pack": "Kenney Pirate Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 37216,
+  "bbox": {
+   "w": 0.86,
+   "h": 0.62,
+   "d": 1.05
+  },
+  "scale": 1,
+  "baked_scale": 0.8,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "crate_bottles",
+  "file": "crate_bottles.glb",
+  "role": "jump",
+  "replaces": "crates (variant) / cooler box stand-in",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/pirate-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/pirate-kit/crate-bottles.glb"
+  ],
+  "pack": "Kenney Pirate Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 50460,
+  "bbox": {
+   "w": 0.86,
+   "h": 0.85,
+   "d": 1.05
+  },
+  "scale": 1,
+  "baked_scale": 0.8,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "cardboard_box",
+  "file": "cardboard_box.glb",
+  "role": "jump",
+  "replaces": "crates (cardboard variant)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/car-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/car-kit/box.glb"
+  ],
+  "pack": "Kenney Car Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 42492,
+  "bbox": {
+   "w": 0.79,
+   "h": 0.79,
+   "d": 0.79
+  },
+  "scale": 1,
+  "baked_scale": 1.1,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "banner_arch",
+  "file": "banner_arch.glb",
+  "role": "slide",
+  "replaces": "banner/sign arch between two poles",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-commercial",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-commercial/detail-awning.glb"
+  ],
+  "pack": "Kenney City Kit (Commercial)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 32764,
+  "bbox": {
+   "w": 2.6,
+   "h": 2.6,
+   "d": 0.96
+  },
+  "scale": 1,
+  "baked_scale": 6.5,
+  "forward": "spans X, face +z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "sign_gantry",
+  "file": "sign_gantry.glb",
+  "role": "slide",
+  "replaces": "sign arch (highway gantry variant)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/sign-highway.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 38940,
+  "bbox": {
+   "w": 3.6,
+   "h": 2.55,
+   "d": 0.48
+  },
+  "scale": 1,
+  "baked_scale": 3.6,
+  "forward": "spans X, signs face +z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "flags_string",
+  "file": "flags_string.glb",
+  "role": "slide",
+  "replaces": "flags string (hang between poles at ~1.6 m; string only, no poles)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/holiday-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/holiday-kit/lights-colored.glb"
+  ],
+  "pack": "Kenney Holiday Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 78548,
+  "bbox": {
+   "w": 3.03,
+   "h": 0.95,
+   "d": 0.19
+  },
+  "scale": 1,
+  "baked_scale": 3,
+  "forward": "spans X",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "taxi",
+  "file": "taxi.glb",
+  "role": "dodge",
+  "replaces": "taxi car",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/car-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/car-kit/taxi.glb"
+  ],
+  "pack": "Kenney Car Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 91780,
+  "bbox": {
+   "w": 2.1,
+   "h": 2.1,
+   "d": 3.85
+  },
+  "scale": 1,
+  "baked_scale": 1.4,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "delivery_truck",
+  "file": "delivery_truck.glb",
+  "role": "dodge",
+  "replaces": "small delivery van (box truck)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/car-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/car-kit/delivery.glb"
+  ],
+  "pack": "Kenney Car Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 106648,
+  "bbox": {
+   "w": 2.1,
+   "h": 2.31,
+   "d": 4.55
+  },
+  "scale": 1,
+  "baked_scale": 1.4,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "van",
+  "file": "van.glb",
+  "role": "dodge",
+  "replaces": "small delivery van",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/car-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/car-kit/van.glb"
+  ],
+  "pack": "Kenney Car Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 91840,
+  "bbox": {
+   "w": 2.1,
+   "h": 1.89,
+   "d": 3.85
+  },
+  "scale": 1,
+  "baked_scale": 1.4,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "food_cart",
+  "file": "food_cart.glb",
+  "role": "dodge",
+  "replaces": "food cart / ka3ke bread cart",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/fantasy-town-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/fantasy-town-kit/cart-high.glb"
+  ],
+  "pack": "Kenney Fantasy Town Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 62656,
+  "bbox": {
+   "w": 1.43,
+   "h": 1.38,
+   "d": 2.22
+  },
+  "scale": 1,
+  "baked_scale": 1.6,
+  "forward": "+z (long axis Z)",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "hand_cart",
+  "file": "hand_cart.glb",
+  "role": "dodge",
+  "replaces": "street cart / donkey cart (cart only, no animal)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/fantasy-town-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/fantasy-town-kit/cart.glb"
+  ],
+  "pack": "Kenney Fantasy Town Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 52644,
+  "bbox": {
+   "w": 1.43,
+   "h": 0.86,
+   "d": 2.14
+  },
+  "scale": 1,
+  "baked_scale": 1.6,
+  "forward": "+z (long axis Z)",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "fish_stall",
+  "file": "fish_stall.glb",
+  "role": "dodge",
+  "replaces": "fish stand / market stall / kiosk",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/fantasy-town-kit | https://kenney.nl/assets/survival-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/fantasy-town-kit/stall-red.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/survival-kit/fish-large.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/survival-kit/fish-large.glb"
+  ],
+  "pack": "Kenney Fantasy Town Kit, Kenney Survival Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 92904,
+  "bbox": {
+   "w": 1.8,
+   "h": 2.23,
+   "d": 1.8
+  },
+  "scale": 1,
+  "baked_scale": 1.8,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "veg_stall",
+  "file": "veg_stall.glb",
+  "role": "dodge",
+  "replaces": "vegetable stall",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/fantasy-town-kit | https://kenney.nl/assets/mini-market",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/fantasy-town-kit/stall-green.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/mini-market/display-fruit.glb"
+  ],
+  "pack": "Kenney Fantasy Town Kit, Kenney Mini Market",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 99392,
+  "bbox": {
+   "w": 1.8,
+   "h": 2.23,
+   "d": 1.8
+  },
+  "scale": 1,
+  "baked_scale": 1.8,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "bench",
+  "file": "bench.glb",
+  "role": "dodge",
+  "replaces": "bench",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/holiday-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/holiday-kit/bench.glb"
+  ],
+  "pack": "Kenney Holiday Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 67740,
+  "bbox": {
+   "w": 1.79,
+   "h": 1.17,
+   "d": 1.01
+  },
+  "scale": 1,
+  "baked_scale": 1.6,
+  "forward": "+z (seat front)",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "trash_bin",
+  "file": "trash_bin.glb",
+  "role": "dodge",
+  "replaces": "trash bin",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/furniture-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/furniture-kit/trashcan.glb"
+  ],
+  "pack": "Kenney Furniture Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 4908,
+  "bbox": {
+   "w": 0.48,
+   "h": 0.98,
+   "d": 0.54
+  },
+  "scale": 1,
+  "baked_scale": 2.3,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "dumpster",
+  "file": "dumpster.glb",
+  "role": "dodge",
+  "replaces": "trash bins (large)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/dumpster.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 39596,
+  "bbox": {
+   "w": 1.65,
+   "h": 1.26,
+   "d": 2.22
+  },
+  "scale": 1,
+  "baked_scale": 6,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "cafe_table",
+  "file": "cafe_table.glb",
+  "role": "dodge",
+  "replaces": "cafe table with chairs",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/furniture-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/furniture-kit/table-round.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/furniture-kit/chair.glb",
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/furniture-kit/chair.glb"
+  ],
+  "pack": "Kenney Furniture Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 13712,
+  "bbox": {
+   "w": 1.44,
+   "h": 1.13,
+   "d": 2.72
+  },
+  "scale": 1,
+  "baked_scale": 1.6,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "beach_umbrella",
+  "file": "beach_umbrella.glb",
+  "role": "dodge",
+  "replaces": "umbrella (beach/cafe parasol with table)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-commercial",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-commercial/detail-parasol-a.glb"
+  ],
+  "pack": "Kenney City Kit (Commercial)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 34072,
+  "bbox": {
+   "w": 1.73,
+   "h": 2.25,
+   "d": 2
+  },
+  "scale": 1,
+  "baked_scale": 5,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "fishing_boat",
+  "file": "fishing_boat.glb",
+  "role": "dodge",
+  "replaces": "boat on trailer (boat only, no trailer)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/watercraft-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/watercraft-kit/boat-fishing-small.glb"
+  ],
+  "pack": "Kenney Watercraft Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 49384,
+  "bbox": {
+   "w": 1.78,
+   "h": 2.6,
+   "d": 3.87
+  },
+  "scale": 1,
+  "baked_scale": 1,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "rowboat",
+  "file": "rowboat.glb",
+  "role": "dodge",
+  "replaces": "boat on trailer (small rowboat variant)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/watercraft-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/watercraft-kit/boat-row-small.glb"
+  ],
+  "pack": "Kenney Watercraft Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 47124,
+  "bbox": {
+   "w": 2.75,
+   "h": 0.85,
+   "d": 2.37
+  },
+  "scale": 1,
+  "baked_scale": 1,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "baratrain_loco",
+  "file": "baratrain_loco.glb",
+  "role": "dodge",
+  "replaces": "BaraTrain mini train (locomotive)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/holiday-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/holiday-kit/train-locomotive.glb"
+  ],
+  "pack": "Kenney Holiday Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 83784,
+  "bbox": {
+   "w": 0.93,
+   "h": 1.5,
+   "d": 2.34
+  },
+  "scale": 1,
+  "baked_scale": 3.5,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "baratrain_wagon",
+  "file": "baratrain_wagon.glb",
+  "role": "dodge",
+  "replaces": "BaraTrain mini train (wagon)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/holiday-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/holiday-kit/train-wagon.glb"
+  ],
+  "pack": "Kenney Holiday Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 88164,
+  "bbox": {
+   "w": 0.72,
+   "h": 1.1,
+   "d": 2.5
+  },
+  "scale": 1,
+  "baked_scale": 3.5,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "tram",
+  "file": "tram.glb",
+  "role": "dodge",
+  "replaces": "small train/tram (alt)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/train-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/train-kit/train-tram-modern.glb"
+  ],
+  "pack": "Kenney Train Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 107736,
+  "bbox": {
+   "w": 1.35,
+   "h": 2.76,
+   "d": 3.22
+  },
+  "scale": 1,
+  "baked_scale": 1.2,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "palm_straight",
+  "file": "palm_straight.glb",
+  "role": "scenery",
+  "replaces": "palm tree",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/pirate-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/pirate-kit/palm-straight.glb"
+  ],
+  "pack": "Kenney Pirate Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 42596,
+  "bbox": {
+   "w": 3.98,
+   "h": 6.74,
+   "d": 3.98
+  },
+  "scale": 1,
+  "baked_scale": 1.6,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "palm_bend",
+  "file": "palm_bend.glb",
+  "role": "scenery",
+  "replaces": "palm tree (leaning)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/pirate-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/pirate-kit/palm-bend.glb"
+  ],
+  "pack": "Kenney Pirate Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 42584,
+  "bbox": {
+   "w": 4.61,
+   "h": 6.8,
+   "d": 5.15
+  },
+  "scale": 1,
+  "baked_scale": 1.6,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "street_lamp",
+  "file": "street_lamp.glb",
+  "role": "scenery",
+  "replaces": "street lamp",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-roads",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-roads/light-curved.glb"
+  ],
+  "pack": "Kenney City Kit (Roads)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 36076,
+  "bbox": {
+   "w": 0.4,
+   "h": 5.4,
+   "d": 1.8
+  },
+  "scale": 1,
+  "baked_scale": 8,
+  "forward": "arm points +z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "planter",
+  "file": "planter.glb",
+  "role": "scenery",
+  "replaces": "planter",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-suburban",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-suburban/planter.glb"
+  ],
+  "pack": "Kenney City Kit (Suburban)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 57296,
+  "bbox": {
+   "w": 1.2,
+   "h": 0.53,
+   "d": 0.9
+  },
+  "scale": 1,
+  "baked_scale": 3,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "building",
+  "file": "building.glb",
+  "role": "scenery",
+  "replaces": "low poly building",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/city-kit-commercial",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/city-kit-commercial/building-a.glb"
+  ],
+  "pack": "Kenney City Kit (Commercial)",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 67676,
+  "bbox": {
+   "w": 7.07,
+   "h": 10.34,
+   "d": 7.52
+  },
+  "scale": 1,
+  "baked_scale": 8,
+  "forward": "+z",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ },
+ {
+  "id": "buoy",
+  "file": "buoy.glb",
+  "role": "scenery",
+  "replaces": "sea decor (buoy)",
+  "license": "CC0-1.0",
+  "source_url": "https://kenney.nl/assets/watercraft-kit",
+  "source_files": [
+   "https://github.com/codelove-models/library/blob/306e4586663a74b64cdfabddc3ad737a73d693ed/watercraft-kit/buoy.glb"
+  ],
+  "pack": "Kenney Watercraft Kit",
+  "author": "Kenney (www.kenney.nl)",
+  "bytes": 45924,
+  "bbox": {
+   "w": 0.93,
+   "h": 1.84,
+   "d": 0.93
+  },
+  "scale": 1,
+  "baked_scale": 1,
+  "forward": "none",
+  "origin": "base centre (y=0 at bottom, centred on X/Z)"
+ }
+]

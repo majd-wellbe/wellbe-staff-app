@@ -1,0 +1,43 @@
+CORNICHE RUN GAME FIXES (Oct 25): INSTALL
+Project: "Wellbe W40 Backend" (Apps Script). About 5 minutes.
+Only ONE server file changes: RunGame. Levels and the other files stay as they are.
+
+WHAT CHANGES FOR PLAYERS
+ - The end screen says what really happened ("Stepped in a puddle, coach caught you").
+ - Big distance at the top while running, with the coins of this run next to it.
+ - End screen: distance first, then Score and Best, then one coins line
+   ("+1,447 coins: 297 picked up + 1,000 WELLBE + 150 missions").
+ - "Lives" everywhere instead of "hearts". The Extra life row says how many lives the next run starts with.
+ - 60 badges: 12 badge ladders with Bronze, Silver, Gold, Platinum and Diamond.
+   Nobody loses a badge: old badges move into the right tier by themselves.
+ - Sharper graphics on iPhones and good Android phones.
+
+A. SERVER FIRST
+ 1. Open the "Wellbe W40 Backend" project in Apps Script.
+ 2. Open the file RunGame. Click inside it, press Ctrl+A (select all), then Delete.
+ 3. Open RunGame.gs from this folder, select all, copy, and paste it into RunGame. Press Ctrl+S.
+ 4. Deploy > Manage deployments > pencil (Edit) > Version: New version > Deploy.
+    Same link, nothing to send to anyone.
+
+B. THEN THE APPS (GitHub Desktop, after step 4)
+ 5. Changed files: client/index.html, client/run.html, client/run-test.html.
+    Tick them, Commit, Push.
+    Between step 4 and step 5 the old app keeps working with the new server
+    (old badges, coins and lives look the same as before). No rush, but do it the same day.
+
+C. QUICK CHECKS (on your phone, after step 5)
+ 6. Open the game and play one short run. At the top you see the distance in metres.
+ 7. Hit something on purpose. The end screen says what you hit.
+    The coins line shows "+N coins: ..." with the parts that add up.
+ 8. Client app > Play > Badges: 12 rows, each with 5 coloured or grey chips and a progress bar.
+ 9. In the Operations sheet, tab CORNICHE RUN: a new column V called "Stats" appears after your first run.
+    Column O (Last run) now also keeps what ended the run. Do not edit or move these columns.
+
+IF A PLAYER REPORTS A STRANGE END
+ Look at their row in CORNICHE RUN, column O (Last run). After the time it shows for example:
+   {"cause":"puddle","text":"Stepped in a puddle, coach caught you","lane":2,"m":2600,"hits":[...]}
+ cause = what ended the run, m = metres at the end, hits = the last 5 things they hit.
+ Send that text to Claude to check it.
+
+GOING BACK (only if something is wrong)
+ Paste the previous RunGame.gs, deploy a new version. The Stats column can stay, the old code ignores it.
