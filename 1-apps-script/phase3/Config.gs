@@ -112,7 +112,10 @@ var CFG_DEFAULTS = {
     methods: ['Cash', 'Whish', 'Neo'],
     expenseCats: ['Rent', 'Utilities', 'Salaries', 'Supplies', 'Equipment', 'Software', 'Marketing', 'Other'],
     repeats: ['Once', 'Weekly', 'Monthly', 'Every 3 months', 'Every 6 months', 'Yearly']
-  }
+  },
+  // which server the apps talk to (core/wb-backend.js): 'apps' = this Apps Script, 'supabase' = after the move.
+  // Set it in SETTINGS (backend.use) AND in Supabase public.settings, see supabase/DEPLOY.md
+  backend: { use: 'apps' }
 };
 
 var CFG_KINDS = ['1:1', '1:2', '1:3', 'Physio', 'Prehab', 'Osteo', 'Madero'];

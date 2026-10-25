@@ -830,6 +830,7 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="../core/wb-core.js?v=1"></script>
+<script src="../core/wb-backend.js?v=1"></script>
 <script>
 /* ---------- content: texts and lists the app shows (not business settings, those are in cfg) ---------- */
 var CONTENT={
@@ -1001,7 +1002,7 @@ var LASTB=0;document.addEventListener('visibilitychange',function(){if(!document
 setInterval(function(){if(TOKEN&&D&&D.guest&&!document.hidden)boot(true)},120000);
 var WARMT=0;function warm(){if(!D||!ACC()||Date.now()-WARMT<60000)return;WARMT=Date.now();if(!D.guest)woLoad(ACC(),1);runLoad();nWarm()}
 function send(action,data){data=data||{};data.cid=ACC().cid;return api(action,data).then(function(j){boot(true);return j})}
-function signOut(expired){var keep={};try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(accent|theme|cfg)/.test(k))keep[k]=localStorage.getItem(k)})}catch(e){}WB.storeClear(['wbc_','cr_']);for(var kk in keep)store(kk,keep[kk]);store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
+function signOut(expired){var keep={};try{Object.keys(localStorage).forEach(function(k){if(/^wbc_(accent|theme|cfg)/.test(k))keep[k]=localStorage.getItem(k)})}catch(e){}if(!expired&&TOKEN&&WB.backend&&WB.backend()==='supabase')WB.api('app_cl_signout',{},{token:TOKEN}).catch(function(){});WB.storeClear(['wbc_','cr_']);for(var kk in keep)store(kk,keep[kk]);store(cacheKey(),null);store('wbc_t',null);TOKEN=null;D=null;LOGIN={step:expired?'email':'welcome',mode:'client',email:'',name:'',busy:false,err:expired?'Please sign in again.':''};history.replaceState(null,'',location.pathname);closeSheet();render()}
 
 /* ---------- render ---------- */
 // PATCH: render() updates the page in place (same result as a full redraw, but unchanged parts, images and animations stay)

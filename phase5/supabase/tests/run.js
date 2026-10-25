@@ -142,6 +142,14 @@ sc('freeze request accepted: end moves 7 days', {
     sh.appendRow(['REQ-0001', '23/10/2026 09:00', 'C010', 'Carl Chami', 'Freeze', 'Away', today(1), 'PKG-0003', 'New', '', '', JSON.stringify({ from: today(1) })]); },
   gs: () => F.st('app_req_done', 'k-romy', { id: 'REQ-0001', act: 'accept' }),
   sql: async c => D.as(c, 'romy', `select public.handle_request((select id from public.client_requests where legacy_id = 'REQ-0001'), 'accept')`) });
+sc('freeze request when Effective end is later than Extended (0009: Effective first, like clFreezeApply_)', {
+  setup: () => { const ops = M.books[CFG.OPS_ID], pk = ops.getSheetByName('PACKAGES').d.find(r => r[0] === 'PKG-0003');
+    pk[11] = beirutDate_(today(5), 0); pk[12] = beirutDate_(today(12), 0);
+    const sh = ops.getSheetByName('CLIENT REQUESTS') || appTab_(ops, 'CLIENT REQUESTS', CL.REQ_HEAD);
+    sh.appendRow(['REQ-0001', '23/10/2026 09:00', 'C010', 'Carl Chami', 'Freeze', 'Away', today(1), 'PKG-0003', 'New', '', '', JSON.stringify({ from: today(1) })]); },
+  gs: () => F.st('app_req_done', 'k-romy', { id: 'REQ-0001', act: 'accept' }),
+  sql: async c => D.as(c, 'romy', `select public.handle_request((select id from public.client_requests where legacy_id = 'REQ-0001'), 'accept')`),
+  result: (g, s) => { const e = s.rows && s.rows[0].handle_request.end; ok(g.ok && e === today(19), 'end = Effective + 7 on both: gs ' + J(g) + ' sql ' + e); } });
 sc('21:30 default Present for everyone not marked today', {
   gs: () => appDefaultPresent(),
   sql: async c => D.as(c, 'system', `select public.default_present()`) });
