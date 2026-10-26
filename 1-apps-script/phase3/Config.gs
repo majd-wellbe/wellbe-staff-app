@@ -113,7 +113,6 @@ var CFG_DEFAULTS = {
       ramadan: { n: 'Ramadan Night Run', coins: 1000 },
       matchday: { n: 'Yalla Lebnan', coins: 0, free: true },
       street: { n: 'Mar Mikhael Street', coins: 2000 },
-      modest: { n: 'Modest Mover', coins: 0, free: true },
       rehab: { n: 'Rehab Hero', coins: 1000, physio: true },
       am530: { n: '5:30 AM Club', coins: 0, early: 10 },
       race42: { n: 'Race Day 42K', coins: 0, km: 42 },
