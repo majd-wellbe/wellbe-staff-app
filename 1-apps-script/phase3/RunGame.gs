@@ -11,6 +11,8 @@
 //   save returns earned (total coins) and breakdown { picked, boost, missions, allBonus, wellbe, total }
 //   badges: 12 ladders x 5 tiers (RUN.LADDERS), returned as ladders; the old badges list stays for older phones
 //   lbHide (on get and save): true hides this player from the leaderboards (they still see their own rank)
+//   name (on get, or op name): the runner name shown on the leaderboards (2 to 14 letters, numbers, spaces). Saved in Stats (nm). Every reply has runName.
+//   buy with item = a studio id (g_ gear, tt_ tattoo, tn_ taunt; Config.gs game.studio) buys it; every reply has studio: { id: { n, k, coins, lv, own, can } }
 // =====================================================================
 var RUN = {
   HEAD: ['Client ID', 'Name', 'Best score', 'Best m', 'Coins', 'Runs', 'Total m', 'Day', 'Day best', 'Week', 'Week best', 'Upgrades', 'Missions', 'Badges', 'Last run', 'Earned total', 'Updated', 'Cash (cents)', 'Cash earned (cents)', 'XP', 'Owned', 'Stats'],   // V = Stats (Oct 25): totals for the badge ladders, JSON
@@ -18,7 +20,7 @@ var RUN = {
   get UP_COST() { return cfg_().game.upCost; },
   get LIFE_COST() { return cfg_().game.lifeCost; }, get LIFE_MAX() { return cfg_().game.lifeMax; },   // extra life: start a run with 2 lives
   get CASH() { return cfg_().game.cash; },
-  get OUTFITS() { return cfg_().game.outfits || {}; }, get EARLY_HOUR() { return cfg_().game.earlyHour; }, get EARLY_MIN_M() { return cfg_().game.earlyMinM; },
+  get OUTFITS() { return cfg_().game.outfits || {}; }, get STUDIO() { return cfg_().game.studio || {}; }, get EARLY_HOUR() { return cfg_().game.earlyHour; }, get EARLY_MIN_M() { return cfg_().game.earlyMinM; },
   MISSIONS: [
     { k: 'coins', t: 'Collect 150 coins in one run', s: 'coins', m: 'max', n: 150, r: 200 },
     { k: 'd1', t: 'Run 1,000 m in one run', s: 'm', m: 'max', n: 1000, r: 200 },
@@ -154,6 +156,7 @@ function clRun_(b, cid) {
   if (op === 'buy') {
     var item = String(b.item || '');
     if (Object.prototype.hasOwnProperty.call(RUN.OUTFITS, item)) { out.bought = runBuyOutfit_(item, rec, owned, st, cid); changed = true; }
+    else if (Object.prototype.hasOwnProperty.call(RUN.STUDIO, item)) { out.bought = runBuyStudio_(item, rec, owned); changed = true; }
     else if (item === 'life') {
       if ((Number(up.life) || 0) >= RUN.LIFE_MAX) throw new Error('You already have ' + RUN.LIFE_MAX + ' extra lives');
       if ((Number(rec[4]) || 0) < RUN.LIFE_COST) throw new Error('Not enough coins');
@@ -164,6 +167,11 @@ function clRun_(b, cid) {
       var cost = RUN.UP_COST[lv]; if ((Number(rec[4]) || 0) < cost) throw new Error('Not enough coins');
       rec[4] = Number(rec[4]) - cost; up[item] = lv + 1; changed = true;
     }
+  }
+  // runner name: the phone sends name on get (the app only passes get, save and buy) or op name
+  if ((op === 'get' || op === 'name') && b.name !== undefined && b.name !== null) {
+    var nm = runNameCheck_(b.name);
+    if (nm !== (st.nm || '')) { if (nm) st.nm = nm; else delete st.nm; changed = true; }
   }
   // leaderboard privacy: the phone sends lbHide on get or save
   if ((op === 'get' || op === 'save') && b.lbHide !== undefined && b.lbHide !== null) {
@@ -209,6 +217,7 @@ function clRun_(b, cid) {
   out.ladders = runLadders_(bset, rec, st); out.badgeCount = { have: Object.keys(bset).length, all: RUN.LADDERS.length * 5 };
   out.boost = boost; out.boards = boards.lists; out.rank = boards.rank; out.lv = lvOut_(rec, owned); out.lbHide = !!owned.lbHide;
   out.outfits = runOutfits_(rec, owned, st, cid);
+  out.studio = runStudio_(rec, owned); out.runName = st.nm || runFirst_(rec[1]); out.runNameSet = !!st.nm;
   return out;
 }
 
@@ -329,13 +338,57 @@ function runLbBump_() { verBump_(['run']); }
 function runLbSrc_() { return cacheGetBig_('runlb|' + runLbVer_()); }
 function runLbPut_(v) {   // only what runBoards_ uses: ID, name, best score, day key + best, week key + best, hidden
   cachePutBig_('runlb|' + runLbVer_(), v.filter(function (r) { return r[0]; }).map(function (r) {
-    return [String(r[0]), r[1], r[2], r[7], r[8], r[9], r[10], runJ_(r[20], {}).lbHide ? 1 : 0];
+    return [String(r[0]), r[1], r[2], r[7], r[8], r[9], r[10], runJ_(r[20], {}).lbHide ? 1 : 0, runJ_(r[21], {}).nm || ''];
   }), 60);
 }
 function runLbRow_(x) {
   var r = new Array(RUN.HEAD.length); for (var i = 0; i < r.length; i++) r[i] = '';
-  r[0] = x[0]; r[1] = x[1]; r[2] = x[2]; r[7] = x[3]; r[8] = x[4]; r[9] = x[5]; r[10] = x[6]; r[20] = x[7] ? '{"lbHide":true}' : '{}';
+  r[0] = x[0]; r[1] = x[1]; r[2] = x[2]; r[7] = x[3]; r[8] = x[4]; r[9] = x[5]; r[10] = x[6]; r[20] = x[7] ? '{"lbHide":true}' : '{}'; r[21] = x[8] ? JSON.stringify({ nm: x[8] }) : '{}';
   return r;
+}
+// ---------- RUNNER NAME and STUDIO ITEMS ----------
+// the name on the leaderboards: the chosen runner name, else "First L."
+function runLbName_(r) { var st = runJ_(r[21], {}); return st && typeof st === 'object' && st.nm ? String(st.nm) : runShort_(r[1]); }
+function runFirst_(name) { var p = String(name || '').trim().split(/\s+/)[0] || 'Runner'; return p.length > 14 ? p.slice(0, 14) : p; }
+// words a runner name cannot hold (English, Lebanese Arabic in Latin letters and Arabic script). Whole words for short ones, anywhere for long ones.
+// (short ones that sit inside real names, like nazi in Nazih, ahbe in Wahbe, نيك in نيكول, خول in خولة, زب in زبيدة, are whole words only)
+RUN.BAD_ANY = ['fuck', 'shit', 'bitch', 'cunt', 'nigg', 'whore', 'slut', 'porn', 'hitler', 'pussy', 'penis', 'vagina', 'dildo', 'wank', 'bastard', 'asshole',
+  'sharmo', 'sharmu', 'charmo', 'charmu', 'manyak', 'manyouk', 'mnayak', 'metnak', 'mitnak', 'qahba', 'a7be', 'a7ba', 'kahba', 'khawal', 'ayreh', '3ayr', 'zebbak', 'kesak', 'kossak', 'kosomak', 'kosom', 'teezak', 'tizak',
+  'شرموط', 'منيك', 'متناك', 'قحب', 'كسمك', 'كسختك'];
+RUN.BAD_WORD = ['ass', 'dick', 'cock', 'sex', 'fag', 'kos', 'kus', 'koss', 'kuss', 'kes', 'zeb', 'zib', 'zebb', 'ayr', 'ayre', 'ayri', 'air', 'teez', 'tiz', 'khara', '5ara', 'a7a', 'ahh', 'kalb', 'hmar', 'fuk', 'rape', 'nazi', 'ahbe', 'كس', 'زب', 'زبي', 'عير', 'طيز', 'خول', 'خرا', 'نيك', 'كلب', 'حمار'];
+// a clean runner name, '' to go back to the first name, or an error the phone shows
+function runNameCheck_(raw) {
+  var s = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  if (s.length < 2 || s.length > 14) throw new Error('Pick a name of 2 to 14 characters.');
+  if (!/^[A-Za-z0-9\u00C0-\u024F\u0621-\u064A\u0660-\u0669 ]+$/.test(s)) throw new Error('Use letters, numbers and spaces only.');
+  if (runNameBad_(s)) throw new Error('Pick another name, that one is not allowed.');
+  return s;
+}
+function runNameBad_(s) {
+  var low = String(s).toLowerCase(), flat = low.replace(/[^a-z0-9\u0621-\u064a]/g, '').replace(/0/g, 'o').replace(/1/g, 'i').replace(/4/g, 'a').replace(/\$/g, 's');
+  var words = low.split(/[^a-z0-9\u0621-\u064a]+/).filter(function (w) { return w; });
+  for (var i = 0; i < RUN.BAD_ANY.length; i++) { var w = RUN.BAD_ANY[i].trim(); if (flat.indexOf(w) > -1 || low.indexOf(w) > -1) return true; }
+  for (var j = 0; j < words.length; j++) if (RUN.BAD_WORD.indexOf(words[j]) > -1 || RUN.BAD_WORD.indexOf(words[j].replace(/0/g, 'o').replace(/1/g, 'i')) > -1) return true;
+  return false;
+}
+// gear, tattoos and taunts: free ones are everybody's, the rest are bought with coins (some open at a level first)
+function runStudio_(rec, owned) {
+  var lv = lvOf_(rec[19]).level, S = RUN.STUDIO, out = {};
+  Object.keys(S).forEach(function (id) {
+    var o = S[id], coins = Number(o.coins) || 0, need = Number(o.lv) || 0, own = (coins <= 0 && !need) || Number(owned[id] || 0) > 0;
+    out[id] = { n: o.n, k: o.k, coins: coins, lv: need, own: own, can: !own && coins > 0 && lv >= need };
+  });
+  return out;
+}
+function runBuyStudio_(id, rec, owned) {
+  var r = runStudio_(rec, owned)[id];
+  if (r.own) throw new Error('You already have ' + r.n);
+  if (r.lv && lvOf_(rec[19]).level < r.lv) throw new Error('Reach level ' + r.lv + ' to buy ' + r.n);
+  if (!(r.coins > 0)) throw new Error(r.n + ' is not for sale');
+  if ((Number(rec[4]) || 0) < r.coins) throw new Error('Not enough coins');
+  rec[4] = Number(rec[4]) - r.coins; owned[id] = 1;
+  return r.n;
 }
 function runName_(cid) { var c = appClientInfo_(cid); return c ? String(c.name || '').trim() : cid; }
 function runShort_(name) { var p = String(name || '').trim().split(/\s+/); return p.length > 1 ? p[0] + ' ' + p[p.length - 1].charAt(0) + '.' : (p[0] || 'Runner'); }
@@ -386,7 +439,7 @@ function runBoards_(v, cid, today, week) {
     var rows = v.filter(function (r) { return r[0] && (Number(r[col]) || 0) > 0 && (keyCol < 0 || String(r[keyCol]) === key) && (String(r[0]).toUpperCase() === cid || !runJ_(r[20], {}).lbHide); })
       .sort(function (a, b) { return (Number(b[col]) || 0) - (Number(a[col]) || 0); });
     var rank = 0; rows.forEach(function (r, i) { if (String(r[0]).toUpperCase() === cid) rank = i + 1; });
-    return { list: rows.slice(0, 10).map(function (r, i) { return { n: runShort_(r[1]), s: Number(r[col]) || 0, me: String(r[0]).toUpperCase() === cid, i: i + 1 }; }), rank: rank, total: rows.length };
+    return { list: rows.slice(0, 10).map(function (r, i) { return { n: runLbName_(r), s: Number(r[col]) || 0, me: String(r[0]).toUpperCase() === cid, i: i + 1 }; }), rank: rank, total: rows.length };
   };
   var d = mk(8, 7, today), w = mk(10, 9, week), a = mk(2, -1, '');
   return { lists: { day: d.list, week: w.list, all: a.list, totals: { day: d.total, week: w.total, all: a.total } }, rank: { day: d.rank, week: w.rank, all: a.rank } };

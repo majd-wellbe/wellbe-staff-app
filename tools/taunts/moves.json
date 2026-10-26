@@ -1,0 +1,14 @@
+[
+ {"file":"Push_Up.fbx","id":"pushup","name":"Push Ups","loop":true,"place":"lock"},
+ {"file":"Air_Squat.fbx","id":"squat","name":"Air Squats","loop":true,"place":"lock"},
+ {"file":"Jumping_Jacks.fbx","id":"jacks","name":"Jumping Jacks","loop":true,"place":"lock"},
+ {"file":"Victory.fbx","id":"victory","name":"Victory","from":0,"to":3.9,"place":"clamp"},
+ {"file":"Fist_Pump.fbx","id":"fistpump","name":"Fist Pump","place":"clamp"},
+ {"file":"Salute.fbx","id":"salute","name":"Salute","place":"clamp"},
+ {"file":"Taunt.fbx","id":"taunt","name":"Taunt","place":"clamp"},
+ {"file":"Hip_Hop_Dancing.fbx","id":"hiphop1","name":"Hip Hop 1","loop":true,"from":0,"to":4,"place":"clamp"},
+ {"file":"Hip_Hop_Dancing_1.fbx","id":"hiphop2","name":"Hip Hop 2","loop":true,"from":0,"to":4,"place":"clamp"},
+ {"file":"Capoeira.fbx","id":"capoeira","name":"Capoeira","place":"lock"},
+ {"file":"Butterfly_Twirl.fbx","id":"twirl","name":"Butterfly Twirl","place":"lock"},
+ {"file":"Run_To_Rolling.fbx","id":"roll","name":"Roll","place":"lock"}
+]

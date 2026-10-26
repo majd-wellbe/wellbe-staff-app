@@ -121,6 +121,24 @@ var CFG_DEFAULTS = {
       legend: { n: 'Corniche Legend', coins: 0, shop: 'o3' }
     },
     earlyHour: 7, earlyMinM: 300,
+    // runner studio items (RunGame.gs runStudio_): k = slot (hat, eye, ear, wrist: gear; tattoo; taunt). coins 0 = free for everyone.
+    // lv = the level that opens it (then it costs coins). Bought ones are saved in Owned under their id. New Mixamo taunts: add tn_<id> here and in client/models/taunts/manifest.json
+    studio: {
+      g_cap: { n: 'Cap', k: 'hat', coins: 0 }, g_hband: { n: 'Headband', k: 'hat', coins: 0 }, g_capb: { n: 'Backwards Cap', k: 'hat', coins: 600 },
+      g_visor: { n: 'Visor', k: 'hat', coins: 900 }, g_beanie: { n: 'Beanie', k: 'hat', coins: 800 }, g_bucket: { n: 'Bucket Hat', k: 'hat', coins: 1200 },
+      g_sport: { n: 'Sport Shades', k: 'eye', coins: 0 }, g_round: { n: 'Round Shades', k: 'eye', coins: 1000 }, g_avi: { n: 'Aviators', k: 'eye', coins: 1500 },
+      g_buds: { n: 'Earbuds', k: 'ear', coins: 0 }, g_phones: { n: 'Headphones', k: 'ear', coins: 1500 },
+      g_sweat: { n: 'Sweatband', k: 'wrist', coins: 0 }, g_watch: { n: 'Sport Watch', k: 'wrist', coins: 1200 },
+      tt_pulse: { n: 'Heartbeat', k: 'tattoo', coins: 0 }, tt_stars: { n: 'Stars', k: 'tattoo', coins: 0 }, tt_wellbe: { n: 'Wellbe Logo', k: 'tattoo', coins: 800 },
+      tt_roman: { n: 'Roman Numerals', k: 'tattoo', coins: 1000 }, tt_cedar: { n: 'Cedar', k: 'tattoo', coins: 1000 }, tt_tribal: { n: 'Tribal Band', k: 'tattoo', coins: 1200 },
+      tt_rose: { n: 'Rose', k: 'tattoo', coins: 1200 }, tt_quwwa: { n: 'Quwwa (Strength)', k: 'tattoo', coins: 1500 }, tt_yalla: { n: 'Yalla', k: 'tattoo', coins: 1500 },
+      // taunts (the move before every race): Yes! is free, the rest cost coins and some open at a level first
+      tn_yes: { n: 'Yes!', k: 'taunt', coins: 0 }, tn_fistpump: { n: 'Fist Pump', k: 'taunt', coins: 500 }, tn_salute: { n: 'Salute', k: 'taunt', coins: 600 },
+      tn_jacks: { n: 'Jumping Jacks', k: 'taunt', coins: 700 }, tn_squat: { n: 'Air Squats', k: 'taunt', coins: 700 }, tn_dance: { n: 'Dance', k: 'taunt', coins: 800, lv: 3 },
+      tn_pushup: { n: 'Push Ups', k: 'taunt', coins: 900 }, tn_taunt: { n: 'Taunt', k: 'taunt', coins: 1000 }, tn_victory: { n: 'Victory', k: 'taunt', coins: 1200 },
+      tn_hiphop1: { n: 'Hip Hop 1', k: 'taunt', coins: 1500, lv: 5 }, tn_hiphop2: { n: 'Hip Hop 2', k: 'taunt', coins: 1500, lv: 5 },
+      tn_twirl: { n: 'Butterfly Twirl', k: 'taunt', coins: 2000, lv: 8 }, tn_capoeira: { n: 'Capoeira', k: 'taunt', coins: 2500, lv: 10 }, tn_roll: { n: 'Roll', k: 'taunt', coins: 2500, lv: 12 }
+    },
     // client IDs that count as Wellbe staff in the game (Coach Kit free). Staff are also found by their email or phone in STAFF.
     staffClients: []
   },

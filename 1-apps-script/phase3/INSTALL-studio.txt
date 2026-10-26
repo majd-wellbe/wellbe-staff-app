@@ -1,0 +1,59 @@
+CORNICHE RUN: RUNNER STUDIO (Oct 26): INSTALL
+Project: "Wellbe W40 Backend" (Apps Script). About 10 minutes.
+TWO server files change: RunGame and Config. No sheet columns are added or moved.
+
+WHAT CHANGES FOR PLAYERS
+ - "Your runner" has tabs under the 3D runner: Name, Face, Hair, Gear, Outfit, Tattoos, Taunt.
+   Female / Male sits on the runner preview. The camera zooms to what you are changing.
+ - Name: players pick a runner name (2 to 14 letters, numbers, spaces). It shows above the runner
+   and on the leaderboards. Rude names (English and Lebanese, in Latin letters or Arabic) are refused.
+   No name picked = the first name, like before ("Majd B." on the boards until they pick one).
+ - Face: 8 faces per body (Classic, Sharp, Soft, Bold Brows, Freckles, Bright Eyes, Strong, and
+   Glow for women / Chiselled for men), with the 8 skin tones and 4 eye colours. All free.
+ - Hair: the same styles, colours and beard as before.
+ - Gear: hats (Cap, Headband free; Backwards Cap, Visor, Beanie, Bucket Hat), eyewear (Sport Shades free;
+   Round Shades, Aviators), ears (Earbuds free; Headphones), wrist (Sweatband free; Sport Watch).
+   A hat tucks the hair in.
+ - Outfit: the 10 outfits and Custom, unchanged.
+ - Tattoos: 9 designs (Heartbeat and Stars free; Wellbe Logo, Roman Numerals XLII, Cedar, Tribal Band, Rose,
+   Quwwa, Yalla) on 5 spots (forearm, upper arm, shoulder, calf, back of neck). They only show on bare skin.
+ - Taunt: the move the runner does at the start line during 3 2 1. Yes! is free. 13 more cost coins
+   (Dance, Hip Hop, Butterfly Twirl, Capoeira and Roll also need a level first).
+ - Sprint intervals are now 45 seconds (were 60).
+
+PRICES (coins; Config.gs > game > studio, change them there any time)
+ Gear:    Backwards Cap 600, Beanie 800, Visor 900, Bucket Hat 1,200, Round Shades 1,000, Aviators 1,500,
+          Headphones 1,500, Sport Watch 1,200
+ Tattoos: Wellbe Logo 800, Roman Numerals 1,000, Cedar 1,000, Tribal Band 1,200, Rose 1,200, Quwwa 1,500, Yalla 1,500
+ Taunts:  Fist Pump 500, Salute 600, Jumping Jacks 700, Air Squats 700, Dance 800 (level 3), Push Ups 900, Taunt 1,000,
+          Victory 1,200, Hip Hop 1 and 2 1,500 (level 5), Butterfly Twirl 2,000 (level 8), Capoeira 2,500 (level 10),
+          Roll 2,500 (level 12)
+ Bought items are saved in the Owned column (like outfits). The runner name is saved in the Stats column (as nm).
+
+A. SERVER FIRST
+ 1. Open the "Wellbe W40 Backend" project in Apps Script.
+ 2. Open the file RunGame. Click inside it, press Ctrl+A (select all), then Delete.
+ 3. Open RunGame.gs from this folder, select all, copy, and paste it into RunGame. Press Ctrl+S.
+ 4. Do the same for Config: open Config, Ctrl+A, Delete, paste Config.gs from this folder, Ctrl+S.
+    (If you changed any setting in Config by hand since the last update, put it back after pasting.)
+ 5. Deploy > Manage deployments > pencil (Edit) > Version: New version > Deploy.
+    Same link, nothing to send to anyone.
+    Old phones keep working: they ignore names and studio items, the leaderboards already show the new names.
+
+B. THEN THE APPS (GitHub Desktop, after step 5)
+ 6. Changed files: client/run.html, client/run-test.html, and the new folder client/models/taunts/ (13 files).
+    Also new: tools/taunts/ (the converter, not used by the app). Tick everything, Commit, Push.
+    If the apps go first by mistake: nothing breaks. The free items work and the paid ones say "Opens soon".
+
+C. QUICK CHECKS (on your phone, after step 6)
+ 7. Open the game. Under the runner you see the tabs. Tap Face: the camera zooms on the face.
+ 8. Name tab: type a name, tap Save. It shows above the runner. Play one run: your name is on the leaderboard.
+    Try a rude word: it is refused with "Pick another name, that one is not allowed."
+ 9. Gear: tap Cap (free), then Backwards Cap: it shows "Buy for 600 coins". Tap it twice to buy.
+    The coins go down and the Owned column (U) of your CORNICHE RUN row has "g_capb":1.
+10. Taunt: pick Yes! (free) and start a run: the runner does it during 3 2 1.
+11. Sprints now last 45 seconds (the SPRINT bar at the top counts down from 45).
+
+ADDING MORE TAUNTS LATER
+ tools/taunts/README.md explains it: download from Mixamo (Y Bot, FBX, Without Skin), add one line to
+ tools/taunts/moves.json, run the converter, add the price to Config.gs (tn_<id>) and the name to run.html.

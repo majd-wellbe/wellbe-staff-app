@@ -146,7 +146,7 @@ const tierOf = x => C.tierAt(x).tier;
 // ---------- 6. speed and sprint numbers (GAME.speed, GAME.sprint) and the server's average speed check
 console.log('6. speed and sprints');
 ok(GAME.speed.start === 9 && GAME.speed.max === 17 && GAME.speed.ramp === .07, 'start at 9 m/s, top speed 17 m/s, +0.07 m/s per second', GAME.speed);
-ok(GAME.sprint.first === 45 && GAME.sprint.dur === 60 && GAME.sprint.gapMin === 75 && GAME.sprint.gapMax === 90, 'first sprint at 45 s, 60 s long, the next 75 to 90 s after one ends', GAME.sprint);
+ok(GAME.sprint.first === 45 && GAME.sprint.dur === 45 && GAME.sprint.gapMin === 75 && GAME.sprint.gapMax === 90, 'first sprint at 45 s, 45 s long, the next 75 to 90 s after one ends', GAME.sprint);
 ok(GAME.sprint.hard.budget === 3, 'sprint sets have 3 times the cost budget');
 ok(/var base=baseAt\(t\),cap=dist-\(T15\?1500:0\)>\(PROF&&Array\.isArray\(PROF\.outfits\)\?SPD\.avgMax:SPD\.avgOld\)\*t\+20/.test(html) && /spr=SP\.dur;/.test(html) && /sprN=t\+SP\.gapMin\+Math\.random\(\)\*\(SP\.gapMax-SP\.gapMin\)/.test(html), 'run.html uses GAME.speed and GAME.sprint for speed and sprint timing');
 ok(!/7\.4\+\.07/.test(html), 'no old 7.4 m/s start left in run.html');

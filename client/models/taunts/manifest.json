@@ -1,0 +1,77 @@
+{
+ "v": 1,
+ "taunts": [
+  {
+   "id": "pushup",
+   "n": "Push Ups",
+   "f": "pushup.json",
+   "loop": true
+  },
+  {
+   "id": "squat",
+   "n": "Air Squats",
+   "f": "squat.json",
+   "loop": true
+  },
+  {
+   "id": "jacks",
+   "n": "Jumping Jacks",
+   "f": "jacks.json",
+   "loop": true
+  },
+  {
+   "id": "victory",
+   "n": "Victory",
+   "f": "victory.json",
+   "loop": false
+  },
+  {
+   "id": "fistpump",
+   "n": "Fist Pump",
+   "f": "fistpump.json",
+   "loop": false
+  },
+  {
+   "id": "salute",
+   "n": "Salute",
+   "f": "salute.json",
+   "loop": false
+  },
+  {
+   "id": "taunt",
+   "n": "Taunt",
+   "f": "taunt.json",
+   "loop": false
+  },
+  {
+   "id": "hiphop1",
+   "n": "Hip Hop 1",
+   "f": "hiphop1.json",
+   "loop": true
+  },
+  {
+   "id": "hiphop2",
+   "n": "Hip Hop 2",
+   "f": "hiphop2.json",
+   "loop": true
+  },
+  {
+   "id": "capoeira",
+   "n": "Capoeira",
+   "f": "capoeira.json",
+   "loop": false
+  },
+  {
+   "id": "twirl",
+   "n": "Butterfly Twirl",
+   "f": "twirl.json",
+   "loop": false
+  },
+  {
+   "id": "roll",
+   "n": "Roll",
+   "f": "roll.json",
+   "loop": false
+  }
+ ]
+}

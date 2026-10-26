@@ -299,7 +299,7 @@ console.log('8. graphics tier');
   ok(src.indexOf('if(av>.05&&Q>(IOS?1:0)){Q--;') > -1, 'probe: one step, only over 50 ms, never to 0 on iPhone');
 }
 
-// ---------- 9. long runs with 60 s sprints still pass the server's speed check (client/run.html GAME.speed, GAME.sprint) ----------
+// ---------- 9. long runs with 45 s sprints still pass the server's speed check (client/run.html GAME.speed, GAME.sprint) ----------
 console.log('9. long sprint runs and the server check');
 {
   const html = fs.readFileSync(path.join(DIR, '..', '..', 'client', 'run.html'), 'utf8');
@@ -389,6 +389,90 @@ console.log('10. runner outfits');
   const wo = makeWorld(NEW); save(wo, 'C830', run1); wo.tab().rows[1][4] = 5000;
   r = wo.call({ op: 'buy', item: 'magnet' }, 'C830'); ok(!r.error && r.up.magnet === 1 && r.coins === 4500, 'upgrade buy unchanged', r.error || r.up);
   r = wo.call({ op: 'shop', item: 'magnet' }, 'C830'); ok(r.error === 'You already have the Coin magnet', 'shop: once item still owned by level', r.error);
+}
+
+// ---------- 11. runner names: chosen name on the leaderboards, checked on the server ----------
+console.log('11. runner names');
+{
+  const w = makeWorld(NEW); save(w, 'C701', run1); save(w, 'C702', run1);
+  let g = w.call({ op: 'get' }, 'C701');
+  ok(g.runName === 'Test' && g.runNameSet === false, 'default runner name is the first name', [g.runName, g.runNameSet]);
+  ok(g.boards.all.some(x => x.n === 'Test C.'), 'leaderboard shows "First L." before a name is picked', g.boards.all);
+  let r = w.call({ op: 'get', name: '  Corniche   Queen ' }, 'C701');
+  ok(!r.error && r.runName === 'Corniche Queen' && r.runNameSet === true, 'name saved (spaces tidied) through op get', r.error || r.runName);
+  ok(JSON.parse(w.tab().rows[1][21]).nm === 'Corniche Queen', 'saved in the Stats column (V) as nm, no new column', w.tab().rows[1][21]);
+  ok(w.tab().rows[0].length === 22 && w.tab().rows[1][1] === 'Test C701', 'header unchanged and the Name column keeps the real name', [w.tab().rows[0].length, w.tab().rows[1][1]]);
+  g = w.call({ op: 'get' }, 'C702');
+  ok(g.boards.all.some(x => x.n === 'Corniche Queen') && g.boards.all.some(x => x.n === 'Test C.'), 'other players see the chosen name on the leaderboards', g.boards.all);
+  r = w.call({ op: 'name', name: 'Majd 961' }, 'C701'); ok(!r.error && r.runName === 'Majd 961', 'op name works too', r.error || r.runName);
+  r = save(w, 'C701', run1); ok(!r.error && r.runName === 'Majd 961' && JSON.parse(w.tab().rows[1][21]).nm === 'Majd 961', 'a run keeps the name (Stats is rewritten with it)', r.error || w.tab().rows[1][21]);
+  const bad = { 'A': 'Pick a name of 2 to 14 characters.', 'Abcdefghijklmno': 'Pick a name of 2 to 14 characters.', 'Hi!': 'Use letters, numbers and spaces only.', '<b>x</b>': 'Use letters, numbers and spaces only.',
+    'fuckboy': 'Pick another name, that one is not allowed.', 'Sh1t Runner': 'Pick another name, that one is not allowed.', 'kos': 'Pick another name, that one is not allowed.', 'Ya Sharmouta': 'Pick another name, that one is not allowed.', 'nazi': 'Pick another name, that one is not allowed.', 'ya ahbe': 'Pick another name, that one is not allowed.', 'نيك': 'Pick another name, that one is not allowed.', 'كسمك': 'Pick another name, that one is not allowed.',
+    'manyak 1': 'Pick another name, that one is not allowed.', 'ayre': 'Pick another name, that one is not allowed.', 'شرموطة': 'Pick another name, that one is not allowed.', 'Big Ass': 'Pick another name, that one is not allowed.' };
+  Object.keys(bad).forEach(k => { const e = w.call({ op: 'get', name: k }, 'C701').error; ok(e === bad[k], 'refused: ' + k, e); });
+  ['Hassan', 'Kostas', 'Assaad', 'Dickson', 'Zeina', 'Airport Run', 'Sexton', 'جاد', 'Élodie', 'Nazih', 'Nazira', 'Wahbe', 'Grape', 'خولة', 'نيكول', 'زبيدة', 'Rami 2'].forEach(k => {
+    const x = w.call({ op: 'get', name: k }, 'C701'); ok(!x.error && x.runName === k, 'allowed: ' + k, x.error); });
+  ok(w.call({ op: 'get' }, 'C701').runName === 'Rami 2', 'a refused name leaves the last good one');
+  r = w.call({ op: 'get', name: '' }, 'C701'); ok(!r.error && r.runName === 'Test' && !r.runNameSet && !('nm' in JSON.parse(w.tab().rows[1][21])), 'empty name goes back to the first name', r.runName);
+  // an old phone (no name field) changes nothing; the cached leaderboard rows carry the name
+  w.call({ op: 'get', name: 'Speedy' }, 'C701'); r = w.call({ op: 'get' }, 'C702'); r = w.call({ op: 'get' }, 'C702');
+  ok(r.boards.all.some(x => x.n === 'Speedy'), 'leaderboard from the cache shows the chosen name', r.boards.all);
+}
+
+// ---------- 12. runner studio: gear, tattoos, taunts bought on the server ----------
+console.log('12. studio items');
+{
+  const S = r => r.studio || {}, xpFor = (w, l) => vm.runInContext('(function(){var t=0;for(var i=1;i<' + l + ';i++)t+=lvNeed_(i);return t})()', w);
+  const w = makeWorld(NEW); save(w, 'C750', run1); let g = w.call({ op: 'get' }, 'C750'), st = S(g);
+  ok(Object.keys(st).length === 36, '36 studio items in every reply', Object.keys(st).length);
+  const free = Object.keys(st).filter(k => st[k].own).sort();
+  ok(J(free) === J(['g_buds', 'g_cap', 'g_hband', 'g_sport', 'g_sweat', 'tn_yes', 'tt_pulse', 'tt_stars']), 'free: cap, headband, sport shades, earbuds, sweatband, heartbeat and stars tattoos, Yes! taunt', free);
+  ok(Object.keys(st).filter(k => /^tn_/.test(k) && st[k].own).length === 1, 'exactly one free taunt');
+  const P = { g_capb: 600, g_visor: 900, g_beanie: 800, g_bucket: 1200, g_round: 1000, g_avi: 1500, g_phones: 1500, g_watch: 1200, tt_wellbe: 800, tt_roman: 1000, tt_cedar: 1000, tt_tribal: 1200, tt_rose: 1200, tt_quwwa: 1500, tt_yalla: 1500,
+    tn_fistpump: 500, tn_salute: 600, tn_jacks: 700, tn_squat: 700, tn_dance: 800, tn_pushup: 900, tn_taunt: 1000, tn_victory: 1200, tn_hiphop1: 1500, tn_hiphop2: 1500, tn_twirl: 2000, tn_capoeira: 2500, tn_roll: 2500 };
+  ok(Object.keys(P).every(k => st[k] && st[k].coins === P[k]), 'prices from Config.gs', Object.keys(P).filter(k => !st[k] || st[k].coins !== P[k]));
+  const L = { tn_dance: 3, tn_hiphop1: 5, tn_hiphop2: 5, tn_twirl: 8, tn_capoeira: 10, tn_roll: 12 };
+  ok(Object.keys(L).every(k => st[k].lv === L[k]), 'level gates: Dance 3, Hip Hop 5, Butterfly Twirl 8, Capoeira 10, Roll 12', Object.keys(L).map(k => st[k].lv));
+  ok(['g_cap', 'g_beanie', 'tt_rose', 'tn_salute'].every(k => ['n', 'k', 'coins', 'lv', 'own', 'can'].every(f => f in st[k])), 'item shape { n, k, coins, lv, own, can }');
+  w.tab().rows[1][4] = 3000;
+  let r = w.call({ op: 'buy', item: 'g_beanie' }, 'C750');
+  ok(!r.error && r.coins === 2200 && S(r).g_beanie.own && r.bought === 'Beanie', 'buy Beanie: 800 coins off, yours', r.error || [r.coins, S(r).g_beanie]);
+  ok(JSON.parse(w.tab().rows[1][20]).g_beanie === 1, 'saved in Owned as g_beanie', w.tab().rows[1][20]);
+  r = w.call({ op: 'buy', item: 'g_beanie' }, 'C750'); ok(r.error === 'You already have Beanie', 'already owned refused', r.error);
+  r = w.call({ op: 'buy', item: 'g_cap' }, 'C750'); ok(r.error === 'You already have Cap', 'free item cannot be bought', r.error);
+  r = w.call({ op: 'buy', item: 'tt_quwwa' }, 'C750'); ok(!r.error && r.coins === 700 && S(r).tt_quwwa.own, 'buy Quwwa tattoo for 1,500', r.error || r.coins);
+  r = w.call({ op: 'buy', item: 'g_avi' }, 'C750'); ok(r.error === 'Not enough coins' && w.call({ op: 'get' }, 'C750').coins === 700, 'not enough coins: refused, nothing taken', r.error);
+  r = w.call({ op: 'buy', item: 'tn_salute' }, 'C750'); ok(!r.error && r.coins === 100, 'buy Salute taunt for 600', r.error || r.coins);
+  w.tab().rows[1][4] = 10000; const lv0 = w.call({ op: 'get' }, 'C750').lv.level;
+  r = w.call({ op: 'buy', item: 'tn_capoeira' }, 'C750'); ok(r.error === 'Reach level 10 to buy Capoeira' && !S(w.call({ op: 'get' }, 'C750')).tn_capoeira.can, 'level gate refuses Capoeira at level ' + lv0, r.error);
+  w.tab().rows[1][19] = xpFor(w, 10) + 5; g = w.call({ op: 'get' }, 'C750');
+  ok(S(g).tn_capoeira.can && !S(g).tn_roll.can, 'level 10: Capoeira can be bought, Roll (level 12) not yet', [S(g).tn_capoeira, S(g).tn_roll]);
+  r = w.call({ op: 'buy', item: 'tn_capoeira' }, 'C750'); ok(!r.error && r.coins === 7500 && S(r).tn_capoeira.own, 'buy Capoeira at level 10: 2,500 coins', r.error || r.coins);
+  r = w.call({ op: 'buy', item: 'tn_moonwalk' }, 'C750'); ok(r.error === 'Unknown upgrade', 'unknown studio id refused', r.error);
+  ok(S(w.call({ op: 'get' }, 'C750')).g_beanie.own && r.outfits === undefined, 'owned items stay owned');
+  // the old buys still work next to the new ones
+  r = w.call({ op: 'buy', item: 'ramadan' }, 'C750'); ok(!r.error && O_(r).ramadan.own, 'outfit buy unchanged', r.error);
+  r = w.call({ op: 'buy', item: 'life' }, 'C750'); ok(!r.error, 'extra life buy unchanged', r.error);
+}
+function O_(r) { const m = {}; (r.outfits || []).forEach(o => { m[o.id] = o; }); return m; }
+
+// ---------- 13. client: taunt files, manifest, sprint ----------
+console.log('13. client taunts and studio lists');
+{
+  const html = fs.readFileSync(path.join(DIR, '..', '..', 'client', 'run.html'), 'utf8'), td = path.join(DIR, '..', '..', 'client', 'models', 'taunts');
+  const man = JSON.parse(fs.readFileSync(path.join(td, 'manifest.json'), 'utf8'));
+  ok(man.taunts.length === 12, '12 converted Mixamo taunts in the manifest', man.taunts.length);
+  const cfg = fs.readFileSync(path.join(DIR, 'Config.gs'), 'utf8');
+  man.taunts.forEach(t => {
+    const j = JSON.parse(fs.readFileSync(path.join(td, t.f), 'utf8')), n = Math.round(j.dur * j.fps) + 1;
+    ok(j.dur >= 1 && j.dur <= 4.05 && j.p.length === n * 3 && j.q.every(a => a.length === 4 || a.length === n * 4) && j.bones.indexOf('pelvis') > -1, t.id + ': ' + j.dur + ' s, tracks complete');
+    ok(fs.statSync(path.join(td, t.f)).size < 60000, t.id + ' file under 60 KB', fs.statSync(path.join(td, t.f)).size);
+    ok(cfg.indexOf('tn_' + t.id + ':') > -1 && html.indexOf("'tn_" + t.id + "'") > -1, t.id + ' has a price in Config.gs and a name in run.html');
+    // stays on the start line: the hips never travel more than 15 cm on the ground
+    let mx = 0; for (let i = 0; i < n; i++) mx = Math.max(mx, Math.abs(j.p[i * 3] - j.p[0]), Math.abs(j.p[i * 3 + 1] - j.p[1]));
+    ok(mx < .16, t.id + ' stays in place (pelvis moves ' + mx.toFixed(2) + ' in the local plane)');
+  });
+  ok(!/—/.test(html.slice(html.indexOf('var FACES='), html.indexOf('/* ---------- music and sounds'))), 'no em dashes in the studio text');
 }
 
 // DUMP=file writes a sample reply (mid level player) for the client preview
