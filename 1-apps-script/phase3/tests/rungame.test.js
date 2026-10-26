@@ -61,7 +61,10 @@ function makeWorld(runGamePath, opts) {
     var TRAINED = ${opts.trained ? 'true' : 'false'};
     function appSessions_() { return TRAINED ? [{ status: 'Done', date: '2026-10-25', start: '08:00', clients: [{ pkg: 'P1', att: 'Present' }] }] : []; }
     function appShift_(ymd, n) { var d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
-    function appClientInfo_(cid) { return { name: 'Test ' + cid }; }
+    function appClientInfo_(cid) { return { name: 'Test ' + cid, email: cid === 'C900' ? ' Joe@Wellbe.com ' : '', phone: cid === 'C901' ? '70 123 456' : cid === 'C902' ? '03 555 777' : cid === 'C903' ? '81 123 456' : '' }; }
+    function cfgStaff_() { return [{ id: 'joe', email: 'joe@wellbe.com', phone: '+961 70 123 456', role: 'trainer' }, { id: 'romy', email: '', phone: '+961 3 555 777', role: 'assistant' }]; }
+    var PKGS = [{ cid: 'C801', type: 'Physio - Single Session ($50)' }, { cid: 'C802', type: '1:3 - 12x/month ($200pp)' }];
+    function pkgsAll_() { return PKGS; }
     function clLog_() { LOGS.push([].slice.call(arguments)); }
     function cfgCopy_(o) { return JSON.parse(JSON.stringify(o)); } function cfgReadStaff_() { return []; } function cfgReadTypes_() { return []; } function cfgReadSettings_() {}
     function appBump_() {}
@@ -294,6 +297,98 @@ console.log('8. graphics tier');
   ok(Q(A, 8, 'Adreno', '1').q === 1, 'cr_q override still works');
   ok(/antialias:Q>0/.test(src), 'antialias on at tier 1 and 2');
   ok(src.indexOf('if(av>.05&&Q>(IOS?1:0)){Q--;') > -1, 'probe: one step, only over 50 ms, never to 0 on iPhone');
+}
+
+// ---------- 9. long runs with 60 s sprints still pass the server's speed check (client/run.html GAME.speed, GAME.sprint) ----------
+console.log('9. long sprint runs and the server check');
+{
+  const html = fs.readFileSync(path.join(DIR, '..', '..', 'client', 'run.html'), 'utf8');
+  const G = vm.runInContext('(' + html.slice(html.indexOf('var GAME={') + 9, html.indexOf('\n};', html.indexOf('var GAME={')) + 2) + ')', vm.createContext({}));
+  // a perfect run frame by frame, like run.html: every sprint, no hits. cap = the client keeps the average under the server's 19.5 m/s
+  const sim = (secs, cap) => { let t = 0, d = 0, spd = G.speed.start * .6, spr = 0, rec = 0, sprN = G.sprint.first, n = 0; const dt = 1 / 60;
+    while (t < secs) { const base = Math.min(G.speed.max, G.speed.start + G.speed.ramp * t) * 1.012, c = cap && d > G.speed.avgMax * t + 20;
+      spd += ((c ? base : base * (spr > 0 ? G.sprint.boost : rec > 0 ? .9 : 1)) - spd) * Math.min(1, dt * 3); d += spd * dt; t += dt;
+      if (t >= sprN && spr <= 0 && rec <= 0) spr = G.sprint.dur;
+      if (spr > 0) { spr -= dt; if (spr <= 0) { spr = 0; rec = 5; n++; sprN = t + G.sprint.gapMin; } } else if (rec > 0) rec = Math.max(0, rec - dt); }
+    return { secs: Math.round(t), m: Math.floor(d), sprints: n }; };
+  [[600, 'C090'], [1500, 'C091'], [3000, 'C092']].forEach(([secs, id]) => {
+    const w = makeWorld(NEW), R = sim(secs, true), coins = Math.floor(R.m * .2);
+    const r = save(w, id, { secs: R.secs, m: R.m, coins, score: R.m * 4, spent: 0, ev: { jumps: 200, slides: 150, sprints: R.sprints } });
+    ok(r && !r.error, Math.round(secs / 60) + ' minute perfect run (' + R.m + ' m, ' + R.sprints + ' sprints of ' + G.sprint.dur + ' s) is accepted', r && r.error);
+  });
+  const raw = sim(1500, false);
+  ok(raw.m <= raw.secs * 19.5 + 30, 'even without the client cap a 25 minute sprint run passes the server check (' + raw.m + ' m in ' + raw.secs + ' s), the cap is only a safety net');
+}
+
+// ---------- 10. runner outfits: prices, unlock rules, buying ----------
+console.log('10. runner outfits');
+{
+  const O = r => { const m = {}; (r.outfits || []).forEach(o => { m[o.id] = o; }); return m; };
+  const xpFor = (w, l) => vm.runInContext('(function(){var t=0;for(var i=1;i<' + l + ';i++)t+=lvNeed_(i);return t})()', w);
+  const w = makeWorld(NEW); save(w, 'C810', run1);
+  let g = w.call({ op: 'get' }, 'C810'), o = O(g);
+  ok(g.outfits && g.outfits.length === 11, '11 outfits in every reply', g.outfits && g.outfits.length);
+  ok(o.matchday.own && o.modest.own && o.matchday.rule === 'free', 'Yalla Lebnan and Modest Mover are free', [o.matchday, o.modest]);
+  ok(!o.coach.own && o.coach.coins === 1500 && o.coach.rule === 'staff' && o.coach.can, 'Coach Kit 1,500 coins for a client', o.coach);
+  ok(o.ramadan.coins === 1000 && o.street.coins === 2000 && o.rehab.coins === 1000, 'prices: Ramadan 1,000, Mar Mikhael 2,000, Rehab Hero 1,000', [o.ramadan.coins, o.street.coins, o.rehab.coins]);
+  ok(o.tyrian.rule === 'level' && o.tyrian.lv === 20 && o.tyrian.coins === 3000 && !o.tyrian.can && o.cedar.lv === 30 && o.cedar.coins === 6000 && o.legend.lv === 40 && o.legend.coins === 10000, 'prestige: level 20/30/40 and 3,000/6,000/10,000 coins', [o.tyrian, o.cedar, o.legend]);
+  const coins0 = g.coins;
+  let r = w.call({ op: 'buy', item: 'street' }, 'C810');
+  ok(coins0 < 2000 ? r.error === 'Not enough coins' : !r.error, 'not enough coins refused', [coins0, r.error]);
+  w.tab().rows[1][4] = 20000;
+  r = w.call({ op: 'buy', item: 'ramadan' }, 'C810');
+  ok(!r.error && r.coins === 19000 && O(r).ramadan.own && r.bought === 'Ramadan Night Run', 'buy Ramadan Night Run: 1,000 coins off, now yours', r.error || [r.coins, O(r).ramadan]);
+  ok(JSON.parse(w.tab().rows[1][20]).of_ramadan === 1, 'saved in Owned as of_ramadan', w.tab().rows[1][20]);
+  r = w.call({ op: 'buy', item: 'ramadan' }, 'C810');
+  ok(r.error === 'You already have Ramadan Night Run', 'already owned refused', r.error);
+  ok(w.call({ op: 'get' }, 'C810').coins === 19000, 'no coins taken for the refused buy');
+  r = w.call({ op: 'buy', item: 'matchday' }, 'C810'); ok(r.error === 'You already have Yalla Lebnan', 'free outfit cannot be bought', r.error);
+  r = w.call({ op: 'buy', item: 'am530' }, 'C810'); ok(/unlocks after 10 runs started before 7 am/.test(r.error || ''), '5:30 AM Club cannot be bought', r.error);
+  r = w.call({ op: 'buy', item: 'race42' }, 'C810'); ok(/unlocks when you have run 42 km/.test(r.error || ''), 'Race Day 42K cannot be bought', r.error);
+  r = w.call({ op: 'buy', item: 'tyrian' }, 'C810'); ok(r.error === 'Reach level 20 to buy Tyrian Purple', 'prestige outfit: level gate', r.error);
+  r = w.call({ op: 'shop', item: 'o1' }, 'C810'); ok(r.error === 'Reach level 20 to buy the Tyrian Purple outfit', 'shop o1 has the same level gate', r.error);
+  r = w.call({ op: 'buy', item: 'constructor' }, 'C810'); ok(r.error === 'Unknown upgrade', 'unknown item refused', r.error);
+  // reach level 20: Tyrian Purple opens for coins (not free), Golden Cedar still closed
+  w.tab().rows[1][19] = xpFor(w, 20) + 5;
+  g = w.call({ op: 'get' }, 'C810'); o = O(g);
+  ok(g.lv.level === 20 && !o.tyrian.own && o.tyrian.can && !o.cedar.can && g.lv.have.o1 === false, 'level 20: Tyrian Purple can be bought, not free', [g.lv.level, o.tyrian, g.lv.have.o1]);
+  r = w.call({ op: 'buy', item: 'tyrian' }, 'C810');
+  ok(!r.error && r.coins === 16000 && O(r).tyrian.own && r.lv.have.o1 === true, 'buy Tyrian Purple: 3,000 coins, level shop shows it owned', r.error || [r.coins, O(r).tyrian, r.lv.have.o1]);
+  r = w.call({ op: 'buy', item: 'cedar' }, 'C810'); ok(r.error === 'Reach level 30 to buy Golden Cedar', 'Golden Cedar needs level 30', r.error);
+  // level up text for a prestige outfit
+  w.tab().rows[1][19] = xpFor(w, 30) - 3;
+  r = save(w, 'C810', run1);
+  ok((r.levelUps || []).some(u => u.level === 30 && u.got.indexOf('Golden Cedar outfit can now be bought') > -1), 'level 30 chest says Golden Cedar can now be bought', r.levelUps);
+  ok(O(r).cedar.can && !O(r).cedar.own, 'level 30: Golden Cedar for coins', O(r).cedar);
+  // staff: Coach Kit free (email or phone in STAFF), physio: Rehab Hero free
+  const ws = makeWorld(NEW); save(ws, 'C900', run1); save(ws, 'C901', run1); save(ws, 'C801', run1); save(ws, 'C802', run1);
+  const a = O(ws.call({ op: 'get' }, 'C900')), b = O(ws.call({ op: 'get' }, 'C901')), c = O(ws.call({ op: 'get' }, 'C801')), d = O(ws.call({ op: 'get' }, 'C802'));
+  ok(a.coach.own && a.coach.got === 'Free for staff' && b.coach.own, 'staff (email or phone in STAFF) get the Coach Kit free', [a.coach, b.coach]);
+  ok(!c.coach.own && c.rehab.own && c.rehab.got === 'Free with your physio booking', 'a physio client gets Rehab Hero free', [c.coach, c.rehab]);
+  ok(!d.rehab.own && d.rehab.can && d.rehab.coins === 1000, 'no physio: Rehab Hero is 1,000 coins', d.rehab);
+  save(ws, 'C902', run1); save(ws, 'C903', run1);
+  ok(O(ws.call({ op: 'get' }, 'C902')).coach.own, 'staff phone written 03 555 777 matches +961 3 555 777');
+  ok(!O(ws.call({ op: 'get' }, 'C903')).coach.own, 'a client on 81 123 456 is not the staff member on 70 123 456');
+  ok(ws.call({ op: 'buy', item: 'coach' }, 'C900').error === 'You already have Wellbe Coach Kit', 'staff cannot pay for the free kit');
+  const wg = makeWorld(NEW); save(wg, 'G0007', run1); const og = O(wg.call({ op: 'get' }, 'G0007'));
+  ok(!og.coach.own && !og.rehab.own, 'a guest is not staff and has no physio');
+  // 5:30 AM Club: 10 runs of 300 m+ that started before 7:00
+  const we = makeWorld(NEW); const short = { secs: 40, m: 200, coins: 20, score: 300, ev: {} };
+  for (let i = 0; i < 9; i++) { NOW = Date.UTC(2026, 10, 1 + i, 6, 30); we.call({ op: 'save', run: run1 }, 'C820'); }
+  NOW = Date.UTC(2026, 10, 12, 6, 30); we.call({ op: 'save', run: short }, 'C820');   // too short: not counted
+  NOW = Date.UTC(2026, 10, 13, 9, 10); we.call({ op: 'save', run: run1 }, 'C820');    // started at 9:07: not counted
+  let e = O(we.call({ op: 'get' }, 'C820')).am530;
+  ok(!e.own && e.have === 9 && e.need === 10, '9 early runs: not yet (short and late runs not counted)', e);
+  NOW = Date.UTC(2026, 10, 14, 7, 1); r = we.call({ op: 'save', run: run1 }, 'C820');   // ends 7:01, started 6:58
+  ok(O(r).am530.own && O(r).am530.have === 10, '10th run started before 7:00 unlocks the 5:30 AM Club', O(r).am530);
+  // Race Day 42K: 42 km in total
+  ok(!O(r).race42.own && O(r).race42.have === Number(we.tab().rows[1][6]), 'Race Day 42K shows total metres', O(r).race42);
+  we.tab().rows[1][6] = 41999; ok(!O(we.call({ op: 'get' }, 'C820')).race42.own, '41,999 m: not yet');
+  we.tab().rows[1][6] = 42000; ok(O(we.call({ op: 'get' }, 'C820')).race42.own, '42 km in total unlocks Race Day 42K');
+  // other buys still work the old way
+  const wo = makeWorld(NEW); save(wo, 'C830', run1); wo.tab().rows[1][4] = 5000;
+  r = wo.call({ op: 'buy', item: 'magnet' }, 'C830'); ok(!r.error && r.up.magnet === 1 && r.coins === 4500, 'upgrade buy unchanged', r.error || r.up);
+  r = wo.call({ op: 'shop', item: 'magnet' }, 'C830'); ok(r.error === 'You already have the Coin magnet', 'shop: once item still owned by level', r.error);
 }
 
 // DUMP=file writes a sample reply (mid level player) for the client preview

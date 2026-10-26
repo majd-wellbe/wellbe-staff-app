@@ -1464,7 +1464,7 @@ ACT.rredeem=function(){var C=RUNST&&RUNST.cash;if(!C||RBUSY)return;var u='$'+(Ma
   $('#rdmNo').onclick=closeSheet;$('#rdmYes').onclick=function(){rbusy(1);api('app_cl_run',{op:'redeem',cid:ACC().cid}).then(function(j){rbusy(0);RUNST=j;closeSheet();render();success(u+' Wellbe Credit saved',''+DESK()+' will take it off your next package or online workout when you renew.')}).catch(function(e){rbusy(0);toast(e.message)})}};
 addEventListener('message',function(e){var d=e.data;if(!d||d.wb!=='api')return;var f=$('#gameFrame');if(!f||e.source!==f.contentWindow)return;if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;
   var reply=function(o){try{f.contentWindow.postMessage(o,location.origin==='null'?'*':location.origin)}catch(x){}};
-  var body=d.body||{};if(['get','save'].indexOf(body.op)<0){reply({wb:'api-res',id:d.id,ok:false,err:'not allowed'});return}if(store('wbc_lbhide')==='1')body.lbHide=1;if(!ACC()){reply({wb:'api-res',id:d.id,ok:false,err:'signin'});return}body.cid=ACC().cid;
+  var body=d.body||{};if(['get','save','buy'].indexOf(body.op)<0){reply({wb:'api-res',id:d.id,ok:false,err:'not allowed'});return}if(store('wbc_lbhide')==='1')body.lbHide=1;if(!ACC()){reply({wb:'api-res',id:d.id,ok:false,err:'signin'});return}body.cid=ACC().cid;
   api('app_cl_run',body).then(function(j){RUNST=j;if(body.op==='save'){store(runsKey(),String(runsToday()+1))}if(MODAL&&SEC==='play')bgRender();reply({wb:'api-res',id:d.id,ok:true,res:j})}).catch(function(err){reply({wb:'api-res',id:d.id,ok:false,err:String(err&&err.message||err)})})});
 ACT.goal=function(){ONB={step:'write',text:ACC().goal?ACC().goal.promise:''};render();scrollTo(0,0)};
 ACT.out=function(){signOut(false)};

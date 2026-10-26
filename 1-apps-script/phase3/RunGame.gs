@@ -7,6 +7,7 @@
 //        or on an online workout, max $20 at a time.
 // Everything is saved here (CORNICHE RUN tab) so it cannot be faked on the phone.
 // Action app_cl_run with op: get | save | buy | redeem | shop
+//   buy with item = an outfit id (coach, ramadan, ...) buys a runner outfit; every reply has outfits: [{ id, n, own, rule, coins, lv, have, need, can }]
 //   save returns earned (total coins) and breakdown { picked, boost, missions, allBonus, wellbe, total }
 //   badges: 12 ladders x 5 tiers (RUN.LADDERS), returned as ladders; the old badges list stays for older phones
 //   lbHide (on get and save): true hides this player from the leaderboards (they still see their own rank)
@@ -17,6 +18,7 @@ var RUN = {
   get UP_COST() { return cfg_().game.upCost; },
   get LIFE_COST() { return cfg_().game.lifeCost; }, get LIFE_MAX() { return cfg_().game.lifeMax; },   // extra life: start a run with 2 lives
   get CASH() { return cfg_().game.cash; },
+  get OUTFITS() { return cfg_().game.outfits || {}; }, get EARLY_HOUR() { return cfg_().game.earlyHour; }, get EARLY_MIN_M() { return cfg_().game.earlyMinM; },
   MISSIONS: [
     { k: 'coins', t: 'Collect 150 coins in one run', s: 'coins', m: 'max', n: 150, r: 200 },
     { k: 'd1', t: 'Run 1,000 m in one run', s: 'm', m: 'max', n: 1000, r: 200 },
@@ -105,7 +107,7 @@ function clRun_(b, cid) {
     if (tk.t500 && !(Number(owned.t500) > 0)) throw new Error('No 500 coin run ticket left.');
     var last = runLastT_(rec[14]);
     if (secs < 3 || secs > 3600) throw new Error('That run is not possible.');
-    if (ran > secs * 17.5 + 30 || coins > ran * 0.35 * (tk.t500 ? 2 : 1) + 80 || score > m * 5 + coins * 5 + 50) throw new Error('That run is not possible.');
+    if (ran > secs * 19.5 + 30 || coins > ran * 0.6 * (tk.t500 ? 2 : 1) + 80 || score > m * 5 + coins * 5 + 50) throw new Error('That run is not possible.');
     if (last && now.getTime() - last < secs * 700) throw new Error('Slow down, one run at a time.');
     var ev = r.ev || {}, cap = function (k, max) { return Math.max(0, Math.min(Math.round(Number(ev[k]) || 0), max)); };
     var got = { coins: coins, m: m, score: score, jumps: cap('jumps', secs * 3), slides: cap('slides', secs * 3), roof: cap('roof', m), runs: 1, powers: cap('powers', Math.floor(m / 40) + 2), clean: cap('clean', m), mult: cap('mult', 5) };
@@ -144,12 +146,15 @@ function clRun_(b, cid) {
     rec[14] = 'T' + now.getTime() + runCause_(ev, m); out.earned = earned; out.boosted = boost;   // Last run: time, then what ended the run (JSON) to check reports
     bd.total = earned; out.breakdown = bd;   // picked + boost + missions + allBonus + wellbe = earned
     out._had = had;
+    // 5:30 AM Club: runs of at least earlyMinM that started before earlyHour (Beirut time)
+    if (ran >= RUN.EARLY_MIN_M) { var hm0 = Utilities.formatDate(new Date(now.getTime() - secs * 1000), tz, 'HH:mm'); if (Number(hm0.slice(0, 2)) < RUN.EARLY_HOUR) st.am = (Number(st.am) || 0) + 1; }
     out._badgeAdd = true; changed = true;
   }
   if (op === 'shop') { out.bought = lvBuy_(rec, owned, String(b.item || '')); changed = true; }
   if (op === 'buy') {
     var item = String(b.item || '');
-    if (item === 'life') {
+    if (Object.prototype.hasOwnProperty.call(RUN.OUTFITS, item)) { out.bought = runBuyOutfit_(item, rec, owned, st, cid); changed = true; }
+    else if (item === 'life') {
       if ((Number(up.life) || 0) >= RUN.LIFE_MAX) throw new Error('You already have ' + RUN.LIFE_MAX + ' extra lives');
       if ((Number(rec[4]) || 0) < RUN.LIFE_COST) throw new Error('Not enough coins');
       rec[4] = Number(rec[4]) - RUN.LIFE_COST; up.life = (Number(up.life) || 0) + 1; changed = true;
@@ -203,10 +208,69 @@ function clRun_(b, cid) {
   out.badges = Object.keys(RUN.OLD).filter(function (id) { return badges.indexOf(id) > -1 || bset[RUN.OLD_MAP[id]]; }).map(function (id) { return { id: id, t: RUN.OLD[id] }; });
   out.ladders = runLadders_(bset, rec, st); out.badgeCount = { have: Object.keys(bset).length, all: RUN.LADDERS.length * 5 };
   out.boost = boost; out.boards = boards.lists; out.rank = boards.rank; out.lv = lvOut_(rec, owned); out.lbHide = !!owned.lbHide;
+  out.outfits = runOutfits_(rec, owned, st, cid);
   return out;
 }
 
 function runJ_(s, d) { return nutJ_(s, d); }   // safe JSON read (Nutrition.gs)
+
+// ---------- RUNNER OUTFITS ----------
+// Bought outfits are saved in Owned as of_<id> (prestige ones as their shop item o1/o2/o3). Earned ones are worked out every time.
+// rule: free | coins | staff (coins, or free for staff) | physio (coins, or free after a physio booking) | early (runs before earlyHour) | km (total km) | level (prestige: level, then coins)
+function runOutfit_(id, rec, owned, st, cid, who) {
+  var o = RUN.OUTFITS[id] || {}, lv = lvOf_(rec[19]).level, r = { id: id, n: o.n, own: false, rule: 'coins', coins: Number(o.coins) || 0, lv: 0, can: false };
+  if (o.shop) {
+    var s = LV.SHOP[o.shop] || {}; r.rule = 'level'; r.coins = Number(s.coins) || 0; r.lv = Number(s.lv) || 0;
+    r.own = Number(owned[o.shop] || 0) > 0; r.can = !r.own && lv >= r.lv; return r;
+  }
+  if (o.free) { r.rule = 'free'; r.coins = 0; r.own = true; return r; }
+  if (o.early) { r.rule = 'early'; r.coins = 0; r.need = Number(o.early); r.have = Number(st.am) || 0; r.hour = RUN.EARLY_HOUR; r.own = r.have >= r.need; return r; }
+  if (o.km) { r.rule = 'km'; r.coins = 0; r.need = Number(o.km) * 1000; r.have = Number(rec[6]) || 0; r.own = r.have >= r.need; return r; }
+  if (Number(owned['of_' + id] || 0) > 0) { r.own = true; r.got = 'Bought'; }
+  if (o.staff) { r.rule = 'staff'; if (!r.own && who().staff) { r.own = true; r.got = 'Free for staff'; } }
+  if (o.physio) { r.rule = 'physio'; if (!r.own && who().physio) { r.own = true; r.got = 'Free with your physio booking'; } }
+  r.can = !r.own && r.coins > 0;
+  return r;
+}
+function runOutfits_(rec, owned, st, cid) {
+  var w = null, who = function () { return w || (w = runWho_(cid)); };
+  return Object.keys(RUN.OUTFITS).map(function (id) { return runOutfit_(id, rec, owned, st, cid, who); });
+}
+function runBuyOutfit_(id, rec, owned, st, cid) {
+  var r = runOutfit_(id, rec, owned, st, cid, function () { return runWho_(cid); });
+  if (r.own) throw new Error('You already have ' + r.n);
+  if (r.rule === 'early') throw new Error(r.n + ' unlocks after ' + r.need + ' runs started before ' + RUN.EARLY_HOUR + ' am');
+  if (r.rule === 'km') throw new Error(r.n + ' unlocks when you have run ' + (r.need / 1000) + ' km in total');
+  if (r.rule === 'level' && lvOf_(rec[19]).level < r.lv) throw new Error('Reach level ' + r.lv + ' to buy ' + r.n);
+  if (!(r.coins > 0)) throw new Error(r.n + ' is not for sale');
+  if ((Number(rec[4]) || 0) < r.coins) throw new Error('Not enough coins');
+  rec[4] = Number(rec[4]) - r.coins;
+  if (r.rule === 'level') owned[RUN.OUTFITS[id].shop] = 1; else owned['of_' + id] = 1;
+  return r.n;
+}
+// is this player Wellbe staff (Coach Kit free) and did they book physio (Rehab Hero free). Cached 3 hours.
+function runWho_(cid) {
+  var cache = CacheService.getScriptCache(), key = 'runwho|' + cid, c = cache.get(key);
+  if (c) { try { return JSON.parse(c); } catch (e) {} }
+  var out = { staff: false, physio: false };
+  try {
+    var g = cfg_().game; if ((g.staffClients || []).map(function (x) { return String(x).trim().toUpperCase(); }).indexOf(cid) > -1) out.staff = true;
+    if (!out.staff && !/^G\d+$/.test(cid) && typeof cfgStaff_ === 'function') {
+      // phone: digits without the 961 country code and the leading 0, so +961 3 123 456 and 03 123 456 are the same number
+      var pn = function (x) { return String(x || '').replace(/\D/g, '').replace(/^00/, '').replace(/^961/, '').replace(/^0+/, ''); };
+      var me = appClientInfo_(cid) || {}, em = String(me.email || '').trim().toLowerCase(), ph = pn(me.phone);
+      cfgStaff_().forEach(function (s) {
+        if ((em && String(s.email || '').trim().toLowerCase() === em) || (ph.length >= 7 && pn(s.phone) === ph)) out.staff = true;
+      });
+    }
+    if (!/^G\d+$/.test(cid) && typeof pkgsAll_ === 'function') {
+      var ops = SpreadsheetApp.openById(CFG.OPS_ID);
+      pkgsAll_(ops).forEach(function (x) { if (x.cid === cid && /physio|prehab|assessment/i.test(x.type)) out.physio = true; });
+    }
+  } catch (e) { Logger.log('runWho_ ' + cid + ': ' + e); }
+  cache.put(key, JSON.stringify(out), 10800);
+  return out;
+}
 // ---------- BADGE LADDERS ----------
 // the number a ladder counts, from the row and the Stats column
 function runLadderVal_(L, rec, st) {

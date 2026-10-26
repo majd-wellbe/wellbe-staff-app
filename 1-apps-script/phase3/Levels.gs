@@ -26,7 +26,8 @@ function lvOf_(xp) {
 // coins in the gift chest for reaching a level
 function lvChest_(l) { return 100 + 25 * l; }
 // has this power / item (free by level, or bought)
-function lvHas_(owned, level, k) { var s = LV.SHOP[k]; return !!s && (level >= s.lv || Number(owned[k] || 0) > 0); }
+// prestige items (the 3 prestige outfits) are never free by level: the level only lets you buy them
+function lvHas_(owned, level, k) { var s = LV.SHOP[k]; return !!s && ((s.kind !== 'prestige' && level >= s.lv) || Number(owned[k] || 0) > 0); }
 
 // players who already bought an upgrade keep that power open
 function lvMigrate_(owned, up) {
@@ -46,6 +47,7 @@ function lvAdd_(rec, owned, xp) {
     Object.keys(LV.SHOP).forEach(function (k) {
       var s = LV.SHOP[k];
       if (s.kind === 'once' && s.lv === l) got.push(s.n);
+      if (s.kind === 'prestige' && s.lv === l) got.push(s.n + ' can now be bought');
       if (s.kind === 'ticket' && l >= s.lv) { owned[k] = (Number(owned[k]) || 0) + 1; got.push('1 ' + s.n); }   // 1 free ticket at the unlock level and every level after
     });
     if (l === LV.BADGE_LV) got.push('Gold Wellbe Runner badge');
@@ -58,7 +60,8 @@ function lvAdd_(rec, owned, xp) {
 function lvBuy_(rec, owned, item) {
   var s = LV.SHOP[item]; if (!s) throw new Error('Not in the shop');
   var level = lvOf_(rec[19]).level;
-  if (s.kind === 'once' && lvHas_(owned, level, item)) throw new Error('You already have ' + s.n);
+  if ((s.kind === 'once' || s.kind === 'prestige') && lvHas_(owned, level, item)) throw new Error('You already have the ' + s.n);
+  if (s.kind === 'prestige' && level < s.lv) throw new Error('Reach level ' + s.lv + ' to buy the ' + s.n);
   if ((Number(rec[4]) || 0) < s.coins) throw new Error('Not enough coins');
   rec[4] = Number(rec[4]) - s.coins;
   owned[item] = (Number(owned[item]) || 0) + 1;

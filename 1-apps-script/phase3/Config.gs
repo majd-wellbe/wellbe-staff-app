@@ -101,10 +101,29 @@ var CFG_DEFAULTS = {
       life2: { n: '2nd extra life slot', coins: 5000, lv: 8, kind: 'once' },
       t500: { n: '500 coin run ticket', coins: 800, lv: 10, kind: 'ticket' },
       t1500: { n: 'Start at 1,500 m ticket', coins: 1200, lv: 15, kind: 'ticket' },
-      o1: { n: 'Outfit 1', coins: 3000, lv: 20, kind: 'once' },
-      o2: { n: 'Outfit 2', coins: 6000, lv: 30, kind: 'once' },
-      o3: { n: 'Outfit 3', coins: 10000, lv: 40, kind: 'once' }
-    }
+      // prestige outfits: the level opens them, then they cost coins (kind 'prestige': never free by level)
+      o1: { n: 'Tyrian Purple outfit', coins: 3000, lv: 20, kind: 'prestige' },
+      o2: { n: 'Golden Cedar outfit', coins: 6000, lv: 30, kind: 'prestige' },
+      o3: { n: 'Corniche Legend outfit', coins: 10000, lv: 40, kind: 'prestige' }
+    },
+    // runner outfits (RunGame.gs runOutfits_). coins = price; free: everyone; staff: free for staff; physio: free after a physio booking;
+    // early: runs started before earlyHour (Beirut); km: total km run; shop: a prestige shop item (level + coins)
+    outfits: {
+      coach: { n: 'Wellbe Coach Kit', coins: 1500, staff: true },
+      ramadan: { n: 'Ramadan Night Run', coins: 1000 },
+      matchday: { n: 'Yalla Lebnan', coins: 0, free: true },
+      street: { n: 'Mar Mikhael Street', coins: 2000 },
+      modest: { n: 'Modest Mover', coins: 0, free: true },
+      rehab: { n: 'Rehab Hero', coins: 1000, physio: true },
+      am530: { n: '5:30 AM Club', coins: 0, early: 10 },
+      race42: { n: 'Race Day 42K', coins: 0, km: 42 },
+      tyrian: { n: 'Tyrian Purple', coins: 0, shop: 'o1' },
+      cedar: { n: 'Golden Cedar', coins: 0, shop: 'o2' },
+      legend: { n: 'Corniche Legend', coins: 0, shop: 'o3' }
+    },
+    earlyHour: 7, earlyMinM: 300,
+    // client IDs that count as Wellbe staff in the game (Coach Kit free). Staff are also found by their email or phone in STAFF.
+    staffClients: []
   },
   // Wellbe The Brand products shown in the client app Shop, in this order (Shopify product handles)
   shop: { brand: ['necklux-2-0-the-ultimate-neck-massager', 'backlux-lower-back-massager', 'hypro-massage-gun', 'aloe-vera-gel', 'wellbe-anti-shock-case', 'knee-patella-support', 'the-ultimate-foot-stretcher'] },
@@ -302,7 +321,7 @@ function cfgPublic_(audience, role, me) {
   c.types = c.types.filter(function (t) { return t.active !== false; });
   if (c.services && c.services['1:3'] && c.trial && c.trial.trainer) c.services['1:3'].trainer = c.trial.trainer;   // who runs the 1:3 trials
   delete c.trial;
-  if (client) { delete c.pay; delete c.lists; delete c.insurance; }
+  if (client) { delete c.pay; delete c.lists; delete c.insurance; if (c.game) delete c.game.staffClients; }
   return c;
 }
 

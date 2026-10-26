@@ -1,0 +1,53 @@
+CORNICHE RUN OUTFITS AND FACES: INSTALL
+Project: "Wellbe W40 Backend" (Apps Script). About 10 minutes.
+Three server files change: RunGame, Levels and Config.
+
+WHAT PLAYERS GET
+ * YOUR RUNNER has two new sections: OUTFIT and FACE.
+ * 11 outfits: Wellbe Coach Kit, Ramadan Night Run, Yalla Lebnan, Mar Mikhael Street, Modest Mover,
+   Rehab Hero, 5:30 AM Club, Race Day 42K, and the 3 prestige outfits Tyrian Purple, Golden Cedar
+   and Corniche Legend. "Custom" keeps the old Top, Bottom and Shoes pickers.
+ * Every outfit can be tried on. A locked outfit shows how to unlock it and cannot be used to run.
+ * Face: 8 skin tones, 4 eye colours. While sprinting the runner makes a Game Face,
+   after 10 coins in a row a Happy face.
+
+HOW OUTFITS UNLOCK (checked on the server, the phone only shows it)
+ * Yalla Lebnan, Modest Mover: free.
+ * Wellbe Coach Kit: 1,500 coins. Free for staff (the player's email or phone matches a row in STAFF,
+   or their client ID is in the setting game.staffClients).
+ * Ramadan Night Run: 1,000 coins (can be bought any time).
+ * Mar Mikhael Street: 2,000 coins.
+ * Rehab Hero: free if the client has a Physio, Prehab or Assessment package in PACKAGES, otherwise 1,000 coins.
+ * 5:30 AM Club: 10 runs of at least 300 m that started before 7:00 (Beirut time). Counting starts after this update.
+ * Race Day 42K: 42 km run in total (all runs, also the ones before this update).
+ * Tyrian Purple: reach level 20, then 3,000 coins. Golden Cedar: level 30, then 6,000.
+   Corniche Legend: level 40, then 10,000. (These are the old "Outfit 1/2/3" shop slots.
+   They are no longer free at that level: the level opens them, the coins buy them.)
+ Prices and rules are in Config (game.outfits) and can be changed in SETTINGS like the other game numbers.
+
+A. SERVER FIRST
+ 1. Open the "Wellbe W40 Backend" project in Apps Script.
+ 2. Open the file RunGame. Click inside it, press Ctrl+A (select all), then Delete.
+    Open RunGame.gs from this folder, select all, copy, and paste it into RunGame. Press Ctrl+S.
+ 3. Do the same for Levels (paste Levels.gs) and Config (paste Config.gs). Press Ctrl+S each time.
+ 4. Deploy > Manage deployments > pencil (Edit) > Version: New version > Deploy.
+    Same link, nothing to send to anyone.
+    The app on the phones keeps working the same with this server (it simply ignores the outfits).
+
+B. THEN THE APPS (GitHub Desktop, after step 4)
+ 5. Changed files: client/index.html, client/run.html and client/run-test.html. Tick them, Commit, Push.
+    (index.html lets the game buy outfits. Phones that still have the app open must close and reopen it once.)
+    If the app comes out before the server: outfits show as locked, faces work.
+
+C. QUICK CHECKS (on your phone, after step 5)
+ 6. Open the game, tap your runner to change it. OUTFIT shows Custom first, then 11 cards.
+    Yalla Lebnan and Modest Mover say Free. Pick one, START RUNNING.
+ 7. Pick Ramadan Night Run: the runner wears it, the box says "Try it on here. Unlock: 1,000 coins".
+    With enough coins tap "Buy for 1,000 coins", then tap again to confirm. The card now says Yours.
+ 8. Sprint in a run: the face turns into the Game Face. Pick up a long row of coins: Happy face.
+ 9. Your own row in CORNICHE RUN, column U (Owned), now has "of_ramadan":1 after that buy.
+
+IF A STAFF MEMBER DOES NOT GET THE COACH KIT FREE
+ Their email or phone in the client list must match the STAFF tab, or add their client ID to SETTINGS:
+   game.staffClients    ["C012"]
+ The check is kept for 3 hours, so it can take up to 3 hours to show.

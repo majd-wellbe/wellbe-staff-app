@@ -739,7 +739,7 @@ begin
   if t1500 and not (coalesce((v_owned->>'t1500')::numeric, 0) > 0) then raise exception 'No start at 1,500 m ticket left.'; end if;
   if t500 and not (coalesce((v_owned->>'t500')::numeric, 0) > 0) then raise exception 'No 500 coin run ticket left.'; end if;
   if secs < 3 or secs > 3600 then raise exception 'That run is not possible.'; end if;
-  if ran > secs * 17.5 + 30 or coins > ran * 0.35 * (case when t500 then 2 else 1 end) + 80 or score > m * 5 + coins * 5 + 50 then raise exception 'That run is not possible.'; end if;
+  if ran > secs * 19.5 + 30 or coins > ran * 0.6 * (case when t500 then 2 else 1 end) + 80 or score > m * 5 + coins * 5 + 50 then raise exception 'That run is not possible.'; end if;
   if g.last_run_at is not null and now() - g.last_run_at < make_interval(secs => secs * 0.7) then raise exception 'Slow down, one run at a time.'; end if;
   got := jsonb_build_object('coins', coins, 'm', m, 'score', score, 'runs', 1,
     'jumps', greatest(0, least(app.jsround(coalesce((ev->>'jumps')::numeric, 0)), secs * 3)), 'slides', greatest(0, least(app.jsround(coalesce((ev->>'slides')::numeric, 0)), secs * 3)),
