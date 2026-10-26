@@ -54,7 +54,7 @@ const fresh = () => { CFG_MEMO_ = null; M.cache = {}; };
 
 (async () => {
   F.build(); BF.extend();
-  M.props.SB_URL = 'https://lfpdcqtwwxkoxvbrlnep.supabase.co'; M.props.SB_SYNC_SECRET = SECRET;
+  M.props.SB_URL = 'https://fuwxmbdygqrmcbhwvrfx.supabase.co'; M.props.SB_SYNC_SECRET = SECRET;
   FD.buildTemplate();
   const dir = path.join(TMP, DB); exportBooks(M.books, dir);
   const { sql } = I.run(dir, GS);
@@ -72,7 +72,7 @@ const fresh = () => { CFG_MEMO_ = null; M.cache = {}; };
     EVENTS = [ev('evA', at(s1) + 15 * 60000, at(s1) + 45 * 60000), ev('evR', at(s2), at(s2) + 3600000), ev('evR', at(s2) + 7 * 864e5, at(s2) + 7 * 864e5 + 3600000),
       ev('allday', at(s1) - 8 * 3600000, at(s1) + 16 * 3600000, true)];
     POSTS = []; const r1 = sbPushCalendar(), p = POSTS[0];
-    ok(POSTS.length === 1 && p.url === 'https://lfpdcqtwwxkoxvbrlnep.supabase.co/rest/v1/rpc/wb_sync_calendar' && p.opt.method === 'post' && p.opt.headers.apikey === SB.KEY && !p.opt.headers.Authorization,
+    ok(POSTS.length === 1 && p.url === 'https://fuwxmbdygqrmcbhwvrfx.supabase.co/rest/v1/rpc/wb_sync_calendar' && p.opt.method === 'post' && p.opt.headers.apikey === SB.KEY && !p.opt.headers.Authorization,
       'sends one POST to /rest/v1/rpc/wb_sync_calendar with the public key only', J(p && { url: p.url, h: p.opt.headers }));
     ok(p.body.secret === SECRET && p.body.rows.length === 4 && p.body.rows[3].allDay === true && typeof p.body.rows[0].s === 'number', 'rows: id, start and end in ms, all day flag', J(p.body.rows));
     ok(r1 && r1.ok, 'returns the answer');
@@ -103,7 +103,7 @@ const fresh = () => { CFG_MEMO_ = null; M.cache = {}; };
     let thrown = ''; try { sbPushCalendar(); } catch (e) { thrown = e.message; }
     ok(thrown === 'Supabase wb_sync_calendar 400: not allowed', 'a refusal shows the database message in the trigger log', thrown); RESP = null;
     delete M.props.SB_URL; thrown = ''; try { sbPushCalendar(); } catch (e) { thrown = e.message; }
-    ok(/Set SB_URL/.test(thrown), 'no SB_URL: clear message', thrown); M.props.SB_URL = 'https://lfpdcqtwwxkoxvbrlnep.supabase.co';
+    ok(/Set SB_URL/.test(thrown), 'no SB_URL: clear message', thrown); M.props.SB_URL = 'https://fuwxmbdygqrmcbhwvrfx.supabase.co';
 
     console.log('\n-- 2. brand catalog');
     PRODUCTS = [{ handle: 'necklux-2-0-the-ultimate-neck-massager', title: 'Necklux 2.0', product_type: 'Neck', variants: [{ price: '49.00', compare_at_price: '69.00' }], images: [{ src: 'https://cdn/x.jpg' }] },

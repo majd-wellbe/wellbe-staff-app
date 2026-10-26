@@ -17,8 +17,8 @@
   'use strict';
   var WB = w.WB; if (!WB || !WB.api) return;
   var appsApi = WB.api;                                   // the Apps Script call from wb-core.js
-  WB.SUPA = 'https://lfpdcqtwwxkoxvbrlnep.supabase.co/functions/v1/api';
-  WB.SUPA_KEY = 'sb_publishable_DNy9ua9QayYLL4e_asTM7Q_idm7vlBW';
+  WB.SUPA = 'https://fuwxmbdygqrmcbhwvrfx.supabase.co/functions/v1/api';
+  WB.SUPA_KEY = 'sb_publishable_f8AblOflNUOUYDOvhkI9jQ_K_QxPRzL';
 
   function netErr(m) { var e = new Error(m); e.net = true; return e; }
   function supaApi(action, data, auth, opt) {

@@ -3,13 +3,13 @@
 //   sbPushCalendar()  busy times of the physio's Google Calendar for the next physioDays   (every 10 minutes)
 //   sbPushBrand()     the Wellbe The Brand catalog, exactly what profBrand_() shows today      (every 6 hours)
 // One time setup: Script Properties
-//   SB_URL          https://lfpdcqtwwxkoxvbrlnep.supabase.co
+//   SB_URL          https://fuwxmbdygqrmcbhwvrfx.supabase.co
 //   SB_SYNC_SECRET  a long random text (at least 24 characters), the same one saved in Supabase app.secrets 'sync_secret'
 //   SB_KEY          optional: the publishable key (the default below is the project's public key)
 // Then run sbSetupTriggers() once from the editor. Nothing here changes the sheets or the apps.
 // =====================================================================
 var SB = {
-  KEY: 'sb_publishable_DNy9ua9QayYLL4e_asTM7Q_idm7vlBW',      // public key (safe to share, the database rules decide what it can do)
+  KEY: 'sb_publishable_f8AblOflNUOUYDOvhkI9jQ_K_QxPRzL',      // public key (safe to share, the database rules decide what it can do)
   CAL_EVERY_MIN: 10, BRAND_EVERY_H: 6
 };
 function sbProp_(k, d) { var v = PropertiesService.getScriptProperties().getProperty(k); return v == null || v === '' ? d : String(v); }

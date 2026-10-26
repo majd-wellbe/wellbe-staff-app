@@ -3,7 +3,7 @@
 Plain steps, in order. Nothing here changes what staff and clients see until the very last part (the switch).
 Until then the apps keep using the Apps Script exactly as today.
 
-What you need open: the Supabase dashboard (project `lfpdcqtwwxkoxvbrlnep`), the Apps Script editor of the Wellbe server, and GitHub (repository `wellbe-staff-app`, folder `supabase`).
+What you need open: the Supabase dashboard (project `fuwxmbdygqrmcbhwvrfx`), the Apps Script editor of the Wellbe server, and GitHub (repository `wellbe-staff-app`, folder `supabase`).
 
 Rules for secrets: never paste a key, a password or a secret in the chat. You paste them only into the Supabase dashboard or into Script Properties. The only key that is public on purpose is the publishable key (`sb_publishable_...`).
 
@@ -12,7 +12,7 @@ If you prefer, say "do step N" and I do that step on your laptop through Chrome,
 
 ## Step 1. Database: run the new files (about 10 minutes)
 
-The live database already has 0001 to 0004 and the seed. Now run the rest, in exactly this order:
+Project moved on 26 Oct 2026 from Tokyo (deleted) to Ireland eu-west-1 (`fuwxmbdygqrmcbhwvrfx`). Step 1 is DONE there: 0001 to 0009 and the seed ran on 26 Oct 2026 (actions 58, tables_without_rls 0, backend apps). Order for any future rebuild: 0001 to 0004 first, then:
 
 1. `0005_boot.sql`
 2. `0006_features.sql`
@@ -101,14 +101,14 @@ In a terminal, inside your copy of the `wellbe-staff-app` repository:
 
 ```
 npx supabase login
-npx supabase link --project-ref lfpdcqtwwxkoxvbrlnep
+npx supabase link --project-ref fuwxmbdygqrmcbhwvrfx
 npx supabase functions deploy api --no-verify-jwt
 npx supabase functions deploy login-code --no-verify-jwt
 npx supabase functions deploy upload --no-verify-jwt
 ```
 
 Check: open this address in the browser. It must answer `{"ok":false,"error":"Bad request"}` (that is the good answer to a plain visit):
-`https://lfpdcqtwwxkoxvbrlnep.supabase.co/functions/v1/api`
+`https://fuwxmbdygqrmcbhwvrfx.supabase.co/functions/v1/api`
 
 
 ## Step 5. Calendar and brand catalog sync: Supabase.gs (10 minutes)
@@ -131,7 +131,7 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 2. Apps Script editor: **+** next to Files, **Script**, name it `Supabase`. Paste the whole content of `server/Supabase.gs`. Save.
 3. **Project Settings**, **Script Properties**, add two:
 
-* `SB_URL`: `https://lfpdcqtwwxkoxvbrlnep.supabase.co`
+* `SB_URL`: `https://fuwxmbdygqrmcbhwvrfx.supabase.co`
 * `SB_SYNC_SECRET`: the same secret as in point 1
 
 4. Back in the editor, pick the function `sbSetupTriggers` in the menu at the top, click **Run**. Allow the permissions it asks for. The log ends with "Supabase sync ready".
