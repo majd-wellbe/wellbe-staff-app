@@ -2195,4 +2195,12 @@ document.addEventListener('pointerdown',function(){try{AU.ctx&&AU.ctx.resume&&AU
 if(window.NO3D){var L0=$('#load');L0.style.display='grid';L0.innerHTML='<div style="text-align:center">You look offline, or the game could not load.<br><br><button id="offr" type="button">Try again</button></div>';$('#offr').onclick=function(){location.reload()}}
 else{obLoad();if(!/[?&]pick=1/.test(location.search)&&store('cr_av'))start();else builderOpen()}
 </script>
+<script>
+// keep the sound and pause buttons (and the score multiplier) just under the coins box, whatever its height on this phone
+(function(){function place(){var c=document.querySelector('.pill.coins');if(!c)return;var r=c.getBoundingClientRect();if(!r.height)return;var t=Math.round(r.bottom+6)+'px';
+  ['mute','pause'].forEach(function(id){var b=document.getElementById(id);if(b)b.style.top=t});var m=document.getElementById('mult');if(m)m.style.top=t}
+  window.addEventListener('resize',place);window.addEventListener('orientationchange',function(){setTimeout(place,250)});
+  if(window.ResizeObserver){var c=document.querySelector('.pill.coins');if(c)new ResizeObserver(place).observe(c)}
+  document.addEventListener('DOMContentLoaded',place);setTimeout(place,0);setTimeout(place,600);setInterval(place,2000)})();
+</script>
 </body></html>
