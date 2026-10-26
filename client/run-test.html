@@ -243,6 +243,8 @@ var GAME={
   env:{url:'models/env/env_city.glb',
     front:{n:16,gap:8.2,z:[15.4,16.6],w:7.6,s:[7,8.6],up:[1.7,2.5],m:['building-skyscraper-a','building-skyscraper-b','building-skyscraper-c','building-skyscraper-d','building-skyscraper-e','building-skyscraper-b','building-skyscraper-c','building-l','building-m','building-n','building-a','building-b','building-c','building-d','building-e','building-f','building-g','building-h','building-i','building-k','building-l','building-m','building-n','building-skyscraper-a','building-skyscraper-b','building-skyscraper-c','building-skyscraper-d','building-skyscraper-e']},
     back:{n:10,gap:14,z:[27,33],w:10.5,s:[9,11.5],up:[1.3,1.9],m:['low-detail-building-a','low-detail-building-b','low-detail-building-c','low-detail-building-d','low-detail-building-e','low-detail-building-f','low-detail-building-g','low-detail-building-h','low-detail-building-i','low-detail-building-j','low-detail-building-k','low-detail-building-l','low-detail-building-m','low-detail-building-wide-a','low-detail-building-wide-b']},
+    // palms on the road edge: h = height range in metres
+    palms:{n:13,gap:9,h:[5.2,7.4],m:['palm-tree_palmDetailedTall','palm-tree_palmDetailedTall','palm-tree_palmDetailedShort','palm-tree_palmTall','palm-tree_palmBend','palm-tree_palm']},
     rocks:{n:12,gap:11,m:['rock_largeA','rock_largeB','rock_largeC','rock_largeD','rock_largeE','rock_largeF','stone_largeA','stone_largeC','stone_largeE']}},
   // every 500 m a new part of the corniche: pavement, buildings, railings, sea
   sections:[{g:['#f3e6cc','#e8d6b3'],b:['#f2d0a4','#e9a87c','#f6e7c8','#d9826b','#c7d8d2','#f4b6a6'],r:'#1f6e8c',sea:'#0fa3c9'},
@@ -1475,10 +1477,10 @@ function run(me,pc){if(TEAR){try{TEAR()}catch(e){}}obLoad();envLoad();var S={agi
   var postM=M('#1f6e8c',{m:.4,r:.4}),postIM=new TH.InstancedMesh(cyl,postM,56);postIM.frustumCulled=false;sc.add(postIM);
   for(i=0;i<56;i++){var p=new TH.Object3D();p.material=postM;p.scale.set(.025,.95,.025);p.position.set(0,.47,-2.9);p.updateMatrix();postIM.setMatrixAt(i,p.matrix);posts.push(p)}
   var trunk=M('#9a7550',{r:.9}),leaf=M('#2fa34a',{r:.7});
-  for(i=0;i<11;i++){var pg=new TH.Group(),trk=new TH.Mesh(new TH.CylinderGeometry(.09,.15,3.6,8),trunk);trk.position.y=1.8;trk.rotation.z=.05;pg.add(trk);
+  for(i=0;i<GAME.env.palms.n;i++){var pq=new TH.Group();pq.userData={row:'palm',i:i};pq.position.z=4;sc.add(pq);palms.push(pq);var pg=new TH.Group(),trk=new TH.Mesh(new TH.CylinderGeometry(.09,.15,3.6,8),trunk);trk.position.y=1.8;trk.rotation.z=.05;pg.add(trk);
     for(j=0;j<8;j++){var lf=new TH.Mesh(sph,leaf),a0=j/8*Math.PI*2;lf.scale.set(1.25,.06,.25);lf.position.set(Math.cos(a0)*1,3.45,Math.sin(a0)*1);lf.rotation.y=-a0;lf.rotation.z=Math.cos(a0)*.4;lf.rotation.x=Math.sin(a0)*.4;pg.add(lf)}
     var mp=i%3===2?obPut(i%2?'palmBend':'palm',[.72,.72+Math.random()*.12,.72]):null;mp=mp?mp.g:propClone('PalmTree_'+(1+i%4),4.4+Math.random()*1.2,Math.random()*6);if(!mp){var kp=obPut('palm');if(kp)mp=kp.g}if(mp){pg=mp;var bu=propClone(i%2?'Bush_1':'Plant_2',.7,Math.random()*6);if(bu){bu.position.set(1.2,0,.4);pg.add(bu)}}
-    pg.position.z=4;mergeStatic(pg);sc.add(pg);palms.push(pg)}
+    mergeStatic(pg);pq.add(pg);pq.userData.box=pg}
   for(i=0;i<9;i++){var lg=new TH.Group(),po=new TH.Mesh(cyl,M('#24343a',{m:.5,r:.5}));po.scale.set(.05,3.4,.05);po.position.y=1.7;lg.add(po);var lb=new TH.Mesh(sph,new TH.MeshBasicMaterial({color:0xfff2b8}));lb.scale.set(.17,.11,.17);lb.position.set(.2,3.35,0);lg.add(lb);var ml=propClone('Streetlight_Single',3.7,Math.PI/2);if(!ml){var kl=obPut('lamp');if(kl){ml=kl.g;ml.rotation.y=Math.PI}}if(ml)lg=ml;lg.position.z=-2.7;mergeStatic(lg);sc.add(lg);lamps.push(lg)}
   var fc2=document.createElement('canvas');fc2.width=128;fc2.height=256;var fx=fc2.getContext('2d');fx.fillStyle='#ffffff';fx.fillRect(0,0,128,256);
   for(var wy2=10;wy2<256;wy2+=32)for(var wx2=10;wx2<128;wx2+=30){fx.fillStyle='#3d5560';fx.fillRect(wx2,wy2,18,20);fx.fillStyle='rgba(255,255,255,.35)';fx.fillRect(wx2+2,wy2+2,6,16);fx.fillStyle='#d9d4c8';fx.fillRect(wx2-3,wy2+21,24,3)}
@@ -1486,13 +1488,14 @@ function run(me,pc){if(TEAR){try{TEAR()}catch(e){}}obLoad();envLoad();var S={agi
   var EV2=GAME.env,bldsB=[],rocks=[],rnd=function(a){return a[0]+Math.random()*(a[1]-a[0])},pick=function(a){return a[Math.floor(Math.random()*a.length)]};
   // fill slot q with a random model of its row (front: tinted walls, back: skyline, rock: sea edge); false while the pack is loading
   var envFill=function(q){if(!ENV)return false;var R0=q.userData.row,o=null;if(q.userData.m){q.remove(q.userData.m);q.userData.m=null}
-    if(R0==='rock'){var gr=new TH.Group();for(var k=0,nk=1+(Math.random()<.5);k<nk;k++){var rk=envPut(pick(EV2.rocks.m),.9+Math.random()*1.1,0,null,1.5+Math.random());if(rk){rk.g.position.set((k-.5)*5+Math.random()*2,-.86,-.7-k*1.1-Math.random()*.9);rk.g.rotation.y=Math.random()*6.28;gr.add(rk.g)}}o={g:gr}}
+    if(R0==='palm'){var pn=pick(EV2.palms.m),pb=ENV.B[pn];if(pb){var ph=rnd(EV2.palms.h)/(pb.max.y-pb.min.y),pw=.62+Math.random()*.1;o=envPut(pn,ph*pw,0,null,1/pw);if(o)o.g.rotation.y=Math.random()*6.28}}
+    else if(R0==='rock'){var gr=new TH.Group();for(var k=0,nk=1+(Math.random()<.5);k<nk;k++){var rk=envPut(pick(EV2.rocks.m),.9+Math.random()*1.1,0,null,1.5+Math.random());if(rk){rk.g.position.set((k-.5)*5+Math.random()*2,-.86,-.7-k*1.1-Math.random()*.9);rk.g.rotation.y=Math.random()*6.28;gr.add(rk.g)}}o={g:gr}}
     else{var C=EV2[R0];for(var t=0;t<6&&!o;t++){var nm=pick(C.m),b=ENV.B[nm];if(!b)continue;var s=Math.min(rnd(C.s),C.w/(b.max.x-b.min.x));o=envPut(nm,s,1,R0==='front'?q.userData.i:null,/skyscraper/.test(nm)?1+Math.random()*.25:rnd(C.up));if(o)o.g.position.z=o.D/2+rnd(C.z)}}
     if(!o)return false;q.add(o.g);q.userData.m=o.g;if(q.userData.box)q.userData.box.visible=false;return true};
   var slots=function(list,row,n,zb){for(var k=0;k<n;k++){var q=new TH.Group();q.userData={row:row,i:k};q.position.z=zb;sc.add(q);list.push(q)}};
   slots(bldsB,'back',EV2.back.n,0);slots(rocks,'rock',EV2.rocks.n,-3.3);
   for(i=0;i<EV2.front.n;i++){var bq=new TH.Group();bq.userData={row:'front',i:i};sc.add(bq);blds.push(bq);var bh=4+Math.random()*16,bd=new TH.Mesh(box,new TH.MeshStandardMaterial({color:new TH.Color('#f2d0a4').convertSRGBToLinear(),roughness:.85,map:ftex.clone()}));bd.scale.set(3.5+Math.random()*3,bh,4);bd.material.map.needsUpdate=true;bd.material.map.repeat.set(bd.scale.x/3.2,bh/6);bd.position.set(0,bh/2,17+Math.random()*8);bq.add(bd);bq.userData.box=bd}
-  [blds,bldsB,rocks].forEach(function(L){L.forEach(function(q){envFill(q)})});
+  [blds,bldsB,rocks,palms].forEach(function(L){L.forEach(function(q){envFill(q)})});
   var sailM=M('#ffffff',{ds:1,r:.6});
   for(i=0;i<7;i++){var bt=new TH.Group(),hull=new TH.Mesh(box,M(['#ffffff','#e0457a','#1f6e8c','#ffc23d'][i%4],{r:.5}));hull.scale.set(3,.6,1);bt.add(hull);
     var ms=new TH.Mesh(cyl,M('#dddddd'));ms.scale.set(.05,4,.05);ms.position.y=2.2;bt.add(ms);
@@ -2140,7 +2143,7 @@ function run(me,pc){if(TEAR){try{TEAR()}catch(e){}}obLoad();envLoad();var S={agi
     cz=cz==null?cTarget:cz+(cTarget-cz)*Math.min(1,(paused?0:dt)*6);pc.holder.position.z=cz;tagS.visible=!t0&&IN.ph<2;
     // world follows
     var fc=sky(Math.max(0,Math.floor(dist/500)),(dist%500)/500);sc.fog.color.copy(fc).convertSRGBToLinear();var night=(Math.floor(dist/500)%4)===3;hemi.intensity=night?.55:.85;sun.intensity=night?.35:1.55;
-    postAt(posts,1.5,14);for(var pi2=0;pi2<posts.length;pi2++){posts[pi2].updateMatrix();postIM.setMatrixAt(pi2,posts[pi2].matrix)}postIM.instanceMatrix.needsUpdate=true;postAt(palms,9,20);postAt(lamps,14,22);recyc(blds,EV2.front.gap,30);recyc(bldsB,EV2.back.gap,40);recyc(rocks,EV2.rocks.gap,20);lmkSync();var nearL=function(q,side,ext){return lmkOn.some(function(p){var o=p.o;return (side?o.z>0:o.z<0)&&q.position.x>p.X-(ext||o.pre||o.clr)&&q.position.x<p.X+o.clr})};palms.forEach(function(q){q.visible=!nearL(q,1,85)});blds.forEach(function(q){q.visible=!nearL(q,1)});bldsB.forEach(function(q){q.visible=!nearL(q,1,30)});lamps.forEach(function(q){q.visible=!nearL(q,0)});
+    postAt(posts,1.5,14);for(var pi2=0;pi2<posts.length;pi2++){posts[pi2].updateMatrix();postIM.setMatrixAt(pi2,posts[pi2].matrix)}postIM.instanceMatrix.needsUpdate=true;recyc(palms,EV2.palms.gap,20);postAt(lamps,14,22);recyc(blds,EV2.front.gap,30);recyc(bldsB,EV2.back.gap,40);recyc(rocks,EV2.rocks.gap,20);lmkSync();var nearL=function(q,side,ext){return lmkOn.some(function(p){var o=p.o;return (side?o.z>0:o.z<0)&&q.position.x>p.X-(ext||o.pre||o.clr)&&q.position.x<p.X+o.clr})};palms.forEach(function(q){q.visible=!nearL(q,1,85)});blds.forEach(function(q){q.visible=!nearL(q,1)});bldsB.forEach(function(q){q.visible=!nearL(q,1,30)});lamps.forEach(function(q){q.visible=!nearL(q,0)});
     ground.position.x=dist;lines.forEach(function(l){l.position.x=dist});tex.offset.x=dist/FTM;rail.position.x=sea.position.x=wall.position.x=road.position.x=walk2.position.x=dist;rtex.offset.x=dist/8;wt.offset.x=dist/13+now/9000;wt.offset.y=now/14000;
     boats.forEach(function(b){b.position.x+=b.userData.v*dt;b.position.y=-.3+Math.sin(now/700+b.userData.ph)*.08;b.rotation.z=Math.sin(now/900+b.userData.ph)*.04;if(b.position.x<dist-40)b.position.x+=180;if(b.position.x>dist+140)b.position.x-=180});
     jet.position.x+=9*dt;if(jet.position.x<dist-40)jet.position.x=dist+80;jet.position.y=-.4+Math.abs(Math.sin(now/180))*.08;

@@ -71,5 +71,22 @@ for(const f of ['rock_largeA','rock_largeB','rock_largeC','rock_largeD','rock_la
         const e1=a[1].map((v,q)=>v-a[0][q]),e2=a[2].map((v,q)=>v-a[0][q]);let nn=[e1[1]*e2[2]-e1[2]*e2[1],e1[2]*e2[0]-e1[0]*e2[2],e1[0]*e2[1]-e1[1]*e2[0]];const L=Math.hypot(...nn);if(L<1e-9)continue;
         const sh=.9+rnd()*.14;trim.push([a[0],a[1],a[2],nn.map(v=>v/L),c.map(v=>v*sh)])}}}
   const mesh=doc.createMesh(f);mesh.addPrimitive(prim(trim,matTrim));scene.addChild(doc.createNode(f).setMesh(mesh));stats.push(f+' t'+trim.length)}
+
+// palms (Kenney Nature Kit), recoloured: date-palm trunk with ring bands, varied Mediterranean greens, stone tree pit at the base
+for(const f of ['tree_palmDetailedTall','tree_palmDetailedShort','tree_palmTall','tree_palmBend','tree_palm']){
+  const src=await io.read(KN+f+'.glb');const trim=[];let minY=1e9,R=0;
+  const G=['#2f8f45','#3aa653','#287d3d','#46b05a','#33964a'].map(L3),T0=L3('#7d5c3d'),T1=L3('#96724c');
+  for(const node of src.getRoot().listNodes()){const m=node.getMesh();if(!m)continue;const W=node.getWorldMatrix();
+    const tf=p=>[W[0]*p[0]+W[4]*p[1]+W[8]*p[2]+W[12],W[1]*p[0]+W[5]*p[1]+W[9]*p[2]+W[13],W[2]*p[0]+W[6]*p[1]+W[10]*p[2]+W[14]];
+    for(const p of m.listPrimitives()){const leaf=(p.getMaterial()&&p.getMaterial().getName())==='leafsGreen',P=p.getAttribute('POSITION'),I=p.getIndices(),n=I?I.getCount():P.getCount();
+      for(let t=0;t<n;t+=3){const ix=[0,1,2].map(q=>I?I.getScalar(t+q):t+q),a=ix.map(i=>tf(P.getElement(i,[])));
+        const e1=a[1].map((v,q)=>v-a[0][q]),e2=a[2].map((v,q)=>v-a[0][q]);let nn=[e1[1]*e2[2]-e1[2]*e2[1],e1[2]*e2[0]-e1[0]*e2[2],e1[0]*e2[1]-e1[1]*e2[0]];const L=Math.hypot(...nn);if(L<1e-9)continue;
+        a.forEach(v=>{minY=Math.min(minY,v[1]);if(!leaf)R=Math.max(R,Math.hypot(v[0],v[2])*0)});
+        const cy=(a[0][1]+a[1][1]+a[2][1])/3;let c;
+        if(leaf){c=G[Math.floor(rnd()*G.length)];const tip=Math.min(1,Math.hypot((a[0][0]+a[1][0]+a[2][0])/3,(a[0][2]+a[1][2]+a[2][2])/3)/0.35);c=c.map((v,q)=>v*(1+.25*tip)+(q===0?.02*tip:0))}
+        else c=(Math.floor(cy/0.045)%2?T0:T1);
+        trim.push([a[0],a[1],a[2],nn.map(v=>v/L),c])}}}
+  cylT(0,minY,0,.13,.02,L3('#d6cab0'),trim,10);cylT(0,minY+.02,0,.105,.003,L3('#5e4630'),trim,10);
+  const mesh=doc.createMesh('palm-'+f);mesh.addPrimitive(prim(trim,matTrim));scene.addChild(doc.createNode('palm-'+f).setMesh(mesh));stats.push(f+' t'+trim.length)}
 await MeshoptEncoder.ready;doc.createExtension(KHRMeshQuantization).setRequired(true);await doc.transform(dedup(),weld(),quantize({quantizePosition:14,quantizeNormal:8,quantizeColor:8,quantizeTexcoord:12}),meshopt({encoder:MeshoptEncoder,level:'high'}),prune());
 const io2=new NodeIO().registerExtensions([EXTMeshoptCompression,KHRMeshQuantization]).registerDependencies({'meshopt.encoder':MeshoptEncoder});await io2.write('/home/claude/pipe/env_city.glb',doc);console.log(stats.join('\n'));console.log(fs.statSync('/home/claude/pipe/env_city.glb').size)
