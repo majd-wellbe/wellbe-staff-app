@@ -72,6 +72,30 @@
    "n": "Roll",
    "f": "roll.json",
    "loop": false
+  },
+  {
+   "id": "crunch",
+   "n": "Circle Crunch",
+   "f": "crunch.json",
+   "loop": true
+  },
+  {
+   "id": "jogback",
+   "n": "Jog Back",
+   "f": "jogback.json",
+   "loop": true
+  },
+  {
+   "id": "jogspot",
+   "n": "Jog On The Spot",
+   "f": "jogspot.json",
+   "loop": true
+  },
+  {
+   "id": "lookaround",
+   "n": "Look Around",
+   "f": "lookaround.json",
+   "loop": false
   }
  ]
 }

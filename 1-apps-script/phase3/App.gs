@@ -115,6 +115,7 @@ function appRoute_(b) {
   if (b.action === 'app_boot') return json_(appCached_('b|' + me.id, function () {
     return appReadOnly_(function () {
       var d = appTrainerScope_(insBoot_(walletBoot_(appBoot_(me))), me);
+      if (typeof refStaffBoot_ === 'function') d = refStaffBoot_(d, me);   // referrals (Referral.gs): owner and front desk
       d.notices = noticesFor_(SpreadsheetApp.openById(CFG.OPS_ID), [me.id]);   // unread in-app notices for this person
       return d;
     });
@@ -138,6 +139,8 @@ function appRoute_(b) {
 
     if (!fn) return json_({ ok: false, error: 'unknown action' });
     var out = fn(b, me) || {};
+    // referral credit: also here in case the live Wallet.gs sells without appSell_ (refOnSale_ is idempotent)
+    if (b.action === 'app_sell' && !out.referral && typeof refOnSale_ === 'function') { var rw = refOnSale_(SpreadsheetApp.openById(CFG.OPS_ID), b.cid); if (rw) out.referral = rw; }
     if (/^app_(wo|nut)_/.test(b.action)) { out.ok = true; return json_(out); }                         // no client package or session changed
     if (b.action === 'app_notice_read') { appUnCache_('b|' + me.id); out.ok = true; return json_(out); }  // only this person's boot changes
     if (b.action === 'app_notify') { appBumpClients_(out.cids || []); delete out.cids; out.ok = true; return json_(out); }   // only those clients' screens
@@ -770,7 +773,10 @@ function appSell_(b, me) {
     if (!sh.getRange(r, 23).getFormula()) sh.getRange(r, 23).setFormula('=IF(I' + r + '="","",IF(V' + r + '="",I' + r + ',I' + r + '-V' + r + '))');
     ids.push(id);
   }
-  return { id: ids[0], ids: ids, total: total };
+  var res = { id: ids[0], ids: ids, total: total };
+  // first paid package of an invited friend: the client who invited them gets the referral credit (Referral.gs)
+  if (typeof refOnSale_ === 'function') { var rw = refOnSale_(ops, cid); if (rw) res.referral = rw; }
+  return res;
 }
 
 function appClient_(b) {

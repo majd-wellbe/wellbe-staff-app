@@ -424,25 +424,35 @@ console.log('12. studio items');
 {
   const S = r => r.studio || {}, xpFor = (w, l) => vm.runInContext('(function(){var t=0;for(var i=1;i<' + l + ';i++)t+=lvNeed_(i);return t})()', w);
   const w = makeWorld(NEW); save(w, 'C750', run1); let g = w.call({ op: 'get' }, 'C750'), st = S(g);
-  ok(Object.keys(st).length === 36, '36 studio items in every reply', Object.keys(st).length);
-  const free = Object.keys(st).filter(k => st[k].own).sort();
-  ok(J(free) === J(['g_buds', 'g_cap', 'g_hband', 'g_sport', 'g_sweat', 'tn_yes', 'tt_pulse', 'tt_stars']), 'free: cap, headband, sport shades, earbuds, sweatband, heartbeat and stars tattoos, Yes! taunt', free);
-  ok(Object.keys(st).filter(k => /^tn_/.test(k) && st[k].own).length === 1, 'exactly one free taunt');
-  const P = { g_capb: 600, g_visor: 900, g_beanie: 800, g_bucket: 1200, g_round: 1000, g_avi: 1500, g_phones: 1500, g_watch: 1200, tt_wellbe: 800, tt_roman: 1000, tt_cedar: 1000, tt_tribal: 1200, tt_rose: 1200, tt_quwwa: 1500, tt_yalla: 1500,
+  ok(Object.keys(st).length === 59, '59 studio items in every reply (13 gear, 28 tattoos, 18 taunts)', Object.keys(st).length);
+  ok(Object.keys(st).filter(k => st[k].own).length === 0, 'nothing is free: a new player owns no gear, tattoo or taunt', Object.keys(st).filter(k => st[k].own));
+  const cnt = p => Object.keys(st).filter(k => p.test(k)).length;
+  ok(cnt(/^g_/) === 13 && cnt(/^tt_/) === 28 && cnt(/^tn_/) === 18, '13 gear, 28 tattoos, 18 taunts', [cnt(/^g_/), cnt(/^tt_/), cnt(/^tn_/)]);
+  const rng = (p, a, b) => Object.keys(st).filter(k => p.test(k)).every(k => st[k].coins >= a && st[k].coins <= b);
+  ok(rng(/^g_/, 300, 1500), 'gear 300 to 1,500');
+  ok(rng(/^tn_/, 300, 2500), 'taunts 300 to 2,500');
+  const small = ['tt_stars', 'tt_pulse', 'tt_roman', 'tt_rose', 'tt_cedar', 'tt_wellbe', 'tt_yalla', 'tt_quwwa', 'tt_nk_bolt', 'tt_nk_dots'], half = ['tt_hs_tribal', 'tt_hs_band', 'tt_hs_rose', 'tt_hs_bolt', 'tt_hl_waves', 'tt_hl_geo', 'tt_ch_beirut', 'tt_ch_cedar', 'tt_ab_sun', 'tt_ab_ribs'],
+    full = ['tt_sl_tribal', 'tt_sl_geo', 'tt_sl_waves', 'tt_lg_tribal', 'tt_lg_geo', 'tt_bk_cedar', 'tt_bk_tribal', 'tt_bk_script'];
+  ok(small.concat(half, full).length === 28 && small.every(k => st[k].coins >= 400 && st[k].coins <= 1000) && half.every(k => st[k].coins >= 1500 && st[k].coins <= 2500) && full.every(k => st[k].coins >= 3000 && st[k].coins <= 5000),
+    'tattoos by size: small 400 to 1,000, half 1,500 to 2,500, full 3,000 to 5,000', small.concat(half, full).filter(k => !st[k]).concat(Object.keys(st).filter(k => /^tt_/.test(k) && small.concat(half, full).indexOf(k) < 0)));
+  ok(Object.keys(st).filter(k => /^tt_/.test(k) && st[k].lv).length >= 4, 'some tattoos have a level gate');
+  const P = { g_cap: 300, g_hband: 300, g_capb: 600, g_visor: 700, g_beanie: 800, g_bucket: 1200, g_sport: 500, g_round: 1000, g_avi: 1500, g_buds: 400, g_phones: 1500, g_sweat: 300, g_watch: 1200,
+    tt_quwwa: 1000, tt_sl_waves: 4500, tt_bk_cedar: 5000, tn_yes: 300, tn_jogspot: 400, tn_jogback: 600, tn_lookaround: 800, tn_crunch: 1100,
     tn_fistpump: 500, tn_salute: 600, tn_jacks: 700, tn_squat: 700, tn_dance: 800, tn_pushup: 900, tn_taunt: 1000, tn_victory: 1200, tn_hiphop1: 1500, tn_hiphop2: 1500, tn_twirl: 2000, tn_capoeira: 2500, tn_roll: 2500 };
   ok(Object.keys(P).every(k => st[k] && st[k].coins === P[k]), 'prices from Config.gs', Object.keys(P).filter(k => !st[k] || st[k].coins !== P[k]));
-  const L = { tn_dance: 3, tn_hiphop1: 5, tn_hiphop2: 5, tn_twirl: 8, tn_capoeira: 10, tn_roll: 12 };
-  ok(Object.keys(L).every(k => st[k].lv === L[k]), 'level gates: Dance 3, Hip Hop 5, Butterfly Twirl 8, Capoeira 10, Roll 12', Object.keys(L).map(k => st[k].lv));
+  const L = { tn_dance: 3, tn_crunch: 3, tn_hiphop1: 5, tn_hiphop2: 5, tn_twirl: 8, tn_capoeira: 10, tn_roll: 12, tt_sl_waves: 10, tt_bk_cedar: 12 };
+  ok(Object.keys(L).every(k => st[k].lv === L[k]), 'level gates kept: Dance 3, Circle Crunch 3, Hip Hop 5, Butterfly Twirl 8, Capoeira 10, Roll 12; Wave Sleeve 10, Cedar Back 12', Object.keys(L).map(k => st[k].lv));
   ok(['g_cap', 'g_beanie', 'tt_rose', 'tn_salute'].every(k => ['n', 'k', 'coins', 'lv', 'own', 'can'].every(f => f in st[k])), 'item shape { n, k, coins, lv, own, can }');
   w.tab().rows[1][4] = 3000;
   let r = w.call({ op: 'buy', item: 'g_beanie' }, 'C750');
   ok(!r.error && r.coins === 2200 && S(r).g_beanie.own && r.bought === 'Beanie', 'buy Beanie: 800 coins off, yours', r.error || [r.coins, S(r).g_beanie]);
   ok(JSON.parse(w.tab().rows[1][20]).g_beanie === 1, 'saved in Owned as g_beanie', w.tab().rows[1][20]);
   r = w.call({ op: 'buy', item: 'g_beanie' }, 'C750'); ok(r.error === 'You already have Beanie', 'already owned refused', r.error);
-  r = w.call({ op: 'buy', item: 'g_cap' }, 'C750'); ok(r.error === 'You already have Cap', 'free item cannot be bought', r.error);
-  r = w.call({ op: 'buy', item: 'tt_quwwa' }, 'C750'); ok(!r.error && r.coins === 700 && S(r).tt_quwwa.own, 'buy Quwwa tattoo for 1,500', r.error || r.coins);
-  r = w.call({ op: 'buy', item: 'g_avi' }, 'C750'); ok(r.error === 'Not enough coins' && w.call({ op: 'get' }, 'C750').coins === 700, 'not enough coins: refused, nothing taken', r.error);
-  r = w.call({ op: 'buy', item: 'tn_salute' }, 'C750'); ok(!r.error && r.coins === 100, 'buy Salute taunt for 600', r.error || r.coins);
+  r = w.call({ op: 'buy', item: 'g_cap' }, 'C750'); ok(!r.error && r.coins === 1900 && S(r).g_cap.own, 'Cap is no longer free: 300 coins', r.error || r.coins);
+  r = w.call({ op: 'buy', item: 'tt_quwwa' }, 'C750'); ok(!r.error && r.coins === 900 && S(r).tt_quwwa.own, 'buy Quwwa tattoo for 1,000', r.error || r.coins);
+  r = w.call({ op: 'buy', item: 'tn_yes' }, 'C750'); ok(!r.error && r.coins === 600 && S(r).tn_yes.own, 'Yes! is no longer free: 300 coins', r.error || r.coins);
+  r = w.call({ op: 'buy', item: 'g_avi' }, 'C750'); ok(r.error === 'Not enough coins' && w.call({ op: 'get' }, 'C750').coins === 600, 'not enough coins: refused, nothing taken', r.error);
+  r = w.call({ op: 'buy', item: 'tn_salute' }, 'C750'); ok(!r.error && r.coins === 0, 'buy Salute taunt for 600', r.error || r.coins);
   w.tab().rows[1][4] = 10000; const lv0 = w.call({ op: 'get' }, 'C750').lv.level;
   r = w.call({ op: 'buy', item: 'tn_capoeira' }, 'C750'); ok(r.error === 'Reach level 10 to buy Capoeira' && !S(w.call({ op: 'get' }, 'C750')).tn_capoeira.can, 'level gate refuses Capoeira at level ' + lv0, r.error);
   w.tab().rows[1][19] = xpFor(w, 10) + 5; g = w.call({ op: 'get' }, 'C750');
@@ -461,11 +471,12 @@ console.log('13. client taunts and studio lists');
 {
   const html = fs.readFileSync(path.join(DIR, '..', '..', 'client', 'run.html'), 'utf8'), td = path.join(DIR, '..', '..', 'client', 'models', 'taunts');
   const man = JSON.parse(fs.readFileSync(path.join(td, 'manifest.json'), 'utf8'));
-  ok(man.taunts.length === 12, '12 converted Mixamo taunts in the manifest', man.taunts.length);
+  ok(man.taunts.length === 16, '16 converted Mixamo taunts in the manifest', man.taunts.length);
+  ok(['crunch', 'jogback', 'jogspot', 'lookaround'].every(id => man.taunts.some(t => t.id === id)), 'Circle Crunch, Jog Back, Jog On The Spot, Look Around added');
   const cfg = fs.readFileSync(path.join(DIR, 'Config.gs'), 'utf8');
   man.taunts.forEach(t => {
     const j = JSON.parse(fs.readFileSync(path.join(td, t.f), 'utf8')), n = Math.round(j.dur * j.fps) + 1;
-    ok(j.dur >= 1 && j.dur <= 4.05 && j.p.length === n * 3 && j.q.every(a => a.length === 4 || a.length === n * 4) && j.bones.indexOf('pelvis') > -1, t.id + ': ' + j.dur + ' s, tracks complete');
+    ok((j.loop ? j.dur >= .5 : j.dur >= 1) && j.dur <= 4.05 && (['crunch', 'jogback', 'jogspot', 'lookaround'].indexOf(t.id) < 0 || j.dur <= 2.45) && j.p.length === n * 3 && j.q.every(a => a.length === 4 || a.length === n * 4) && j.bones.indexOf('pelvis') > -1, t.id + ': ' + j.dur + ' s, tracks complete');
     ok(fs.statSync(path.join(td, t.f)).size < 60000, t.id + ' file under 60 KB', fs.statSync(path.join(td, t.f)).size);
     ok(cfg.indexOf('tn_' + t.id + ':') > -1 && html.indexOf("'tn_" + t.id + "'") > -1, t.id + ' has a price in Config.gs and a name in run.html');
     // stays on the start line: the hips never travel more than 15 cm on the ground

@@ -642,6 +642,18 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 .rd-rate b{display:block;margin-top:4px;font-size:14px}
 .rd-rate span{font-size:12px;color:var(--ink-3)}
 .rd-inv p{margin:-6px 0 12px;font-size:14px;color:var(--ink-2)}
+.ref-earn{display:flex;gap:10px;align-items:center;margin:0 0 12px;padding:11px 13px;border-radius:14px;background:#fff6dc;color:#5c4400;font-size:14px;line-height:1.35}.ref-earn svg{color:#c98a00}.ref-earn b{color:#3d2d00}
+.ref-list{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.ref-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.ref-h b{font-size:15px}
+.ref-cr{font-size:12.5px;font-weight:800;padding:5px 10px;border-radius:99px;background:#fff6dc;color:#7a5600}
+.ref-row{display:flex;align-items:center;gap:10px;padding:8px 0}.ref-row+.ref-row{border-top:1px solid var(--line)}
+.ref-row b{display:block;font-size:15px}.ref-row small{display:block;font-size:12.5px;color:var(--ink-3)}
+.ref-av{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;background:var(--mint-soft);color:var(--mint-deep)}
+.ref-st{flex:none;font-size:12px;font-weight:800;padding:5px 10px;border-radius:99px;background:var(--bg);color:var(--ink-2);white-space:nowrap}
+.ref-st.j{background:var(--mint-soft);color:var(--mint-deep)}.ref-st.e{background:#ffe9a8;color:#5c4400}.ref-st.m{background:transparent;color:var(--ink-3);font-weight:600}
+.ref-note{margin:6px 0 0!important;font-size:12.5px!important;color:var(--ink-3)!important}
+:root[data-theme="dark"] .ref-earn{background:rgba(232,164,0,.14);color:#f1d48a}:root[data-theme="dark"] .ref-earn b{color:#ffe7a6}
+:root[data-theme="dark"] .ref-cr,:root[data-theme="dark"] .ref-st.e{background:rgba(232,164,0,.2);color:#ffe7a6}:root[data-theme="dark"] .ref-st:not(.j):not(.e):not(.m){background:rgba(255,255,255,.09);color:var(--ink-2)}
 /* ME */
 .rd-me{display:flex;align-items:center;gap:14px;padding:6px 0 16px}
 .rd-me .ph{position:relative;flex:0 0 86px;height:86px;border-radius:50%;background:linear-gradient(135deg,#2c8a72,#17594a);display:grid;place-items:center;color:#fff;font:800 32px var(--display);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--accent)}
@@ -1487,8 +1499,11 @@ function inviteSheet(nm,ph){var a=ACC(),picker=!!(navigator.contacts&&navigator.
     if(!n){toast('Write their name');return}if(p.length<10||p.length>15){toast('Check the phone number');return}
     var first=n.split(' ')[0],msg=inviteText(first,a.first),link='https://wa.me/'+p+'?text='+encodeURIComponent(msg);
     busy(b,true);
-    send('app_cl_request',{kind:'invite',fname:n,phone:p,msg:msg}).then(function(){success('Invite on its way! 🎉',''+DESK()+' will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.')})
-     .catch(function(){busy(b,false);
+    send('app_cl_request',{kind:'invite',fname:n,phone:p,msg:msg}).then(function(j){var st=((j&&j.ref)||{}).status,amt=refAmt();
+       if(j&&j.ref){a.refs=(a.refs||[]).filter(function(x){return x.n!==n});a.refs.unshift({n:n,d:D.today,st:{'Already invited':'already','Already a client':'client'}[st]||'invited'})}
+       success('Invite on its way! 🎉',''+DESK()+' will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.'+(st==='Invited'&&amt?' When '+esc(first)+' joins, you get '+money(amt)+' Wellbe Credit for your next package.':''))})
+     .catch(function(e){busy(b,false);
+       if(e&&/own number/i.test(e.message||'')){toast(e.message);return}   // you cannot invite yourself
        // backend not updated yet: hand it to Romy on WhatsApp in one tap
        var txt='Hi '+DESK()+'! '+a.name+' here. I’d love to invite '+n+' to Wellbe. Their number: +'+p+'\n\nTap to send them the invite:\n'+link;
        openSheet('',' <div class="done"><div class="ok">'+ICON('i-heart')+'</div><h3>Almost there!</h3><p>One tap sends '+esc(first)+'’s details to '+DESK()+' so she can invite them.</p></div>','<a class="btn wa block" id="wgo" target="_blank" rel="noopener" href="'+waLink(txt)+'">'+ICON('i-wa')+'Send to '+DESK()+'</a>');
@@ -1779,7 +1794,17 @@ VIEWS.home=function(){var a=ACC(),p=currentPkg(a),q=quoteOfDay(),up=a.upcoming.f
   h+='<div style="margin-top:22px">'+friendCard()+'</div>';
   return h};
 function rdRate(){return rdH2('Rate us')+'<div class="rd-rate"><div class="card"><div class="stars">★★★★★</div><b>On Google</b><span>Helps others find us</span><button class="btn sm" style="margin-top:10px;width:100%;background:#e8a400;color:#fff" data-review="1">Review</button></div><div class="card"><div class="stars">★★★★★</div><b>In the app</b><span>Tell us how we are doing</span><button class="btn sm sec2" style="margin-top:10px;width:100%" data-act="rate">Rate</button></div></div>'}
-function friendCard(){return '<div class="invite rd-inv"><h3>Who would you like to invite to Wellbe?</h3><p>We’ll reach out with a warm welcome and a free trial session from you.</p><button class="pick" data-act="friend"><span class="ic">'+ICON('i-users')+'</span><span class="grow"><b>Choose from my contacts</b><span>'+(navigator.contacts&&navigator.contacts.select?'Pick them, or type their name and phone number':'Type their name and phone number')+'</span></span>'+ICON('i-plus','width:20px;height:20px')+'</button></div>'}
+function friendCard(){var a=ACC()||{},amt=refAmt();return '<div class="invite rd-inv"><h3>Who would you like to invite to Wellbe?</h3><p>We’ll reach out with a warm welcome and a free trial session from you.</p>'+
+  (amt?'<div class="ref-earn">'+ICON('i-gift','width:22px;height:22px;flex:none')+'<span>If your friend joins Wellbe, you get <b>'+money(amt)+' Wellbe Credit</b> for your next package.</span></div>':'')+
+  '<button class="pick" data-act="friend"><span class="ic">'+ICON('i-users')+'</span><span class="grow"><b>Choose from my contacts</b><span>'+(navigator.contacts&&navigator.contacts.select?'Pick them, or type their name and phone number':'Type their name and phone number')+'</span></span>'+ICON('i-plus','width:20px;height:20px')+'</button>'+refList(a)+'</div>'}
+// referral credit: the server setting referral.amount (0 = off). It is wallet money for packages, not the game's Cash or coins
+function refAmt(){var v=Number(cfg('referral.amount',5));return v>0?v:0}
+var REFST={invited:['Invited',''],joined:['Joined','j'],earned:['earned','e'],already:['Already invited','m'],client:['Already a client','m']};
+function refList(a){var r=a.refs||[],cr=+a.credit||0;if(!r.length&&!(cr>0))return '';
+  return '<div class="ref-list"><div class="ref-h"><b>Your invites</b>'+(cr>0?'<span class="ref-cr">'+money(cr)+' credit ready</span>':'')+'</div>'+
+   r.slice(0,8).map(function(x){var l=REFST[x.st]||REFST.invited,t=x.st==='earned'?'+'+money(x.amt||refAmt())+' earned':l[0];
+     return '<div class="ref-row"><span class="ref-av">'+esc(String(x.n||'?').charAt(0).toUpperCase())+'</span><div class="grow"><b>'+esc(x.n)+'</b><small>'+(x.d?'Invited '+esc(dayShort(x.d)):'Invited')+'</small></div><span class="ref-st '+l[1]+'">'+esc(t)+'</span></div>'}).join('')+
+   (cr>0?'<p class="ref-note">'+DESK()+' takes your credit off your next package when you renew.</p>':'')+'</div>'}
 /* ---------- sheets used by Center and Me ---------- */
 function allSess(a){return a.upcoming.slice().sort(function(x,y){return x.at-y.at})}
 ACT.sess=function(id){var a=ACC(),s=a.upcoming.filter(function(x){return x.id===id})[0]||a.past.filter(function(x){return x.id===id})[0];if(!s)return;

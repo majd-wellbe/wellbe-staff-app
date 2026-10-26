@@ -372,11 +372,11 @@ function runNameBad_(s) {
   for (var j = 0; j < words.length; j++) if (RUN.BAD_WORD.indexOf(words[j]) > -1 || RUN.BAD_WORD.indexOf(words[j].replace(/0/g, 'o').replace(/1/g, 'i')) > -1) return true;
   return false;
 }
-// gear, tattoos and taunts: free ones are everybody's, the rest are bought with coins (some open at a level first)
+// gear, tattoos and taunts: all bought with coins (some open at a level first). Owned is the only record of what a player has.
 function runStudio_(rec, owned) {
   var lv = lvOf_(rec[19]).level, S = RUN.STUDIO, out = {};
   Object.keys(S).forEach(function (id) {
-    var o = S[id], coins = Number(o.coins) || 0, need = Number(o.lv) || 0, own = (coins <= 0 && !need) || Number(owned[id] || 0) > 0;
+    var o = S[id], coins = Number(o.coins) || 0, need = Number(o.lv) || 0, own = Number(owned[id] || 0) > 0;   // no free items, no grandfathering: only what Owned records
     out[id] = { n: o.n, k: o.k, coins: coins, lv: need, own: own, can: !own && coins > 0 && lv >= need };
   });
   return out;

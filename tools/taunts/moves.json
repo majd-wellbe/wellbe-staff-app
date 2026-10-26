@@ -10,5 +10,9 @@
  {"file":"Hip_Hop_Dancing_1.fbx","id":"hiphop2","name":"Hip Hop 2","loop":true,"from":0,"to":4,"place":"clamp"},
  {"file":"Capoeira.fbx","id":"capoeira","name":"Capoeira","place":"lock"},
  {"file":"Butterfly_Twirl.fbx","id":"twirl","name":"Butterfly Twirl","place":"lock"},
- {"file":"Run_To_Rolling.fbx","id":"roll","name":"Roll","place":"lock"}
+ {"file":"Run_To_Rolling.fbx","id":"roll","name":"Roll","place":"lock"},
+ {"file":"Circle_Crunch.fbx","id":"crunch","name":"Circle Crunch","loop":true,"place":"lock"},
+ {"file":"Jog_Backward.fbx","id":"jogback","name":"Jog Back","loop":true,"place":"lock"},
+ {"file":"Jog_Forward.fbx","id":"jogspot","name":"Jog On The Spot","loop":true,"place":"lock"},
+ {"file":"Nervously_Look_Around.fbx","id":"lookaround","name":"Look Around","from":0,"to":2.4,"place":"clamp"}
 ]

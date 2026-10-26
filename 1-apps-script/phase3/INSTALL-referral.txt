@@ -1,0 +1,65 @@
+INVITE A FRIEND: $5 REFERRAL CREDIT (Oct 26): INSTALL
+Project: "Wellbe W40 Backend" (Apps Script). About 10 minutes.
+ONE new server file (Referral) and THREE changed (App, Client, Config). No column of an existing tab is added or moved.
+One new tab, REFERRALS, is made by itself in the Operations sheet the first time a client sends an invite.
+
+WHAT CHANGES
+ - Client app, "Who would you like to invite to Wellbe?" card: new line
+   "If your friend joins Wellbe, you get $5 Wellbe Credit for your next package."
+   Under it, "Your invites": each friend with Invited, Joined (they became a lead, guest or client) or +$5 earned,
+   and "$5 credit ready" when the client has wallet credit. Inviting your own number is refused.
+ - Every invite is saved in REFERRALS (who invited, friend name, friend phone without spaces, +961, 961 or leading 0,
+   date, status). Romy still gets the invite in her To do, now with the referral number and whether it earns credit.
+ - When an invited friend buys their FIRST PAID package (not the free trial, not a free package, price above $0),
+   the client who invited them gets $5 in CLIENT WALLET by itself:
+   Amount 5, Reason "Referral: <friend name>", Package = the friend's package, By "auto".
+   They also get a message in the app ("Sara joined Wellbe. $5 Wellbe Credit is ready for your next package.").
+   Rules: once per friend phone. Two clients invite the same friend: the first one gets it.
+   No credit for yourself, and none when the friend already had a paid package before the invite.
+ - Staff app (Romy, Majd):
+   * Sell a package to an invited friend: "Referred by Lara Khoury: $5 credit will be added to Lara."
+     (also in the "Sell and book" panel). After the sale the message says "$5 credit added to Lara".
+   * Sell a package to a client with wallet credit: "Wallet credit $5 ... Use it on this package" (ticked).
+     It is taken off what is left to pay (the live Wallet.gs does it, same as overpaid money). Untick to keep it.
+   * Client card: a "Referrals" box: who referred them, who they invited, their wallet credit.
+ - Wallet credit is real money for packages. It is NOT the game's Cash or coins (those stay in CORNICHE RUN).
+
+THE AMOUNT
+ Setting referral.amount (default 5). To change it: SETTINGS tab, Key referral.amount, Value e.g. 10.
+ 0 turns referrals off (nothing is given, the card line is hidden). Run cfgBump() to see it at once.
+
+A. SERVER FIRST (before the apps)
+ 1. Open the "Wellbe W40 Backend" project in Apps Script.
+ 2. NEW FILE: Files "+" > Script > name it Referral (the editor adds .gs). Paste Referral.gs from this folder. Ctrl+S.
+ 3. Open App. Ctrl+A, Delete, paste App.gs from this folder, Ctrl+S.
+ 4. Open Client. Ctrl+A, Delete, paste Client.gs from this folder, Ctrl+S.
+ 5. Open Config. Ctrl+A, Delete, paste Config.gs from this folder, Ctrl+S.
+    (If you changed a setting in Config by hand since the last update, put it back after pasting.
+     Settings in the SETTINGS tab are kept, they are not in the file.)
+    Wallet is not changed, leave it.
+ 6. Run once (dropdown at the top, Run):
+      cfgSetup   -> adds the row referral.amount = 5 to the SETTINGS tab (other rows are not touched)
+      refSetup   -> makes the REFERRALS tab now and logs the amount (optional, it is made by itself anyway)
+ 7. Deploy > Manage deployments > pencil (Edit) > Version: New version > Deploy.
+    Same link, nothing to send to anyone.
+
+B. THEN THE APPS (GitHub Desktop, after step 7)
+ 8. Changed: index.html (staff app), client/index.html (client app). Tick both, Commit, Push.
+    Old app versions keep working with the new server (they just do not show the new parts).
+    A new app with the old server shows the card line but nothing is saved: that is why the server goes first.
+
+C. QUICK CHECKS
+ 9. Client app (your own test account): Center > the invite card shows the $5 line. Invite a friend with a
+    test number: Romy gets the request, REFERRALS has a row "Invited". Inviting your own number says
+    "This is your own number. Invite a friend instead."
+10. Staff app: make that test number a client, sell a free trial: nothing. Sell a paid package: the sell screen
+    showed "Referred by ...", CLIENT WALLET has + 5 "Referral: <name>" By auto, REFERRALS says Rewarded.
+    Sell another paid package to the same friend: no second credit.
+11. Delete your test rows (REFERRALS, CLIENT WALLET, the test packages) when done.
+
+PACKAGES TYPED BY HAND
+ A package typed straight into the PACKAGES tab (not sold in the app) is checked at the friend's next app sale.
+ To give those credits right away: run refCheckAll from the editor (it only gives credit that is due, never twice).
+
+TESTS (for developers)
+ node 1-apps-script/phase3/tests/referral.test.js

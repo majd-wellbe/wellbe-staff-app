@@ -91,6 +91,8 @@ var CFG_DEFAULTS = {
   // ad leads that come in between quietFrom and quietTo (Beirut hours) wait until quietTo: no night calls
   leads: { quietFrom: 21, quietTo: 9 },
   insurance: { rate: 27 },
+  // invite a friend (Referral.gs): wallet credit for the client who invited, when the friend buys their first paid package. 0 = off
+  referral: { amount: 5 },
   game: {
     cash: { MIN_M: 2000, CENTS: 10, DAY_MAX: 50, REDEEM_MIN: 100, REDEEM_MAX: 2000, TRAINED_DAYS: 7 },
     upCost: [500, 1000, 2000, 4000, 8000], lifeCost: 1000, lifeMax: 3, levelMax: 50, badgeLv: 50,
@@ -121,21 +123,38 @@ var CFG_DEFAULTS = {
       legend: { n: 'Corniche Legend', coins: 0, shop: 'o3' }
     },
     earlyHour: 7, earlyMinM: 300,
-    // runner studio items (RunGame.gs runStudio_): k = slot (hat, eye, ear, wrist: gear; tattoo; taunt). coins 0 = free for everyone.
-    // lv = the level that opens it (then it costs coins). Bought ones are saved in Owned under their id. New Mixamo taunts: add tn_<id> here and in client/models/taunts/manifest.json
+    // runner studio items (RunGame.gs runStudio_): k = slot (hat, eye, ear, wrist: gear; tattoo; taunt). Nothing here is free (Oct 26): every item costs coins.
+    // lv = the level that opens it (then it costs coins). Bought ones are saved in Owned under their id; only those are the player's.
+    // New Mixamo taunts: add tn_<id> here and in client/models/taunts/manifest.json
     studio: {
-      g_cap: { n: 'Cap', k: 'hat', coins: 0 }, g_hband: { n: 'Headband', k: 'hat', coins: 0 }, g_capb: { n: 'Backwards Cap', k: 'hat', coins: 600 },
-      g_visor: { n: 'Visor', k: 'hat', coins: 900 }, g_beanie: { n: 'Beanie', k: 'hat', coins: 800 }, g_bucket: { n: 'Bucket Hat', k: 'hat', coins: 1200 },
-      g_sport: { n: 'Sport Shades', k: 'eye', coins: 0 }, g_round: { n: 'Round Shades', k: 'eye', coins: 1000 }, g_avi: { n: 'Aviators', k: 'eye', coins: 1500 },
-      g_buds: { n: 'Earbuds', k: 'ear', coins: 0 }, g_phones: { n: 'Headphones', k: 'ear', coins: 1500 },
-      g_sweat: { n: 'Sweatband', k: 'wrist', coins: 0 }, g_watch: { n: 'Sport Watch', k: 'wrist', coins: 1200 },
-      tt_pulse: { n: 'Heartbeat', k: 'tattoo', coins: 0 }, tt_stars: { n: 'Stars', k: 'tattoo', coins: 0 }, tt_wellbe: { n: 'Wellbe Logo', k: 'tattoo', coins: 800 },
-      tt_roman: { n: 'Roman Numerals', k: 'tattoo', coins: 1000 }, tt_cedar: { n: 'Cedar', k: 'tattoo', coins: 1000 }, tt_tribal: { n: 'Tribal Band', k: 'tattoo', coins: 1200 },
-      tt_rose: { n: 'Rose', k: 'tattoo', coins: 1200 }, tt_quwwa: { n: 'Quwwa (Strength)', k: 'tattoo', coins: 1500 }, tt_yalla: { n: 'Yalla', k: 'tattoo', coins: 1500 },
-      // taunts (the move before every race): Yes! is free, the rest cost coins and some open at a level first
-      tn_yes: { n: 'Yes!', k: 'taunt', coins: 0 }, tn_fistpump: { n: 'Fist Pump', k: 'taunt', coins: 500 }, tn_salute: { n: 'Salute', k: 'taunt', coins: 600 },
-      tn_jacks: { n: 'Jumping Jacks', k: 'taunt', coins: 700 }, tn_squat: { n: 'Air Squats', k: 'taunt', coins: 700 }, tn_dance: { n: 'Dance', k: 'taunt', coins: 800, lv: 3 },
-      tn_pushup: { n: 'Push Ups', k: 'taunt', coins: 900 }, tn_taunt: { n: 'Taunt', k: 'taunt', coins: 1000 }, tn_victory: { n: 'Victory', k: 'taunt', coins: 1200 },
+      // gear: 300 to 1,500
+      g_cap: { n: 'Cap', k: 'hat', coins: 300 }, g_hband: { n: 'Headband', k: 'hat', coins: 300 }, g_capb: { n: 'Backwards Cap', k: 'hat', coins: 600 },
+      g_visor: { n: 'Visor', k: 'hat', coins: 700 }, g_beanie: { n: 'Beanie', k: 'hat', coins: 800 }, g_bucket: { n: 'Bucket Hat', k: 'hat', coins: 1200 },
+      g_sport: { n: 'Sport Shades', k: 'eye', coins: 500 }, g_round: { n: 'Round Shades', k: 'eye', coins: 1000 }, g_avi: { n: 'Aviators', k: 'eye', coins: 1500 },
+      g_buds: { n: 'Earbuds', k: 'ear', coins: 400 }, g_phones: { n: 'Headphones', k: 'ear', coins: 1500 },
+      g_sweat: { n: 'Sweatband', k: 'wrist', coins: 300 }, g_watch: { n: 'Sport Watch', k: 'wrist', coins: 1200 },
+      // tattoos by size. Small (arm, leg or neck): 400 to 1,000
+      tt_stars: { n: 'Stars', k: 'tattoo', coins: 400 }, tt_nk_dots: { n: 'Three Dots', k: 'tattoo', coins: 400 }, tt_pulse: { n: 'Heartbeat', k: 'tattoo', coins: 500 },
+      tt_nk_bolt: { n: 'Neck Bolt', k: 'tattoo', coins: 500 }, tt_roman: { n: 'Roman Numerals', k: 'tattoo', coins: 600 }, tt_rose: { n: 'Rose', k: 'tattoo', coins: 700 },
+      tt_cedar: { n: 'Cedar', k: 'tattoo', coins: 700 }, tt_wellbe: { n: 'Wellbe Logo', k: 'tattoo', coins: 800 }, tt_yalla: { n: 'Yalla', k: 'tattoo', coins: 900 },
+      tt_quwwa: { n: 'Quwwa (Strength)', k: 'tattoo', coins: 1000 },
+      // half sleeve, half leg, chest, abs and ribs: 1,500 to 2,500
+      tt_hs_tribal: { n: 'Tribal Half Sleeve', k: 'tattoo', coins: 1500 }, tt_hs_band: { n: 'Heartbeat Bands', k: 'tattoo', coins: 1500 },
+      tt_hs_bolt: { n: 'Lightning Half Sleeve', k: 'tattoo', coins: 1800 }, tt_hs_rose: { n: 'Rose Half Sleeve', k: 'tattoo', coins: 2000, lv: 4 },
+      tt_hl_waves: { n: 'Wave Calf', k: 'tattoo', coins: 2000 }, tt_hl_geo: { n: 'Geometric Calf', k: 'tattoo', coins: 2200 },
+      tt_ab_ribs: { n: 'Sabr Ribs', k: 'tattoo', coins: 1800 }, tt_ch_beirut: { n: 'Beirut', k: 'tattoo', coins: 2000 }, tt_ch_cedar: { n: 'Cedar Crest', k: 'tattoo', coins: 2200 },
+      tt_ab_sun: { n: 'Sun', k: 'tattoo', coins: 2500, lv: 5 },
+      // full sleeve, full leg, full back: 3,000 to 5,000
+      tt_sl_tribal: { n: 'Tribal Sleeve', k: 'tattoo', coins: 3000 }, tt_lg_tribal: { n: 'Tribal Leg', k: 'tattoo', coins: 3000 }, tt_bk_script: { n: 'Never Give Up', k: 'tattoo', coins: 3000 },
+      tt_sl_geo: { n: 'Geometric Sleeve', k: 'tattoo', coins: 3500, lv: 6 }, tt_lg_geo: { n: 'Geometric Leg', k: 'tattoo', coins: 3500, lv: 6 },
+      tt_bk_tribal: { n: 'Tribal Back', k: 'tattoo', coins: 4000, lv: 8 }, tt_sl_waves: { n: 'Wave Sleeve', k: 'tattoo', coins: 4500, lv: 10 },
+      tt_bk_cedar: { n: 'Cedar Back', k: 'tattoo', coins: 5000, lv: 12 },
+      // taunts (the move before every race): 300 to 2,500, some open at a level first
+      tn_yes: { n: 'Yes!', k: 'taunt', coins: 300 }, tn_jogspot: { n: 'Jog On The Spot', k: 'taunt', coins: 400 }, tn_fistpump: { n: 'Fist Pump', k: 'taunt', coins: 500 },
+      tn_salute: { n: 'Salute', k: 'taunt', coins: 600 }, tn_jogback: { n: 'Jog Back', k: 'taunt', coins: 600 }, tn_jacks: { n: 'Jumping Jacks', k: 'taunt', coins: 700 },
+      tn_squat: { n: 'Air Squats', k: 'taunt', coins: 700 }, tn_lookaround: { n: 'Look Around', k: 'taunt', coins: 800 }, tn_dance: { n: 'Dance', k: 'taunt', coins: 800, lv: 3 },
+      tn_pushup: { n: 'Push Ups', k: 'taunt', coins: 900 }, tn_taunt: { n: 'Taunt', k: 'taunt', coins: 1000 }, tn_crunch: { n: 'Circle Crunch', k: 'taunt', coins: 1100, lv: 3 },
+      tn_victory: { n: 'Victory', k: 'taunt', coins: 1200 },
       tn_hiphop1: { n: 'Hip Hop 1', k: 'taunt', coins: 1500, lv: 5 }, tn_hiphop2: { n: 'Hip Hop 2', k: 'taunt', coins: 1500, lv: 5 },
       tn_twirl: { n: 'Butterfly Twirl', k: 'taunt', coins: 2000, lv: 8 }, tn_capoeira: { n: 'Capoeira', k: 'taunt', coins: 2500, lv: 10 }, tn_roll: { n: 'Roll', k: 'taunt', coins: 2500, lv: 12 }
     },

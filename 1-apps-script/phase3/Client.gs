@@ -53,6 +53,7 @@ function clRoute_(b) {
   if (a === 'app_cl_boot') return json_(appCached_('c|' + who.email, function () {
     return appReadOnly_(function () {
       var d = profBoot_(who.guest ? guestBoot_(who) : insClientBoot_(clBoot_(who)));
+      if (d && !who.guest && typeof refClientBoot_ === 'function') d = refClientBoot_(d);   // "Your invites" + wallet credit (Referral.gs)
       if (d) d.cfg = cfgPublic_('client');
       if (d) d.notices = noticesFor_(SpreadsheetApp.openById(CFG.OPS_ID), who.ids);   // unread in-app notices (e.g. a 1:2 partner cancelled)
       return d;
@@ -533,9 +534,12 @@ function clRequest_(b, cid) {
   if (kind === 'invite') {
     var fn = clean_(b.fname, 60), ph = String(b.phone || '').replace(/\D/g, '');
     if (!fn || ph.length < 10) throw new Error('Check the name and phone number.');
+    var ref = typeof refInvite_ === 'function' ? refInvite_(ops, cid, name, fn, ph) : null;   // REFERRALS tab (Referral.gs); refuses your own number
     var inv = 'https://wa.me/' + ph + '?text=' + encodeURIComponent(String(b.msg || '').slice(0, 300));
-    clLog_(ops, cid, name, 'Friend invite', name + ' would like to invite ' + fn + ' (+' + ph + ') to Wellbe. Tap to send them the invite: ' + inv, '', '', 'New', { fname: fn, phone: ph });
-    return {};
+    var refTxt = !ref ? '' : ' Referral ' + ref.id + (ref.status === 'Invited' ? ': ' + name + ' gets $' + refAmount_() + ' credit when ' + fn + ' buys a first paid package.' : ' (' + ref.status + ', no credit).');
+    var reqId = clLog_(ops, cid, name, 'Friend invite', name + ' would like to invite ' + fn + ' (+' + ph + ') to Wellbe.' + refTxt + ' Tap to send them the invite: ' + inv, '', '', 'New', { fname: fn, phone: ph, ref: ref ? ref.id : '' });
+    if (ref && !ref.again) refSetReq_(ops, ref.row, reqId);
+    return ref ? { ref: { id: ref.id, status: ref.status } } : {};
   }
   throw new Error('Unknown request');
 }
@@ -733,6 +737,7 @@ function clAddPkg_(ops, cid, name, type, price, startYmd, disc, note) {
   var r = info.lastRow + 1;
   sh.getRange(r, 10, 1, 4).setNumberFormat('dd/MM/yyyy');
   if (!sh.getRange(r, 23).getFormula()) sh.getRange(r, 23).setFormula('=IF(I' + r + '="","",IF(V' + r + '="",I' + r + ',I' + r + '-V' + r + '))');
+  if (typeof refOnSale_ === 'function') refOnSale_(ops, cid);   // referral credit if this is an invited friend's first paid package (Referral.gs)
   return id;
 }
 // ---------- delete account (clients and guests): action app_cl_delete ----------
