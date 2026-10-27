@@ -167,6 +167,28 @@ truncate public.clients, public.sessions, public.leads, public.expenses, public.
 
 Then paste the new `import.sql`. (The calendar comes back by itself within 10 minutes.)
 
+### Redo the copy step by step (what was done on 27 Oct 2026)
+
+The sheets are only read, never changed. The data is kept exactly as in the sheets, in sheet order, and every copied row has `sheet_row` (row 1 is the header) and `sheet_tab` where one table takes rows from several tabs.
+
+1. Download **Wellbe - Operations** as Excel (.xlsx). Download the **CLIENTS** tab of **Wellbe - Client Portal** as CSV (File, Download, CSV, with the CLIENTS tab open). Name it `Wellbe - Client Portal - CLIENTS.csv`.
+2. Turn the Excel file into one CSV per tab. Real dates are written as dd/MM/yyyy, so nothing is misread:
+   `node phase5/supabase/import/tools/xlsx2csv_dates.js --out csv "Wellbe - Operations.xlsx"`
+   Then copy the CLIENTS CSV into the same `csv` folder.
+3. Make the SQL. The import runs the real Apps Script code from `1-apps-script/phase3` with a small mock (`tools/gs-mock.js`) that reads STAFF, PACKAGE TYPES and SETTINGS from the Operations file:
+   `WB_OPS_XLSX="Wellbe - Operations.xlsx" node phase5/supabase/import/import.js --in csv --out import.sql --report report.md`
+   Read `report.md`. Optional check of every change against the CSVs: `node phase5/supabase/import/tools/audit.js csv import.sql`.
+4. If `public.clients` already has rows, run the truncate above first.
+5. Migrations `0010_keep_sheet_fields.sql` and `0011_match_apps_script.sql` must be applied (they are, on the live project). Then run `select app.api_sync();`.
+6. Split into parts that fit the SQL Editor (fixed ids, so parts are short and the same each time):
+   `python3 phase5/supabase/import/tools/split.py import.sql parts 24000 --seq-uuid`
+   Paste the parts in number order. Stop at the first error.
+7. Check: per table counts against the sheets (clients 192 + 2 guests, packages 235, sessions 798, session seats 1205, leads 15, expenses 85, inventory 12, POS sales 3), and
+   `select (select count(*) from app.api_actions), (select count(*) from pg_tables where schemaname='public' and not rowsecurity), (select value from public.settings where key='backend');`
+   must give 58, 0, {"use":"apps"}.
+
+What the import changes on purpose (approved by the owner): phone numbers written the same way, emails in lower case without spaces, trainer names matched to STAFF, attendance filled in where the tab has no attendance column (taken from the session status). One CORNICHE RUN row is skipped (a second, all zero row for C153).
+
 First look on your laptop: open the staff app with `?wb=supabase` before the `#`:
 `https://majd-wellbe.github.io/wellbe-staff-app/?wb=supabase#k=YOUR KEY`
 You are now on Supabase on this browser only. To go back: the same address with `?wb=auto`.
