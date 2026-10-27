@@ -571,6 +571,8 @@ main{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
 .nt-mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}.nt-mh b{font-size:16px}.nt-mh small{font-size:12.5px;color:var(--ink-3);white-space:nowrap}
 .nt-it{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}.nt-it span{color:var(--ink-2)}.nt-it i{font-style:normal;color:var(--ink-3);font-size:12.5px;text-align:end}
 .nt-sw{font-size:13px;color:var(--mint-deep);margin-top:6px;font-weight:600}
+.nt-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--ink-3)}
+.nt-soc{box-shadow:inset 3px 0 0 var(--amber)}.nt-gi[disabled]{opacity:.75;cursor:default}
 .nt-aisle{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--amber);margin:16px 0 4px;text-transform:uppercase}
 .nt-gi{display:flex;align-items:center;gap:12px;width:100%;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;text-align:start;color:var(--ink)}
 .nt-gi .bx{flex:0 0 22px;height:22px;border-radius:7px;box-shadow:inset 0 0 0 1.5px var(--ink-3);display:grid;place-items:center;color:#fff}
@@ -853,6 +855,7 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 
 <script src="../core/wb-core.js?v=1"></script>
 <script src="../core/wb-backend.js?v=1"></script>
+<script src="nut-pdf.js?v=1"></script>
 <script>
 /* ---------- content: texts and lists the app shows (not business settings, those are in cfg) ---------- */
 var CONTENT={
@@ -1621,6 +1624,7 @@ function nPlanBlock(N){
   var st=S.state,cy=S.cycle;
   if(st==='coming_soon')return '<div class="nt-lock"><b>🔒 '+nL('Your 3-week nutrition plan · coming soon','خطة التغذية (3 أسابيع) · قريباً')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, weekly grocery lists and reminders. Your free numbers above stay yours.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، لوايح مشتريات أسبوعية وتذكيرات. أرقامك المجانية فوق بتضل إلك.')+'</p></div>';
   if(pl&&pl.state==='ready')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-check')+'</span><div><b>'+nL('Your plan is ready','خطتك جاهزة')+'</b><span>'+esc(nCycleLine(cy))+(pl.note?' · '+esc(String(pl.note).slice(0,80)):'')+'</span></div></div><div class="nt-two" style="margin-top:12px"><button class="btn" data-nv="plan">'+nL('Open my plan','افتح خطتي')+'</button><button class="btn sec2" data-nv="grocery">'+nL('Grocery list','لائحة المشتريات')+'</button></div><button class="btn ghost block" style="margin-top:8px" data-nv="rem">'+ICON('i-clock')+nL('Reminders','التذكيرات')+'</button>'+nDisc(N)+'</div>';
+  if(pl&&pl.state==='draft')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-spark')+'</span><div><b>'+nL('Your week 1 draft is ready','مسودة الأسبوع الأول جاهزة')+'</b><span>'+nL('Check it, ask for changes, then approve. Your 3 weeks start when you approve.','شيكها، اطلب تغييرات، بعدين وافق. الـ 3 أسابيع بيبلشوا لما توافق.')+'</span></div></div><button class="btn block" style="margin-top:12px" data-nv="plan">'+nL('Review my week 1','راجع الأسبوع الأول')+'</button>'+nDisc(N)+'</div>';
   if(pl&&pl.state==='preparing')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+esc(nT(pl.msg)||nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.'))+'</b><span>'+nL('We tell you when it is ready.','منخبرك أول ما تجهز.')+'</span></div></div></div>';
   if(pl&&pl.state==='declined')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-heart')+'</span><div><b>'+esc(nT(pl.msg))+'</b><span>'+esc(pl.note||'')+'</span></div></div></div>';
   var ready=N.done&&!c.blocked&&!c.missing,can=st==='active'||st==='waiting'||S.can_start;
@@ -1650,7 +1654,7 @@ function nHome(N){
   h+='<div class="nt-two" style="margin-top:14px"><button class="btn ghost" data-nv="body">'+ICON('i-edit')+nL('Body and target','الجسم والهدف')+'</button>'+(N.done?'<button class="btn ghost" data-nq="0">'+ICON('i-edit')+nL('My answers','أجوبتي')+'</button>':'')+'</div>';
   return h}
 // a question shows only when its show_if matches the answers so far (pace: lose / gain only)
-function nShow(q,A){var s=q.show_if;if(!s)return true;return Object.keys(s).every(function(k){return (s[k]||[]).indexOf(A[k])>-1})}
+function nShow(q,A){var s=q.show_if;if(!s)return true;return Object.keys(s).every(function(k){var a=A[k],l=s[k]||[];return Array.isArray(a)?a.some(function(x){return l.indexOf(x)>-1}):l.indexOf(a)>-1})}   // many-answers: any match
 function nQ(N){
   var qs=N.questions||[],s=qs[NQS]||qs[0];if(!s)return nQHead()+'<div class="skel" style="height:300px"></div>';
   var A=Object.assign({},N.answers||{},NDRAFT),pct=Math.round((NQS+1)/qs.length*100);
@@ -1671,17 +1675,103 @@ function nBody(N){var b=N.body||{};
    '<div class="card" style="margin-top:12px">'+f('nbT',nL('Your target weight (kg)','وزنك المطلوب (كيلو)'),N.target,'')+'</div>'+
    '<div class="nt-foot"><button class="btn" id="nbSave">'+nL('Confirm and continue','أكد وكمل')+'</button></div>'}
 // which day template a date of the cycle uses: the 21 day schedule (v2) or Mon..Sun (old plans)
-function nDayTpl(N,plus){var P=(N.plan||{}).data;if(!P||!P.days||!P.days.length)return null;var cy=(N.nut||{}).cycle;plus=plus||0;
+function nDayTpl(N,plus){var P=(N.plan||{}).data;plus=plus||0;if(nV4(N)){var cy4=(N.nut||{}).cycle||{};return nDayV4(N,(cy4.day?cy4.day-1:0)+plus)}
+  if(!P||!P.days||!P.days.length)return null;var cy=(N.nut||{}).cycle;
   if(P.schedule&&cy&&cy.day){var i=Math.max(0,Math.min(P.schedule.length-1,cy.day-1+plus));return P.days[P.schedule[i]%P.days.length]}
   return P.days[(P.week||NWEEK)[(nDayIdx()+plus)%7]%P.days.length]}
 function nSlotName(s){return {breakfast:nL('Breakfast','ترويقة'),lunch:nL('Lunch','غدا'),dinner:nL('Dinner','عشا'),snack:nL('Snack','سناك')}[s]||s||''}
 function nItems(items){return (items||[]).map(function(x){return '<div class="nt-it"><span>'+esc(nT(x.food))+'</span><i>'+(x.g?Math.round(x.g)+' '+esc(x.unit||'g')+' · ':'')+esc(nT(x.measure))+'</i></div>'}).join('')}
-function nMealCard(m){var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0),sw=m.swap;
+function nMealCard(m){if(m.social)return nSocialCard(m.social,m.time);var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0),sw=m.swap;
   return '<div class="nt-meal"><div class="card"><div class="nt-slot">'+esc(nSlotName(m.slot))+(m.time?' · '+esc(m.time):'')+(m.training?' · '+(m.training==='pre'?nL('before training','قبل التمرين'):nL('after training','بعد التمرين')):'')+'</div><div class="nt-mh"><b>'+esc(nT(m.name))+'</b><small class="num">'+Math.round(k)+' kcal</small></div>'+nItems(m.items)+
-    (sw&&typeof sw==='object'&&sw.items?'<details class="nt-sw"><summary>↺ '+nL('Swap: ','بديل: ')+esc(nT(sw.name))+'</summary>'+nItems(sw.items)+'</details>':(sw&&nT(sw)?'<div class="nt-sw">↺ '+nL('Swap: ','بديل: ')+esc(nT(sw))+'</div>':''))+'</div></div>'}
+    (sw&&typeof sw==='object'&&sw.items?'<details class="nt-sw"><summary>↺ '+nL('Swap: ','بديل: ')+esc(nT(sw.name))+'</summary>'+nItems(sw.items)+'</details>':(sw&&nT(sw)?'<div class="nt-sw">↺ '+nL('Swap: ','بديل: ')+esc(nT(sw))+'</div>':''))+
+    (m.fixed!=null?'<div class="nt-opt"><span>'+nL('Option '+(m.opt+1)+' of '+m.nopts+' · swap any option, any day','خيار '+(m.opt+1)+' من '+m.nopts+' · بدّل أي خيار بأي يوم')+'</span><button class="btn sm ghost" data-nopts="'+m.fixed+'">'+nL('All options','كل الخيارات')+'</button></div>':'')+'</div></div>'}
+/* ---------- v4 plans (Supabase nutrition-worker): week 1 draft and review, 4 breakfast / snack options, lunch and dinner every 2 days,
+   2 prep sessions a week, nights out and the Sunday family lunch, grocery lists that follow the client's usual picks ---------- */
+function nV4(N){var P=((N||{}).plan||{}).data;return !!(P&&P.v===4&&P.weeks&&P.weeks.length)}
+function nStart(N){var cy=(N.nut||{}).cycle||{};return cy.start||D.today}   // the draft is previewed from today
+// one day of the cycle (i = 0..20): the pair of that weekday in that week, the client's usual options, the night out of that weekday
+function nDayV4(N,i){var P=N.plan.data,ymd=addDays(nStart(N),i),dow=(dOf(ymd).getDay()+6)%7,wk=Math.max(0,Math.min(P.weeks.length-1,Math.floor(i/7))),W=P.weeks[wk];
+  var blk=(P.blocks||[0,0,1,1,2,2,3])[dow],tpl=W.days[blk]||W.days[0],picks=N.plan.picks||{};
+  var meals=(tpl.meals||[]).map(function(m){var fi=-1;(P.fixed||[]).forEach(function(f,j){if(fi<0&&f.slot===m.slot&&f.time===m.time)fi=j});
+    if(fi<0)return m;var f=P.fixed[fi],oi=Math.max(0,Math.min(f.options.length-1,+(picks[fi]||0))),o=f.options[oi];
+    return Object.assign({},m,{name:o.name,items:o.items,totals:o.totals,fixed:fi,opt:oi,nopts:f.options.length})});
+  (P.social||[]).forEach(function(s){if(s.dow!==dow)return;var j=-1;meals.forEach(function(m,k){if(j<0&&m.slot===s.slot&&m.fixed==null)j=k});
+    if(j>-1){var b=s.budget||{};meals[j]={slot:s.slot,time:meals[j].time,name:s.label,social:s,items:[],totals:{kcal:b.kcal,p:b.p,c:b.c,f:b.f}}}});
+  var t={kcal:0,p:0,c:0,f:0};meals.forEach(function(m){var x=m.totals||{};for(var k in t)t[k]+=Number(x[k])||0});for(var k2 in t)t[k2]=Math.round(t[k2]);
+  return {key:tpl.key,name:tpl.name,meals:meals,totals:t,week:wk+1,ymd:ymd,dow:dow}}
+// a night out or the family lunch: the budget, dish ideas (estimates), what to ask for, the drink allowance
+function nSocialCard(s,time){var b=s.budget||{},h='<div class="nt-meal"><div class="card nt-soc"><div class="nt-slot">'+esc(nSlotName(s.slot))+(time?' · '+esc(time):'')+'</div><div class="nt-mh"><b>'+esc(nT(s.label))+'</b><small class="num">'+nL('up to ','لحد ')+Number(b.kcal||0).toLocaleString()+' kcal</small></div>';
+  if(s.kind==='family'&&s.guide){h+='<div class="nt-k" style="margin-top:8px">'+nL('Your plate','صحنك')+'</div>'+(s.guide.items||[]).map(function(x){return '<div class="nt-it"><span>'+esc(nT(x))+'</span><i>~'+Math.round(x.kcal)+' kcal</i></div>'}).join('');
+    if(s.home)h+='<details class="nt-sw"><summary>🏠 '+nL('No gathering? Have this: ','ما في عزيمة؟ كول هيدا: ')+esc(nT(s.home.name))+'</summary>'+nItems(s.home.items)+'</details>'}
+  if((s.suggestions||[]).length)h+='<div class="nt-k" style="margin-top:8px">'+nL('Good picks','خيارات منيحة')+'</div>'+s.suggestions.map(function(x){return '<div class="nt-it"><span>'+esc(x.restaurant)+' · '+esc(NLANG==='ar'&&x.dish_ar?x.dish_ar:x.dish)+(nT(x.ask_for)?'<br><small class="muted">'+nL('Ask for: ','اطلب: ')+esc(nT(x.ask_for))+'</small>':'')+'</span><i>~'+Math.round(x.kcal)+' kcal · '+nL('estimate','تقدير')+'</i></div>'}).join('');
+  (s.not_found||[]).forEach(function(x){h+='<div class="nt-it"><span>'+esc(x.restaurant)+'</span><i>'+esc(nT(x.msg))+'</i></div>'});
+  if(s.drinks&&s.drinks.n)h+='<div class="muted" style="font-size:13px;margin-top:8px">🥂 '+esc(nT(s.drinks.note))+'</div>';
+  if(nT(s.tip))h+='<div class="muted" style="font-size:13px;margin-top:6px">'+esc(nT(s.tip))+'</div>';
+  return h+'</div></div>'}
+function nDayName(k){var d=NDAYS.filter(function(x){return x[0]===k})[0];return d?(NLANG==='ar'?d[2]:d[1]):(k||'')}
+// the 2 prep sessions of a week
+function nPrepCard(W){var B=(W||{}).batch||{},h='';
+  ['main','topup'].forEach(function(k){var b=B[k];if(!b)return;var st=(b.steps||{})[NLANG]||(b.steps||{}).en||[],ls=function(a){return esc((a||[]).map(nT).join(', '))};
+    h+='<div class="card" style="margin-top:10px"><div class="nt-slot">'+(k==='main'?nL('Main prep','التحضير الأساسي'):nL('Mid-week top-up','تحضير نص الأسبوع'))+' · '+esc(nDayName(b.day))+' '+esc(b.time||'')+(b.minutes?' · ~'+b.minutes+' min':'')+'</div>'+
+      '<div class="nt-it"><span>'+nL('Proteins','بروتين')+'</span><i>'+ls(b.proteins)+'</i></div><div class="nt-it"><span>'+nL('Carbs','نشويات')+'</span><i>'+ls(b.carbs)+'</i></div>'+((b.veg||[]).length?'<div class="nt-it"><span>'+nL('Raw veg','خضرة نية')+'</span><i>'+ls(b.veg)+'</i></div>':'')+
+      (st.length?'<ol class="nt-notes">'+st.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')+'</div>'});
+  return h?'<div class="sec"><h2>'+nL('Meal prep','تحضير الأكل')+'</h2></div><div class="muted" style="font-size:13px">'+nL('Weekdays you only heat and assemble.','بأيام الأسبوع بس بتسخّن وبتركّب.')+'</div>'+h:''}
+// the review of the week 1 draft: quick chips, "write your own", up to 2 change rounds, then approval
+var NCHIPS=[['swap_meal','Swap a meal','بدّل وجبة'],['too_much','Too much food','الأكل كتير'],['still_hungry',"I'm still hungry",'بعدني جوعان'],['simpler','Simpler meals','وجبات أسهل'],['more_variety','More variety','تنويع أكتر'],['more_lebanese','More Lebanese dishes','أكل لبناني أكتر'],['cheaper','Cheaper ingredients','مكونات أرخص'],['meal_times','Change meal times','غيّر أوقات الأكل'],['less_prep','Less prep time','وقت تحضير أقل'],['dont_eat',"I don't eat something",'في شي ما باكله']];
+var NREV={};
+function nMealNames(P){var l=[];((P.weeks[0]||{}).combos||[]).forEach(function(c){[c.lunch,c.dinner].forEach(function(m){if(m&&l.indexOf(nT(m.name))<0)l.push(nT(m.name))})});
+  (P.fixed||[]).forEach(function(f){f.options.forEach(function(o){if(l.indexOf(nT(o.name))<0)l.push(nT(o.name))})});return l}
+function nReview(N){var pl=N.plan,P=pl.data,left=pl.rounds_left|0;
+  var h='<div class="card nt-rev" style="margin-bottom:12px"><b>'+nL('Your week 1 draft','مسودة الأسبوع الأول')+'</b><p class="muted" style="font-size:14px;margin-top:4px">'+nL('Look through the days. Happy with it? Approve and we write all 3 weeks in the same style. Want changes? Tell us below.','شوف الأيام. مبسوط فيها؟ وافق ومنكتب الـ 3 أسابيع بنفس الأسلوب. بدك تغيير؟ قلنا تحت.')+'</p>'+
+    '<button class="btn block" style="margin-top:10px" data-nappr="'+esc(pl.id)+'">'+ICON('i-check')+nL('Approve my plan','وافق على خطتي')+'</button>';
+  if(left>0){
+    h+='<div class="nt-q" style="margin-top:16px">'+nL('What should we change?','شو بدك نغيّر؟')+' <small class="muted" style="font-weight:400">'+nL(left+(left>1?' change rounds left':' change round left'),'باقي '+left+(left>1?' مرات':' مرة'))+'</small></div><div class="nt-chips" role="group">'+
+      NCHIPS.map(function(c){return '<button class="nt-chip" data-nchip="'+c[0]+'" aria-pressed="'+!!NREV[c[0]]+'">'+esc(nL(c[1],c[2]))+'</button>'}).join('')+'</div>';
+    if(NREV.swap_meal)h+='<div class="field" style="margin-top:8px"><label for="nrvMeal">'+nL('Which meal?','أي وجبة؟')+'</label><select class="inp" id="nrvMeal"><option value="">–</option>'+nMealNames(P).map(function(x){return '<option'+(NREV.meal===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></div>';
+    if(NREV.dont_eat)h+='<div class="field" style="margin-top:8px"><label for="nrvFood">'+nL('What don\'t you eat?','شو ما بتاكل؟')+'</label><input class="inp" id="nrvFood" maxlength="80" value="'+esc(NREV.food||'')+'" placeholder="'+nL('e.g. tuna','مثلاً تونة')+'"></div>';
+    if(NREV.meal_times)h+='<div class="field" style="margin-top:8px"><label for="nrvTimes">'+nL('Which times suit you?','أي أوقات بتناسبك؟')+'</label><input class="inp" id="nrvTimes" maxlength="120" value="'+esc(NREV.times||'')+'" placeholder="'+nL('e.g. lunch at 2 pm','مثلاً الغدا عالـ 2')+'"></div>';
+    h+='<div class="field" style="margin-top:8px"><label for="nrvText">'+nL('Write your own','اكتب طلبك')+'</label><textarea class="inp" id="nrvText" rows="2" maxlength="300" placeholder="'+nL('Anything else we should change','أي شي تاني بدك نغيّره')+'">'+esc(NREV.text||'')+'</textarea></div>'+
+      '<button class="btn sec2 block" style="margin-top:10px" data-nsendrev="'+esc(pl.id)+'">'+nL('Send my changes','ابعت التغييرات')+'</button>';
+  }else h+='<div class="muted" style="font-size:13.5px;margin-top:12px">'+nL('You used your 2 change rounds. Approve the plan, or message us for more changes.','استعملت المرتين تبع التغيير. وافق على الخطة، أو راسلنا لتغييرات أكتر.')+'</div><div style="margin-top:8px">'+nDeskLink('Message us','راسلنا')+'</div>';
+  return h+'</div>'}
+function nPlanV4(N){var P=N.plan.data,pl=N.plan,draft=pl.state==='draft',cy=(N.nut||{}).cycle||{},nw=P.weeks.length;
+  var wk=Math.min(nw,NWK||(cy.day?nCurWeek(N):1)),sel=Math.min(6,NDAY),d=nDayV4(N,(wk-1)*7+sel),h=nTop('home');
+  if(draft)h+=nReview(N);else h+='<div class="muted" style="font-size:13.5px;margin-bottom:8px">'+esc(nCycleLine(cy))+'</div>';
+  if(nw>1)h+='<div class="nt-days" role="tablist">'+P.weeks.map(function(W){return '<button data-nwk="'+W.week+'" aria-pressed="'+(W.week===wk)+'">'+nL('Week '+W.week,'أسبوع '+W.week)+'</button>'}).join('')+'</div>';
+  h+='<div class="nt-days" role="tablist">'+[0,1,2,3,4,5,6].map(function(j){var x=dOf(addDays(nStart(N),(wk-1)*7+j));return '<button data-nday="'+j+'" aria-pressed="'+(j===sel)+'">'+NDN[NLANG][(x.getDay()+6)%7]+'<br><small>'+x.getDate()+'</small></button>'}).join('')+'</div>';
+  var t=d.totals;
+  h+='<div class="nt-tot"><span>'+esc(nT(d.name))+' · <b class="num">'+Number(t.kcal||0).toLocaleString()+' kcal</b></span><span>P <b>'+t.p+'</b> · C <b>'+t.c+'</b> · F <b>'+t.f+'</b></span></div>';
+  d.meals.forEach(function(m){h+=nMealCard(m)});
+  h+=nPrepCard(P.weeks[wk-1]);
+  var notes=(P.notes||{})[NLANG]||(P.notes||{}).en||[];
+  if(pl.note||notes.length)h+='<div class="card" style="margin-top:12px"><b>'+nL('From our team','من فريقنا')+'</b>'+(pl.note?'<p style="margin-top:6px;font-size:14px;color:var(--ink-2)">'+esc(pl.note)+'</p>':'')+(notes.length?'<ul class="nt-notes">'+notes.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'')+'</div>';
+  h+='<div class="nt-two" style="margin-top:12px"><button class="btn sec2" data-nv="grocery">'+ICON('i-bag')+nL('Grocery list','لائحة المشتريات')+'</button><button class="btn ghost" data-npdf="1">'+nL('Download PDF','نزّل PDF')+'</button></div>';
+  return h+nDisc(N)}
+// the 4 options of one eating time; the usual pick is what the grocery list buys
+var NOPT=0;
+function nOpts(N){var P=(N.plan||{}).data,f=P&&P.fixed&&P.fixed[NOPT];if(!f)return nTop('plan');var pk=+((N.plan.picks||{})[NOPT]||0),can=N.plan.state==='ready'||N.plan.state==='draft';
+  var h=nTop('plan')+'<div class="nt-h">'+esc(nSlotName(f.slot))+' <em>'+nL('options','خيارات')+'</em></div><div class="nt-sub">'+nL('All '+f.options.length+' are matched on calories and protein: swap any option on any day. Your usual pick goes on the grocery list.','الـ '+f.options.length+' متقاربين بالسعرات والبروتين: بدّل أي خيار بأي يوم. خيارك المعتاد بينزل عاللائحة.')+'</div>';
+  f.options.forEach(function(o,i){var t=o.totals||{};h+='<div class="nt-meal"><div class="card"><div class="nt-mh"><b>'+(i+1)+'. '+esc(nT(o.name))+'</b><small class="num">'+Math.round(t.kcal||0)+' kcal · P '+Math.round(t.p||0)+' g</small></div>'+nItems(o.items)+
+    (i===pk?'<span class="rd-chip" style="margin-top:8px;display:inline-block">'+nL('Your usual','خيارك المعتاد')+'</span>':(can?'<button class="btn sm sec2" style="margin-top:8px" data-npick="'+NOPT+'|'+i+'">'+nL('Make this my usual','خلّيه خياري المعتاد')+'</button>':''))+'</div></div>'});
+  return h+nDisc(N)}
+// grocery: lunch and dinner of the week (nights out left off) + the usual breakfast and snack, ticks saved on the server
+function nGroceryV4(N){var P=N.plan.data,pl=N.plan,nw=P.weeks.length,cy=(N.nut||{}).cycle||{},wk=Math.min(nw,NWK||(cy.day?nCurWeek(N):1)),W=P.weeks[wk-1],tk=((pl.ticks||{})[String(wk)])||[],can=pl.state==='ready',picks=pl.picks||{};
+  var h=nTop('plan')+'<div class="nt-h">'+nL('Week '+wk+' <em>list</em>','لائحة <em>الأسبوع '+wk+'</em>')+'</div><div class="nt-sub">'+nL('Added up from your portions, in shop packs. Meals out are left off. '+(can?'Tick as you shop.':'Ticks open once your plan is approved.'),'مجموعة من كمياتك، بأحجام المحلات. أكل برّا مش محسوب. '+(can?'علّم وانت عم تتسوق.':'التعليم بيفتح بعد الموافقة على خطتك.'))+'</div>';
+  if(nw>1)h+='<div class="nt-days" role="tablist">'+P.weeks.map(function(x){return '<button data-nwk="'+x.week+'" aria-pressed="'+(x.week===wk)+'">'+nL('Week '+x.week,'أسبوع '+x.week)+'</button>'}).join('')+'</div>';
+  var row=function(pre){return function(x){var k=pre+x.key,on=tk.indexOf(k)>-1;return '<button class="nt-gi" data-ngw="'+wk+'" data-ngk="'+esc(k)+'" aria-pressed="'+on+'"'+(can?'':' disabled')+'><span class="bx">'+(on?ICON('i-check','width:14px;height:14px'):'')+'</span><span>'+esc(nT(x))+'</span><i>'+esc(nT(x.qty))+'</i></button>'}};
+  var list=function(pre,G,title){if(!G)return '';var s='<div class="sec"><h2>'+esc(title)+'</h2></div>';(G.aisles||[]).forEach(function(a){s+='<div class="nt-aisle">'+esc(nT(a.aisle))+'</div>'+a.items.map(row(pre)).join('')});
+    if(G.pantry&&G.pantry.items.length)s+='<div class="nt-aisle">'+esc(nT(G.pantry.title))+'</div>'+G.pantry.items.map(row(pre)).join('');return s};
+  h+=list('ld:',W.grocery,nL('Lunch and dinner','الغدا والعشا'));
+  (P.fixed||[]).forEach(function(f,fi){var oi=+(picks[fi]||0),G=((P.options_grocery||[])[fi]||[])[oi];if(G)h+=list('o'+fi+'.'+oi+':',G,nSlotName(f.slot)+' · '+nT(f.options[oi].name)+' (×7)')});
+  return h+'<div class="muted" style="font-size:12.5px;margin-top:10px">'+nL('Change your usual breakfast or snack and this list follows it.','غيّر ترويقتك أو سناكك المعتاد واللائحة بتتغير معه.')+'</div>'+nDisc(N)}
+// the plan as a PDF that looks like this screen (client/nut-pdf.js)
+function nPdf(btn){var N=nGet();if(!N||!nV4(N)||!window.WBNutPdf){toast(nL('Not ready yet','مش جاهز بعد'));return}
+  busy(btn,true,nL('Making the PDF...','عم نعمل الـ PDF...'));
+  WBNutPdf.download({plan:N.plan,cycle:(N.nut||{}).cycle,start:nStart(N),calc:N.calc,disclaimer:(N.nut||{}).disclaimer,name:(ACC()||{}).first||'',lang:NLANG,today:D.today})
+    .then(function(){busy(btn,false)}).catch(function(e){busy(btn,false);toast(e.message||String(e))})}
 var NWK=0;   // week tab on the plan and grocery screens (0 = the current week of the cycle)
 function nCurWeek(N){var cy=(N.nut||{}).cycle;return cy&&cy.day?Math.min(3,Math.floor((cy.day-1)/7)+1):1}
-function nPlan(N){var P=(N.plan||{}).data;if(!P)return nTop('home')+'<div class="empty">'+nL('No plan yet.','بعد ما في خطة.')+'</div>';
+function nPlan(N){var P=(N.plan||{}).data;if(!P)return nTop('home')+'<div class="empty">'+nL('No plan yet.','بعد ما في خطة.')+'</div>';if(nV4(N))return nPlanV4(N);
   if(!P.days||!P.days.length)return '<div class="card muted">'+nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.')+'</div>';
   var h=nTop('home'),d,di;
   if(P.schedule){
@@ -1701,7 +1791,7 @@ function nPlan(N){var P=(N.plan||{}).data;if(!P)return nTop('home')+'<div class=
 // grocery: v2 = 3 weekly lists from the server, ticks saved on the server; old plans = one list, ticks on this phone
 function nGKey(){return 'wbc_groc_'+ACC().cid+'_'+nWeekKey()}
 function nTicks(){try{return JSON.parse(store(nGKey())||'{}')}catch(e){return {}}}
-function nGrocery(N){var P=(N.plan||{}).data;if(!P)return nTop('home');
+function nGrocery(N){var P=(N.plan||{}).data;if(!P)return nTop('home');if(nV4(N))return nGroceryV4(N);
   var G=P.grocery||[];
   if(G.length&&G[0].aisles){
     var wk=NWK||nCurWeek(N),W=G[wk-1]||G[0],tk=((N.plan.ticks||{})[String(W.week)])||[];
@@ -1717,7 +1807,7 @@ function nGrocery(N){var P=(N.plan||{}).data;if(!P)return nTop('home');
 // reminder settings (the schedule is saved now; phone notifications come with the app update)
 var NDAYS=[['mon','Monday','الاثنين'],['tue','Tuesday','الثلاثا'],['wed','Wednesday','الأربعا'],['thu','Thursday','الخميس'],['fri','Friday','الجمعة'],['sat','Saturday','السبت'],['sun','Sunday','الأحد']];
 function nRem(N){var R=N.reminders||{},pr=R.prefs||{},it=R.items||[],P=(N.plan||{}).data||{},A=N.answers||{};
-  var h=nTop('home')+'<div class="nt-h">'+nL('Your <em>reminders</em>','<em>تذكيراتك</em>')+'</div><div class="nt-sub">'+nL('Meals, water and meal prep, on your schedule.','الوجبات، المي وتحضير الأكل، على وقتك.')+'</div>';
+  var h=nTop('home')+'<div class="nt-h">'+nL('Your <em>reminders</em>','<em>تذكيراتك</em>')+'</div><div class="nt-sub">'+nL('Meals, water, meal prep and your weekly weigh-in, on your schedule.','الوجبات، المي، تحضير الأكل والوزن الأسبوعي، على وقتك.')+'</div>';
   h+='<div class="note warn" style="margin-bottom:12px">'+ICON('i-clock')+'<span>'+nL('Phone notifications are coming with the next app update. Your schedule is saved now.','إشعارات التلفون جايين مع تحديث التطبيق الجاي. برنامجك محفوظ من هلق.')+'</span></div>';
   if(!R.active)return h+'<div class="card muted">'+nL('Reminders run while your 3-week plan is active.','التذكيرات بتشتغل خلال الـ 3 أسابيع تبع خطتك.')+'</div>';
   var tog=function(id,on,lab){return '<label class="nt-q" style="display:flex;justify-content:space-between;align-items:center;margin:0"><span>'+lab+'</span><input type="checkbox" id="'+id+'"'+(on?' checked':'')+'></label>'};
@@ -1726,7 +1816,12 @@ function nRem(N){var R=N.reminders||{},pr=R.prefs||{},it=R.items||[],P=(N.plan||
   var ev=(pr.water||{}).every_h||2;
   h+='<div class="card" style="margin-top:12px">'+tog('nrWater',(pr.water||{}).on!==false,'💧 '+nL('Water','المي'))+'<div class="seg" style="margin-top:8px">'+[1,2,3,4].map(function(n){return '<button data-nrw="'+n+'" aria-pressed="'+(n===ev)+'">'+nL('Every '+n+' h','كل '+n+' س')+'</button>'}).join('')+'</div><div class="muted" style="font-size:12.5px;margin-top:6px">'+nL('Between '+R.window.from+' and '+R.window.to,'بين '+R.window.from+' و '+R.window.to)+'</div></div>';
   var pd=(pr.prep||{}).day||A.prep_day||'',pt=(pr.prep||{}).time||A.prep_time||'10:00';
-  h+='<div class="card" style="margin-top:12px">'+tog('nrPrep',(pr.prep||{}).on!==false,'🥡 '+nL('Weekly meal prep','تحضير الأكل بالأسبوع'))+'<div class="nt-two" style="margin-top:8px"><div class="field"><label>'+nL('Day','النهار')+'</label><select class="inp" id="nrPd"><option value="">–</option>'+NDAYS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===pd?' selected':'')+'>'+(NLANG==='ar'?x[2]:x[1])+'</option>'}).join('')+'</select></div><div class="field"><label>'+nL('Time','الساعة')+'</label><input class="inp" type="time" id="nrPt" value="'+esc(pt)+'"></div></div></div>';
+  h+='<div class="card" style="margin-top:12px">'+tog('nrPrep',(pr.prep||{}).on!==false,'🥡 '+nL('Main meal prep','التحضير الأساسي'))+'<div class="nt-two" style="margin-top:8px"><div class="field"><label>'+nL('Day','النهار')+'</label><select class="inp" id="nrPd"><option value="">–</option>'+NDAYS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===pd?' selected':'')+'>'+(NLANG==='ar'?x[2]:x[1])+'</option>'}).join('')+'</select></div><div class="field"><label>'+nL('Time','الساعة')+'</label><input class="inp" type="time" id="nrPt" value="'+esc(pt)+'"></div></div></div>';
+  var rf=function(k){return it.filter(function(x){return x.kind===k})[0]||{}},tu=pr.topup||{},wg=pr.weigh||{},dsel=function(id,v){return '<select class="inp" id="'+id+'"><option value="">–</option>'+NDAYS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===v?' selected':'')+'>'+(NLANG==='ar'?x[2]:x[1])+'</option>'}).join('')+'</select>'};
+  if(P.v===4){var tud=tu.day||rf('topup').days||A.topup_day||'wed',tut=tu.time||rf('topup').time||'19:00';
+    h+='<div class="card" style="margin-top:12px">'+tog('nrTop',tu.on!==false,'🍲 '+nL('Mid-week top-up (about 30 min)','تحضير نص الأسبوع (حوالي 30 دقيقة)'))+'<div class="nt-two" style="margin-top:8px"><div class="field"><label>'+nL('Day','النهار')+'</label>'+dsel('nrTd',tud)+'</div><div class="field"><label>'+nL('Time','الساعة')+'</label><input class="inp" type="time" id="nrTt" value="'+esc(tut)+'"></div></div></div>'}
+  var wgd=wg.day||rf('weigh').days||'',wgt=wg.time||rf('weigh').time||A.wake||'07:00';
+  h+='<div class="card" style="margin-top:12px">'+tog('nrWeigh',wg.on!==false,'⚖️ '+nL('Weekly weigh-in','الوزن الأسبوعي'))+'<div class="nt-two" style="margin-top:8px"><div class="field"><label>'+nL('Day','النهار')+'</label>'+dsel('nrWd',wgd)+'</div><div class="field"><label>'+nL('Time','الساعة')+'</label><input class="inp" type="time" id="nrWt" value="'+esc(wgt)+'"></div></div></div>';
   h+='<div class="card" style="margin-top:12px"><b>🌙 '+nL('Quiet hours','ساعات الهدوء')+'</b><div class="nt-two" style="margin-top:8px"><div class="field"><label>'+nL('From','من')+'</label><input class="inp" type="time" id="nrQf" value="'+esc(R.quiet.from)+'"></div><div class="field"><label>'+nL('To','لـ')+'</label><input class="inp" type="time" id="nrQt" value="'+esc(R.quiet.to)+'"></div></div></div>';
   h+='<button class="btn block" style="margin-top:12px" id="nrSave">'+nL('Save my reminders','احفظ التذكيرات')+'</button>';
   h+='<div class="nt-two" style="margin-top:8px"><button class="btn ghost" data-nrs="'+(R.snooze_until?0:60)+'">'+(R.snooze_until?nL('Stop snoozing','وقف التأجيل'):nL('Snooze 1 hour','أجّل ساعة'))+'</button><button class="btn ghost" data-nrmute="'+(R.muted?0:1)+'">'+(R.muted?nL('Unmute','رجّع الصوت'):nL('Mute all','سكّت الكل'))+'</button></div>';
@@ -1734,20 +1829,21 @@ function nRem(N){var R=N.reminders||{},pr=R.prefs||{},it=R.items||[],P=(N.plan||
   return h}
 VIEWS.nut=function(){var N=nGet();
   if(!N)return nTop('close')+'<div class="skel" style="height:44px;width:60%;margin:10px 0 18px"></div><div class="skel" style="height:160px"></div><div class="skel" style="height:120px;margin-top:14px"></div>';
-  var h=NV==='q'?nHome(N):NV==='body'?nBody(N):NV==='plan'?nPlan(N):NV==='grocery'?nGrocery(N):NV==='rem'?nRem(N):nHome(N);
+  var h=NV==='q'?nHome(N):NV==='body'?nBody(N):NV==='plan'?nPlan(N):NV==='grocery'?nGrocery(N):NV==='rem'?nRem(N):NV==='opts'?nOpts(N):nHome(N);
   return (NLANG==='ar'?'<div class="nt-ar" dir="rtl">'+h+'</div>':h)+(NV==='q'?nQModal(N):'')};
 function nQHead(){return '<div class="rd-wh"><button class="rd-x" data-nv="home" aria-label="Close">'+ICON('i-x')+'</button><h3 style="font-size:20px">'+nL('5 minute questionnaire','استبيان 5 دقايق')+'</h3>'+nLangSw(1)+'</div>'}
 // small card on Center home / guest page / Me
 function nutCard(){var N=nGet(),a=ACC(),st='',btn=nL('Open','افتح');
   if(!N)st=nL('Your calories, macros and a timeline to your goal.','سعراتك، الماكروز، ووقت الوصول لهدفك.');
   else if(N.plan&&N.plan.status==='Approved'&&N.plan.data)st=nL('Today: ','اليوم: ')+Number((N.plan.macros||N.calc||{}).kcal||0).toLocaleString()+' kcal · P '+((N.plan.macros||N.calc||{}).p||0)+' g';
+  else if(N.plan&&N.plan.status==='Draft')st=nL('Your week 1 draft is ready to review.','مسودة الأسبوع الأول جاهزة للمراجعة.');
   else if(N.plan&&/Queued|Writing|Pending|Coach review|Failed/.test(N.plan.status))st=nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.');
   else if(N.calc&&N.calc.ok)st=Number(N.calc.kcal).toLocaleString()+' kcal · '+N.calc.p+' g '+nL('protein a day','بروتين باليوم');
   else st=N.done?nL('Add your body numbers to see your target.','زيد أرقامك لتشوف هدفك.'):nL('5 minute questionnaire to start.','استبيان 5 دقايق لتبلش.');
   return '<div class="card nt-card-home"><span class="ic" style="flex:0 0 46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--mint-soft);color:var(--mint-deep)">'+ICON('i-spark')+'</span><div class="grow"><b>'+nL('Your nutrition plan','خطة التغذية')+'</b><div class="muted" style="font-size:14px">'+esc(st)+'</div></div><button class="btn sm sec2" data-act="nut">'+btn+'</button></div>'}
 ACT.nut=function(){SEC='plan';PLANTAB='nut';store('wbc_sec','plan');store('wbc_ptab','nut');NV='home';render();scrollTo(0,0);nLoad(NUT[ACC().cid]&&NUT[ACC().cid].questions?'get':'intake_get').catch(function(){})};
 function nGo(v){if(v==='close'){SEC='plan';PLANTAB='nut';NV='home';render();scrollTo(0,0);return}var wasQ=NV==='q';
-  if(v==='plan'||v==='grocery'){var N=nGet()||{},cy=(N.nut||{}).cycle;NWK=0;NDAY=cy&&cy.day?(cy.day-1)%7:nDayIdx()}   // open on today
+  if(v==='plan'||v==='grocery'){var N=nGet()||{},cy=(N.nut||{}).cycle;NWK=0;NDAY=cy&&cy.day?(cy.day-1)%7:nV4(N)?0:nDayIdx()}   // open on today (a draft starts today)
   NV=v;NDRAFT={};render();if(!wasQ&&v!=='home')scrollTo(0,0)}
 function nImg(file){return new Promise(function(res,rej){var r=new FileReader();r.onerror=rej;
   if(file.type==='application/pdf'){r.onload=function(){res({b64:String(r.result).split(',')[1],mime:'application/pdf'})};r.readAsDataURL(file);return}
@@ -1779,11 +1875,28 @@ function nutBind(){var N=nGet()||{};
   $$('[data-nrw]').forEach(function(b){b.onclick=function(){$$('[data-nrw]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
   var rs=$('#nrSave');if(rs)rs.onclick=function(){var tm={};$$('[data-nrm]').forEach(function(x){if(x.value)tm[x.dataset.nrm]=x.value});var wv=$('[data-nrw][aria-pressed="true"]'),v=function(id){var e=$('#'+id);return e?e.value:''};
     var pr={meal:{on:$('#nrMeal').checked,times:tm},water:{on:$('#nrWater').checked,every_h:wv?+wv.dataset.nrw:2},prep:{on:$('#nrPrep').checked,day:v('nrPd'),time:v('nrPt')}};
+    if($('#nrTop'))pr.topup={on:$('#nrTop').checked,day:v('nrTd'),time:v('nrTt')};
+    if($('#nrWeigh'))pr.weigh={on:$('#nrWeigh').checked,day:v('nrWd'),time:v('nrWt')};
     if(v('nrQf')&&v('nrQt'))pr.quiet={from:v('nrQf'),to:v('nrQt')};
     nLoad('reminders',{prefs:pr},rs).then(function(){toast(nL('Saved','انحفظ'))}).catch(function(){})};
   $$('[data-nrs]').forEach(function(b){b.onclick=function(){nLoad('reminders',{snooze_min:+b.dataset.nrs},b).catch(function(){})}});
   $$('[data-nrmute]').forEach(function(b){b.onclick=function(){nLoad('reminders',{mute:b.dataset.nrmute==='1'},b).catch(function(){})}});
   var wb=$('[data-nweigh]');if(wb)wb.onclick=function(){var kg=Number(String($('#ntW').value).replace(',','.'));if(!(kg>25)){toast(nL('Type your weight in kg','اكتب وزنك بالكيلو'));return}nLoad('weigh',{kg:kg},wb).then(function(j){toast(nL('Saved. Projection updated.','انحفظ. التوقع تحدث.'))}).catch(function(){})};
+  // v4: options, usual pick, draft review, PDF
+  $$('[data-nopts]').forEach(function(b){b.onclick=function(){NOPT=+b.dataset.nopts;NV='opts';render();scrollTo(0,0)}});
+  $$('[data-npick]').forEach(function(b){b.onclick=function(){var x=b.dataset.npick.split('|');nLoad('pick',{plan:(N.plan||{}).id,slot:+x[0],option:+x[1]},b).then(function(){toast(nL('Saved. Your grocery list follows it.','انحفظ. اللائحة بتتبعه.'))}).catch(function(){})}});
+  var keepRev=function(){var g=function(id){var e=$('#'+id);return e?e.value:undefined},m=g('nrvMeal'),f=g('nrvFood'),t=g('nrvText'),tm=g('nrvTimes');if(m!==undefined)NREV.meal=m;if(f!==undefined)NREV.food=f;if(t!==undefined)NREV.text=t;if(tm!==undefined)NREV.times=tm};
+  $$('[data-nchip]').forEach(function(b){b.onclick=function(){keepRev();var k=b.dataset.nchip;NREV[k]=!NREV[k];var y=scrollY;render();scrollTo(0,y)}});
+  ['nrvMeal','nrvFood','nrvText','nrvTimes'].forEach(function(id){var e=$('#'+id);if(e)e.oninput=e.onchange=keepRev});
+  var sr=$('[data-nsendrev]');if(sr)sr.onclick=function(){keepRev();var ch=[];
+    NCHIPS.forEach(function(c){if(!NREV[c[0]])return;var x={kind:c[0]};if(c[0]==='swap_meal')x.meal=NREV.meal||'';if(c[0]==='dont_eat')x.text=NREV.food||'';if(c[0]==='meal_times')x.text=NREV.times||'';ch.push(x)});
+    if(NREV.swap_meal&&!NREV.meal){toast(nL('Pick the meal to swap','اختار الوجبة يلي بدك تبدلها'));return}
+    if(NREV.dont_eat&&!String(NREV.food||'').trim()){toast(nL('Write what you don\'t eat','اكتب شو ما بتاكل'));return}
+    if(!ch.length&&!String(NREV.text||'').trim()){toast(nL('Tap a chip or write your request','اختار طلب أو اكتبه'));return}
+    nLoad('draft_feedback',{plan:sr.dataset.nsendrev,chips:ch,text:NREV.text||''},sr).then(function(){NREV={};NV='home';render();scrollTo(0,0);toast(nL('Sent. We are changing week 1 for you.','انبعت. عم نغيّر الأسبوع الأول.'))}).catch(function(){})};
+  var ap=$('[data-nappr]');if(ap)ap.onclick=function(){if(!confirm(nL('Approve week 1? We then write your full 3 weeks in the same style.','توافق على الأسبوع الأول؟ بعدها منكتب الـ 3 أسابيع بنفس الأسلوب.')))return;
+    nLoad('draft_approve',{plan:ap.dataset.nappr},ap).then(function(){NREV={};NV='home';render();scrollTo(0,0);toast(nL('Approved. We are writing your 3 weeks.','تمت الموافقة. عم نكتب الـ 3 أسابيع.'))}).catch(function(){})};
+  var pd=$('[data-npdf]');if(pd)pd.onclick=function(){nPdf(pd)};
   $$('[data-ngi]').forEach(function(b){b.onclick=function(){var t=nTicks(),k=b.dataset.ngi;if(t[k])delete t[k];else t[k]=1;try{store(nGKey(),JSON.stringify(t))}catch(e){}softRender()}});
 }
 
@@ -1851,6 +1964,7 @@ function rdNutCard(){var N=nGet(),a=ACC(),ic='<span class="ic">'+ICON('i-spark',
       h+='<button class="meal" data-act="plan|nut"><div><small>'+(nx.tomorrow?'Tomorrow · ':'Next meal · ')+esc(nx.m.time)+'</small><b>'+esc(nT(nx.m.name))+'</b><div class="muted" style="font-size:12.5px">'+esc(its)+'</div></div><div class="cd"><b data-cd="'+esc(nx.m.time)+'" data-cdt="'+(nx.tomorrow?1:0)+'">'+cdText(nx.mins)+'</b><span>to go</span></div></button>'}
     if(wg)h+='<div class="wat"><div class="l"><span>💧 Water today</span><span>'+(left?'<b>'+left+' L to go</b> · ':'<b>Done for today</b> · ')+wd+' of '+wg+' L</span></div><div class="rd-wrow"><div class="rd-bar"><i style="width:'+Math.min(100,Math.round(wd/wg*100))+'%"></i></div><button class="rd-glass" data-act="water|1" aria-label="I drank a glass">+ glass</button></div></div>';
     return h+'</div>'}
+  if(pl&&pl.status==='Draft')return '<div class="rd-nut"><div class="hd">'+ic+'<b>Your nutrition plan</b></div><div class="muted" style="font-size:14px;margin:8px 0 12px">Your week 1 draft is ready. Check it, ask for changes, then approve.</div><button class="btn block" data-act="nut">Review my week 1</button></div>';
   if(pl&&/Queued|Writing|Pending|Coach review|Failed/.test(pl.status))return '<div class="rd-nut"><div class="hd">'+ic+'<b>Your nutrition plan</b></div><div class="muted" style="font-size:14px;margin:8px 0 12px">Your plan is being prepared by our team. We tell you when it is ready.</div><button class="btn sec2 block" data-act="nut">Open</button></div>';
   if(c.ok)return '<div class="rd-nut"><div class="hd">'+ic+'<b>Your nutrition plan</b><span class="rd-chip">'+Number(c.kcal).toLocaleString()+' kcal · P '+c.p+' g</span></div><div class="muted" style="font-size:14px;margin:8px 0 12px">'+(N.paid?'Your numbers are ready. Get your meals, portions and grocery lists.':'Your daily numbers are ready.')+'</div><button class="btn block" data-act="nut">'+(N.paid?'Make my full plan':'Open')+'</button></div>';
   if(c.coach)return '<div class="rd-nut"><div class="hd">'+ic+'<b>Your nutrition plan</b></div><div class="muted" style="font-size:14px;margin:8px 0 12px">Our team will set your numbers with you personally, to keep you safe.</div><button class="btn sec2 block" data-act="nut">Open</button></div>';
@@ -1972,9 +2086,9 @@ function aboutCard(){var N=nGet()||{},b=N.body||((WOS[ACC().cid]||{}).body)||{},
 function nWeighCard(N){var w=N.weighins||[],last=w[w.length-1];return '<div class="sec"><h2>'+nL('Weekly weigh-in','الوزن الأسبوعي')+'</h2></div><div class="card"><div class="muted" style="font-size:14px">'+(last?nL('Last: ','آخر وزن: ')+last.kg+' kg · '+nDate(last.date):nL('Weigh yourself once a week, same day, morning.','وزن حالك مرة بالأسبوع، نفس النهار، الصبح.'))+'</div><div class="nt-wrow"><input class="inp" id="ntW" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button class="btn sm" data-nweigh="1">'+nL('Save','احفظ')+'</button></div></div>'}
 function nToday(N){var P=N.plan.data,c=Object.assign({},N.calc||{},N.plan.macros||{}),d=nDayTpl(N,0)||{},nx=nNextMeal(N),nxn=nx&&!nx.tomorrow?nx.m:null;
   var h='<div class="rd-macro"><div><b class="num">'+Number(c.kcal||0).toLocaleString()+'</b><span>kcal</span></div><div><b class="num">'+(c.p||0)+'</b><span>'+nL('Protein','بروتين')+'</span></div><div><b class="num">'+(c.c||0)+'</b><span>'+nL('Carbs','نشويات')+'</span></div><div><b class="num">'+(c.f||0)+'</b><span>'+nL('Fat','دهون')+'</span></div></div>';
-  h+=(d.meals||[]).map(function(m){var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0),isN=m===nxn;
+  h+=(d.meals||[]).map(function(m){if(m.social)return nSocialCard(m.social,m.time);var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0),isN=nxn&&m.slot===nxn.slot&&m.time===nxn.time;
     return '<div class="rd-meal'+(isN?' nx':'')+'"><div class="h"><small>'+esc({breakfast:nL('Breakfast','ترويقة'),lunch:nL('Lunch','غدا'),dinner:nL('Dinner','عشا'),snack:nL('Snack','سناك')}[m.slot]||m.slot||'')+(m.time?' · '+esc(m.time):'')+'</small><span>'+Math.round(k)+' kcal</span></div><b>'+esc(nT(m.name))+(isN?' <span class="rd-chip" style="vertical-align:2px">'+nL('Next','التالي')+' · '+cdText(nx.mins)+'</span>':'')+'</b>'+
-     (m.items||[]).map(function(x){return '<div class="it"><span>'+esc(nT(x.food))+'</span><em>'+(x.g?Math.round(x.g)+' '+esc(x.unit||'g')+' · ':'')+esc(nT(x.measure))+'</em></div>'}).join('')+(m.swap&&m.swap.items?'<details class="nt-sw"><summary>↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap.name))+'</summary>'+nItems(m.swap.items)+'</details>':(m.swap&&nT(m.swap)?'<div class="nt-sw">↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap))+'</div>':''))+'</div>'}).join('');
+     (m.items||[]).map(function(x){return '<div class="it"><span>'+esc(nT(x.food))+'</span><em>'+(x.g?Math.round(x.g)+' '+esc(x.unit||'g')+' · ':'')+esc(nT(x.measure))+'</em></div>'}).join('')+(m.swap&&m.swap.items?'<details class="nt-sw"><summary>↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap.name))+'</summary>'+nItems(m.swap.items)+'</details>':(m.swap&&nT(m.swap)?'<div class="nt-sw">↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap))+'</div>':''))+(m.fixed!=null?'<div class="nt-opt"><span>'+nL('Option '+(m.opt+1)+' of '+m.nopts+' · swap any day','خيار '+(m.opt+1)+' من '+m.nopts+' · بدّل أي يوم')+'</span><button class="btn sm ghost" data-nopts="'+m.fixed+'">'+nL('All options','كل الخيارات')+'</button></div>':'')+'</div>'}).join('');
   h+='<div class="nt-two"><button class="btn sec2" data-nv="grocery">'+ICON('i-bag')+nL('Grocery list','لائحة المشتريات')+'</button><button class="btn ghost" data-nv="plan">'+nL('Full week','كل الأسبوع')+'</button></div>';
   if(N.nut)h+='<div class="muted" style="font-size:13px;margin-top:8px">'+esc(nCycleLine(N.nut.cycle))+'</div><button class="btn ghost block" style="margin-top:8px" data-nv="rem">'+ICON('i-clock')+nL('Reminders','التذكيرات')+'</button>'+nDisc(N);
   h+=nWeighCard(N);

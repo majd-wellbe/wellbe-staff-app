@@ -3,6 +3,7 @@
 // editor (Edge Functions > Deploy a new function > Via Editor), which has no _shared folder.
 // The code is the same: the _shared files are copied in above the function, their "export" words removed.
 // Run: node build-single.js   (the CLI deploy does not need this: it reads functions/<name>/index.ts)
+// outbox-worker is already one file (no _shared): dist/outbox-worker.ts is a plain copy of outbox-worker/index.ts.
 const fs = require('fs'), path = require('path');
 const DIR = __dirname, OUT = path.join(DIR, 'dist'), NAMES = ['api', 'login-code', 'upload', 'nutrition-worker'];
 const SHARED_ORDER = ['supabase.ts', 'login.ts'];

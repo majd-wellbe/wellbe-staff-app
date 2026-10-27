@@ -236,25 +236,41 @@ update public.settings set value = '{"use":"apps"}'::jsonb, updated_at = now() w
 4. Honest warning: anything done on Supabase between the switch and the rollback (sales, payments, attendance) is not in the sheets. I make you the list from Supabase so Romy can enter it in the sheets. Nothing is ever deleted on the Apps Script side, so going back is always possible.
 
 
-## Step 8. Nutrition v2 (built 27 Oct 2026, NOT applied yet)
+## Step 8. Nutrition v2 (built 27 Oct 2026, NOT applied yet: the apply prompt expired)
 
 The paid 3-week plan stays locked for clients ("coming soon") until you open it. Testers can use it before that.
 
 1. Database: run `migrations/0012_nutrition.sql` in the SQL Editor (or with the Supabase tools). It ends with `app.api_sync()`.
-   Check: actions 60 (58 + `app_nut_cycle`, `app_nut_settings`), tables_without_rls 0, backend `{"use":"apps"}`.
+   Check: actions 66 (58 + 8: `app_nut_cycle`, `app_nut_settings`, `app_nut_notes`, `app_nut_note_save`, `app_nut_note_delete`,
+   `app_nut_rest_list`, `app_nut_rest_save`, `app_nut_rest_delete`), tables_without_rls 0, backend `{"use":"apps"}`.
 2. Edge function `nutrition-worker`: deploy `functions/nutrition-worker` (index.ts + plan.ts + `_shared/supabase.ts`), **Verify JWT ON**
    (only the scheduler and itself call it, with the service key). Dashboard way: paste `functions/dist/nutrition-worker.ts`.
-   CLI: `npx supabase functions deploy nutrition-worker`.
-3. Secrets (Edge Functions, Secrets): `ANTHROPIC_KEY` (yours, never in the chat). Optional `NUTRITION_MODEL` (default `claude-sonnet-5-5`, the same default as Nutrition.gs; check it is a model your key can use).
-   Without the key the worker writes nothing (it only re-checks plans you edited).
-4. The scheduler calls the worker every 5 minutes only when the Vault has `project_url` and `service_role_key` (the legacy JWT service key, because Verify JWT is on). They are not set yet.
-5. Test it yourself: your own client account (same email as your staff row) is a tester. Or in the staff app, open a client, Nutrition plan, "3-week cycle and test access", Make tester / Start a test cycle.
+   CLI: `npx supabase functions deploy nutrition-worker`. Deploy it together with step 1: the cron job already calls it every 5 minutes.
+3. Secrets: `ANTHROPIC_KEY` is set. Optional `NUTRITION_MODEL` (default `claude-sonnet-5-5`; check your key can use it).
+   The worker uses the Anthropic web search tool for restaurant menus it does not know.
+4. The scheduler: the Vault has `project_url` and `service_role_key`; `app.call_function` was fixed live (and in `0004_jobs.sql`).
+5. Test it yourself: your own client account (same email as your staff row) is a tester. Or in the staff app, open a client, Nutrition plan,
+   "3-week cycle and test access", Make tester / Start a test cycle.
 6. Open it for everyone: staff app, My day, "Open it for all clients" (or `update public.settings set value = jsonb_set(value, '{paid_open}', 'true') where key = 'nutrition';`).
    There is no payment provider yet: until there is, a cycle is started by you (staff app) or by a tester.
 
-What clients get: the free calculator (everyone signed in, guests too), and with a cycle: the plan by day for 21 days, one swap per meal,
-3 weekly grocery lists with ticks, reminder settings, the disclaimer. Flagged clients (any health answer or under 18) see no numbers;
-their plan comes to you only, and their 21 days start when you approve.
+How a plan is made (owner rules, 27 Oct):
+* Week 1 is written first as a DRAFT. The client reviews it: quick chips (Swap a meal, Too much food, I'm still hungry, Simpler meals,
+  More variety, More Lebanese dishes, Cheaper ingredients, Change meal times, Less prep time, I don't eat something) and "Write your own",
+  at most 2 change rounds, then approves. Weeks 2 and 3 are then written in the same style. The 21 days start at the client's approval.
+* Flagged clients (any health answer or under 18): the draft comes to you first, then the client's review, then you approve the
+  full plan; their 21 days start at your final approval. Under 18, pregnant, kidney, past eating disorder: no AI until you set the numbers.
+* Per client: 4 breakfast and 4 snack options (matched within 5% on calories and protein, any option any day; the client sets a
+  usual pick and the grocery list follows it). Lunch and dinner change every 2 days (Mon-Tue, Wed-Thu, Fri-Sat, Sun) from 2 prep
+  sessions a week (main on the client's prep day, ~30 min top-up Wednesday evening), each at most 2 proteins and 2 carbs.
+  At most 3 ingredients a meal; salads only as often as the client said; complicated dishes only as "ready-made".
+* Nights out and the Sunday family lunch get the rest of the day's budget, dish ideas from the restaurant library (marked "estimate"),
+  up to 2 drinks on weekend nights for clients without flags. Unknown restaurants are looked up by web search and saved UNCHECKED;
+  nothing found = "menu not found, coach will add it". Check them in the staff app (My day, Restaurant library).
+* Every change request is kept as a client note (staff app, client's Nutrition plan, Client notes: you can edit them). The notes go
+  into the next cycle's plan. A renewal takes the numbers from the latest weigh-in. No mid-cycle replans.
+* The client app makes a PDF of the plan (EN or AR) with `client/nut-pdf.js` (html2pdf from cdnjs, print dialog if it cannot load).
 
-**Reminders: push delivery is pending.** The schedule (meals, water every 2 hours between wake and bed, weekly meal prep, quiet hours,
-snooze, mute) is stored and served by `app_cl_nut op reminders`; nothing is sent to phones until FCM is set up (`FCM_SERVER_KEY`, outbox worker, mobile app).
+**Reminders: push delivery is pending.** The schedule (meals, water every 2 hours between wake and bed, main prep, top-up,
+weekly weigh-in the day after the prep day at wake time, quiet hours, snooze, mute) is stored and served by `app_cl_nut op reminders`;
+nothing is sent to phones until push is set up (FCM, mobile app).

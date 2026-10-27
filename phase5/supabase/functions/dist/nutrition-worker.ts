@@ -43,62 +43,87 @@ function json(body: unknown, status = 200): Response {
 
 // ---------- from nutrition-worker/plan.ts ----------
 // =====================================================================
-// Nutrition plan core (pure code, no I/O): the prompt, the code checks, the grocery list.
+// Nutrition plan core (pure code, no I/O): the prompts, the code checks, social meals, restaurants, the grocery lists.
 // Ported from Nutrition.gs (nutSystem_, nutSchema_, nutBrief_, nutValidate_, nutOkWord_, nutGrocery_, nutWrite_)
-// with the approved v2 rules (27 Oct 2026):
+// with the owner's rules of 27 Oct 2026 (latest first where they conflict):
 //  - 3 to 5 eating times (2 meals becomes 3), times set here in code from wake / bed / breakfast / training
-//  - variety: same day all week (1 template) / 2 alternating / 4 rotating / 7 different days, over the 21 days
-//  - one swap per meal, with its own items and the same macros
-//  - after the AI: code checks allergies, intolerances, food rules, dislikes (keyword match) and the macros
-//    (day within 5% of kcal and protein, 10% of carbs and fat); one retry with the problems listed,
-//    then the plan goes to the owner
-//  - grocery list here, never by the AI: 3 weekly lists, by aisle, shop pack sizes, pantry staples apart,
-//    for the client only (not scaled to the household)
+//  - breakfast and snacks: 4 OPTIONS each (matched within 5% of kcal and protein), option 1 is the default pick, the client
+//    can exchange any option on any day and set a usual pick; the same options for the 3 weeks. Lunch and dinner change every 2 days:
+//    one pair per block Mon-Tue, Wed-Thu, Fri-Sat, Sun (combos A B C D), new pairs each week
+//  - 2 prep sessions a week: the main one at the client's prep day/time cooks for A and B, a short mid-week
+//    top-up (about 30 min, default Wednesday 19:00) cooks for C and D; each at most 2 proteins and 2 carbs;
+//    weekday meals are heat and assemble. At most 3 ingredients a meal (oil, salt, spices, lemon, garlic do not count).
+//    Complicated dishes (kibbeh, mehshi...) only as "buy ready-made".
+//  - salads: no salad by default; a raw vegetable side (cucumber, tomato) is fine; named salads (fattoush,
+//    tabbouleh, any "salad") only as often as the client said (most meals / 1 to 2 a week / rarely)
+//  - one swap per meal, with the same macros and the same rules
+//  - SOCIAL meals (Friday night, Saturday night, Sunday lunch, a weekday dinner) = a restaurant meal with the rest of
+//    the day's budget, up to 2 drinks on social nights only (never midweek, flagged, under 18 or halal);
+//    FAMILY lunch (Sunday BBQ and mezze) = portion guidance inside the budget + a home meal for when there is none
+//  - RESTAURANTS: 1 to 2 dishes per restaurant slot from the client's places (Wellbe library, estimates, "ask for"
+//    tweaks); unknown places are looked up by the AI with web search; nothing found = "menu not found, coach will add it"
+//  - REVIEW LOOP: week 1 is written first as a draft; the client asks for changes (up to 2 revision rounds),
+//    then approves; then weeks 2 and 3 are written in the same style. Client notes from earlier cycles go in the prompt.
+//  - after every AI answer: code checks allergies, intolerances, food rules, dislikes (also "I don't eat X" notes),
+//    the simplicity and salad rules and the macros (day within 5% of kcal and protein, 10% of carbs and fat);
+//    one retry with the problems listed, then the owner
+//  - grocery lists here, never by the AI: by aisle, shop pack sizes, pantry staples apart, client only,
+//    meals eaten out left out, one list per week
 // Used by index.ts (the edge function) and by the tests (Deno and Node). Plain TypeScript only (no enums).
 // =====================================================================
 
 type T2 = { en: string; ar: string };
 type Ingredient = { buy: T2; g: number; unit?: string; aisle?: string };
-type Item = { food: T2; buy?: T2; g: number; unit: string; state?: string; measure: T2; kcal: number; p: number; c: number; f: number; aisle?: string; allergens?: string[]; ingredients?: Ingredient[] };
-type Meal = { slot: string; time: string; name: T2; items: Item[]; swap?: { name: T2; items: Item[] }; training?: string; totals?: Macros };
+type Item = { food: T2; buy?: T2; g: number; unit: string; state?: string; measure: T2; kcal: number; p: number; c: number; f: number; aisle?: string; allergens?: string[]; ingredients?: Ingredient[]; role?: string; ready_made?: boolean };
+type Meal = { slot: string; time: string; name: T2; items: Item[]; swap?: { name: T2; items: Item[]; method?: string }; method?: string; training?: string; totals?: Macros };
 type Day = { key: string; name: T2; meals: Meal[]; totals?: Macros };
 type Macros = { kcal: number; p: number; c: number; f: number };
 type Answers = Record<string, any>;
 type Slot = { slot: string; time: string; training?: "pre" | "post" };
 type AskFn = (system: string, user: string, maxTokens: number) => Promise<string>;
+type Batch = { proteins: T2[]; carbs: T2[]; veg?: T2[]; steps?: { en: string[]; ar: string[] } };
+type Combo = { key: string; name?: T2; lunch: Meal; dinner: Meal };
+type AiWeek = { combos: Combo[]; batch: { main: Batch; topup: Batch } };
+type FixedSlot = { slot: string; time?: string; options: Meal[] };
+type AiPlan = { fixed: FixedSlot[]; week: AiWeek; notes?: any };
+type Dish = { restaurant: string; dish: string; dish_ar?: string; kcal: number; p?: number | null; c?: number | null; f?: number | null; source_url?: string; checked?: boolean };
+type Restaurant = { name: string; key: string; status: string; dishes: Dish[] };
+type Note = { kind: string; text: string; cycle?: string };
 
 const TOL = { kcal: 0.05, p: 0.05, c: 0.10, f: 0.10 };
 const SWAP_TOL = { kcal: 0.10, kcalAbs: 40, p: 0.15, pAbs: 5 };
 const CYCLE_DAYS = 21;
+const MAX_INGREDIENTS = 3;
+const MAX_REVISIONS = 2;
+const OPTIONS = 4;                 // breakfast and snack options per eating time
+const OPT_TOL = { kcal: 0.05, p: 0.05, pAbs: 2 };   // options matched to their set's average
+const DRINK_KCAL = 150;            // one beer (330 ml), a glass of wine or an arak with water, rounded up
 const DISCLAIMER: T2 = {
   en: "General guidance for healthy eating, not medical treatment. If you have a health condition or take medication, follow your doctor's advice.",
   ar: "إرشادات عامة للأكل الصحي، مش علاج طبي. إذا عندك حالة صحية أو بتاخد دوا، اتبع نصيحة طبيبك.",
 };
 
 // ---------------------------------------------------------------------
-// eating times and variety
+// eating times, the 2-day blocks, the prep sessions
 // ---------------------------------------------------------------------
 // meals answer -> eating times, always 3 to 5 ('2' becomes 3)
 function eatingTimes(meals: unknown): number {
   const n = ({ "2": 3, "3": 3, "3s": 4, "4s": 5 } as Record<string, number>)[String(meals ?? "")] ?? 4;
   return Math.max(3, Math.min(5, n));
 }
-// variety answer -> number of day templates (default 4, the old A B C D rotation)
-function dayCount(variety: unknown): number {
-  return ({ same: 1, two: 2, four: 4, seven: 7 } as Record<string, number>)[String(variety ?? "")] ?? 4;
+const COMBO_KEYS = ["A", "B", "C", "D"];
+const BLOCKS = [0, 0, 1, 1, 2, 2, 3];                 // Mon..Sun -> lunch/dinner pair (Mon-Tue A, Wed-Thu B, Fri-Sat C, Sun D)
+const SESSION_OF = ["main", "main", "topup", "topup"];   // A, B from the main prep; C, D from the mid-week top-up
+const DAYS3 = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+function topupOf(ans: Answers): { day: string; time: string } { return { day: DAYS3.includes(ans.topup_day) ? ans.topup_day : "wed", time: /^\d{2}:\d{2}$/.test(String(ans.topup_time ?? "")) ? ans.topup_time : "19:00" }; }
+// the combo of each of the 21 days, from the first day's weekday (0 = Monday): [week index, combo index]
+function schedule(startDow = 0, days = CYCLE_DAYS): [number, number][] {
+  return Array.from({ length: days }, (_, i) => [Math.floor(i / 7), BLOCKS[(startDow + i) % 7]]);
 }
-const KEYS = "ABCDEFG";
-// day template for each of the 21 days of the cycle: same A..., two ABAB..., four ABCDABCD..., seven ABCDEFG...
-function schedule(variety: unknown, days = CYCLE_DAYS): number[] {
-  const n = dayCount(variety);
-  return Array.from({ length: days }, (_, i) => i % n);
-}
-// AI calls of at most 2 days each
-function chunks(variety: unknown): string[][] {
-  const keys = KEYS.slice(0, dayCount(variety)).split(""), out: string[][] = [];
-  for (let i = 0; i < keys.length; i += 2) out.push(keys.slice(i, i + 2));
-  return out;
-}
+// salads: named salads per week allowed by the answer
+function saladMax(ans: Answers): number { return ({ most_meals: 99, few_week: 2, rarely: 0 } as Record<string, number>)[String(ans.salad_freq ?? "")] ?? 2; }
+const SALAD_WORDS = ["salad", "fattoush", "tabbouleh", "tabouleh", "tabouli", "coleslaw", "caesar"];
+function isNamedSalad(x: Item): boolean { const s = (t2(x?.food).en + " " + t2(x?.buy).en).toLowerCase(); return SALAD_WORDS.some((w) => wordRe(w).test(s)); }
 
 function hm(t: unknown, fb: string): number {
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(t ?? "")) || /^(\d{1,2}):(\d{2})$/.exec(fb)!;
@@ -108,8 +133,8 @@ function hhmm(min: number): string {
   const m = ((Math.round(min / 15) * 15) % 1440 + 1440) % 1440;
   return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
 }
-// the eating times of the day, in code: first meal from wake + breakfast habit, last meal before bed,
-// the others evenly in between; the meals before and after training are marked (carbs around training)
+// the eating times of the day, in code: first meal from wake + breakfast habit, last meal before bed, the others
+// evenly in between; always exactly one lunch and one dinner; the meals before and after training are marked
 function mealSlots(ans: Answers): Slot[] {
   const n = eatingTimes(ans.meals), wake = hm(ans.wake, "07:00");
   let bed = hm(ans.bed, "23:00"); if (bed <= wake + 10 * 60) bed += 24 * 60;   // after midnight
@@ -135,7 +160,7 @@ function mealSlots(ans: Answers): Slot[] {
 }
 
 // ---------------------------------------------------------------------
-// the code check (nutValidate_ + nutOkWord_)
+// the code check (nutValidate_ + nutOkWord_ + the simplicity and salad rules)
 // ---------------------------------------------------------------------
 const ALLERGEN_WORDS: Record<string, string[]> = {
   lactose: ["milk", "cheese", "labneh", "laban", "yogurt", "yoghurt", "cream", "butter", "halloumi", "akkawi", "feta", "kashkaval", "shanklish", "mozzarella", "whey", "parmesan", "ricotta", "cheddar", "ishta", "kashta", "ice cream", "kefir", "ayran"],
@@ -178,135 +203,275 @@ function wordRe(w: string): RegExp {
 function words(text: unknown): string[] {
   return String(text ?? "").toLowerCase().split(/[,;\/\n]+| and | or /).map((s) => s.trim()).filter((s) => s.length > 2);
 }
+const ALCOHOL_WORDS = ["beer", "wine", "arak", "vodka", "whisky", "whiskey", "gin", "rum", "tequila", "cocktail", "alcohol", "liqueur"];
 // [word, why] pairs that must not appear anywhere in the plan
 function banList(ans: Answers): { ban: [string, string][]; dislike: string[] } {
   const ban: [string, string][] = [];
   for (const a of arr(ans.allergy)) for (const w of ALLERGEN_WORDS[a] ?? []) ban.push([w, a]);
   for (const r of arr(ans.rules)) for (const w of RULE_WORDS[r] ?? []) ban.push([w, r]);
   for (const w of words(ans.allergy_other)) ban.push([w, "allergy: " + w]);
+  for (const w of ALCOHOL_WORDS) ban.push([w, "no alcohol in meals"]);   // drinks are budgeted by the code on social nights only
   return { ban, dislike: words(ans.dislike) };
+}
+// a text breaks: [reasons] (allergies, rules, dislikes)
+function breaks(text: string, ans: Answers, isFood = true): string[] {
+  const t = text.toLowerCase(), { ban, dislike } = banList(ans), out: string[] = [];
+  for (const [w, why] of ban) if (wordRe(w).test(t) && !okWord(t, w, why)) out.push(`"${why}" (${w})`);
+  if (isFood) for (const w of dislike) if (wordRe(w).test(t)) out.push(`a food they dislike (${w})`);
+  return out;
 }
 function arr(v: unknown): string[] { return Array.isArray(v) ? v.map(String) : []; }
 const n0 = (v: unknown) => Number(v) || 0;
 const t2 = (o: any) => ({ en: String(o?.en ?? ""), ar: String(o?.ar ?? "") });
 function sum(items: Item[]): Macros {
   const t = { kcal: 0, p: 0, c: 0, f: 0 };
-  for (const x of items) { t.kcal += n0(x.kcal); t.p += n0(x.p); t.c += n0(x.c); t.f += n0(x.f); }
+  for (const x of items ?? []) { t.kcal += n0(x.kcal); t.p += n0(x.p); t.c += n0(x.c); t.f += n0(x.f); }
   return t;
 }
 const r1 = (t: Macros): Macros => ({ kcal: Math.round(t.kcal), p: Math.round(t.p), c: Math.round(t.c), f: Math.round(t.f) });
 
-// checks days written by the AI. Returns the problems ([] = good) and fills totals.
-// o.keys: the day keys expected; o.slots: the eating times; o.sport: big carb portions around training
-function validate(days: Day[], m: Macros, ans: Answers, o: { keys?: string[]; slots?: Slot[]; sport?: boolean } = {}): string[] {
-  const errs: string[] = [];
-  const { ban, dislike } = banList(ans);
-  const n = (o.slots ?? mealSlots(ans)).length;
-  if (!Array.isArray(days) || !days.length) return ["No days in the plan"];
-  if (o.keys && days.length !== o.keys.length) errs.push(`Write exactly ${o.keys.length} day(s) (${o.keys.join(", ")}), not ${days.length}`);
-  const checkText = (where: string, text: string, isFood: boolean) => {
-    const t = text.toLowerCase();
-    for (const [w, why] of ban) if (wordRe(w).test(t) && !okWord(t, w, why)) errs.push(`${where} breaks "${why}" (${w})`);
-    if (isFood) for (const w of dislike) if (wordRe(w).test(t)) errs.push(`${where} is a food they dislike (${w})`);
-  };
-  const checkItem = (dn: string, x: Item) => {
-    for (const k of ["kcal", "p", "c", "f", "g"] as const) (x as any)[k] = n0((x as any)[k]);
-    const nm = t2(x.food).en || "?";
-    if (!(x.g > 0)) errs.push(`${dn}: ${nm} has no portion in grams`);
-    if (!/^(g|ml)$/.test(String(x.unit ?? ""))) errs.push(`${dn}: ${nm} unit must be g or ml`);
-    if (!t2(x.measure).en) errs.push(`${dn}: ${nm} has no household measure`);
-    if (!t2(x.food).ar) errs.push(`${dn}: ${nm} has no Arabic name`);
-    const calc = x.p * 4 + x.c * 4 + x.f * 9;
-    if (x.kcal > 40 && Math.abs(calc - x.kcal) / x.kcal > 0.2) errs.push(`${dn}: ${nm} kcal does not match its macros`);
-    checkText(`${dn}: ${nm}`, t2(x.food).en + " | " + t2(x.buy).en + " | " + arr(x.allergens).join(" ") + " | " + (Array.isArray(x.ingredients) ? x.ingredients.map((i) => t2(i?.buy).en).join(" | ") : ""), true);
-  };
-  days.forEach((d, di) => {
-    const dn = "Day " + (d?.key || o.keys?.[di] || KEYS[di]);
-    const meals = Array.isArray(d?.meals) ? d.meals : [];
-    if (meals.length !== n) errs.push(`${dn}: needs exactly ${n} eating times, has ${meals.length}`);
-    let t = { kcal: 0, p: 0, c: 0, f: 0 };
-    meals.forEach((ml) => {
-      const mn = t2(ml.name).en || "?";
-      if (!Array.isArray(ml.items) || !ml.items.length) { errs.push(`${dn}: meal "${mn}" has no items`); return; }
-      if (!t2(ml.name).ar) errs.push(`${dn}: meal "${mn}" has no Arabic name`);
-      checkText(`${dn}: meal "${mn}"`, mn, false);
-      ml.items.forEach((x) => checkItem(dn, x));
-      const mt = sum(ml.items); ml.totals = r1(mt);
-      t = { kcal: t.kcal + mt.kcal, p: t.p + mt.p, c: t.c + mt.c, f: t.f + mt.f };
-      const sw = ml.swap;
-      if (!sw || !Array.isArray(sw.items) || !sw.items.length) errs.push(`${dn}: meal "${mn}" needs one swap with its own items`);
-      else {
-        checkText(`${dn}: swap "${t2(sw.name).en}"`, t2(sw.name).en, false);
-        sw.items.forEach((x) => checkItem(dn + " swap", x));
-        const st = sum(sw.items);
-        if (Math.abs(st.kcal - mt.kcal) > Math.max(SWAP_TOL.kcalAbs, SWAP_TOL.kcal * mt.kcal)) errs.push(`${dn}: swap for "${mn}" is ${Math.round(st.kcal)} kcal, the meal is ${Math.round(mt.kcal)} (same macros)`);
-        if (Math.abs(st.p - mt.p) > Math.max(SWAP_TOL.pAbs, SWAP_TOL.p * mt.p)) errs.push(`${dn}: swap for "${mn}" has ${Math.round(st.p)} g protein, the meal ${Math.round(mt.p)} g (same macros)`);
-      }
-    });
-    for (const k of ["kcal", "p", "c", "f"] as const) {
-      const want = m[k];
-      if (want && Math.abs(t[k] - want) / want > TOL[k]) errs.push(`${dn}: ${k} is ${Math.round(t[k])}, needs ${want} (within ${Math.round(TOL[k] * 100)}%)`);
-    }
-    if (o.sport && o.slots && meals.length === n) {
-      const avg = t.c / n;
-      o.slots.forEach((s, i) => { if (s.training && (meals[i]?.totals?.c ?? 0) < avg) errs.push(`${dn}: the meal ${s.training === "pre" ? "before" : "after"} training (${s.time}) needs a bigger carb portion than an average meal`); });
-    }
-    if (d) d.totals = r1(t);
+// oil, salt, spices, lemon and garlic do not count as ingredients
+const EXEMPT_WORDS = ["oil", "olive oil", "salt", "pepper powder", "black pepper", "spice", "spices", "seven spices", "7 spices", "cumin", "cinnamon", "paprika", "sumac", "turmeric", "curry", "oregano", "thyme", "dried mint", "zaatar", "za'atar", "chili flakes", "lemon", "lemon juice", "garlic", "cooking spray"];
+function isExempt(name: string): boolean {
+  const s = name.toLowerCase();
+  if (/(peanut|almond|nut) butter/.test(s)) return false;
+  return EXEMPT_WORDS.some((w) => wordRe(w).test(s)) && !/(chicken|beef|meat|fish|bread|rice|potato|cheese|labneh|egg|salad)/.test(s);
+}
+// complicated dishes: only as "buy ready-made"
+const COMPLEX_WORDS = ["kibbeh", "kebbeh", "kibbe", "mehshi", "mahshi", "stuffed", "warak enab", "vine leaves", "mloukhieh", "molokhia", "fatteh", "sayadieh", "maqluba", "makloubeh", "moussaka", "lasagna", "lasagne", "shish barak", "mansaf", "biryani", "bechamel", "sheikh el mehshi", "kebbe"];
+const HEAT_METHODS = ["grill", "oven tray", "rice cooker", "pan", "heat", "assemble", "boil", "air fryer"];
+// ingredients of one meal: a raw vegetable side counts as one; a ready-made food counts as one;
+// a home-made dish counts its own ingredients
+function ingredientCount(items: Item[]): number {
+  let n = 0;
+  for (const x of items ?? []) {
+    const nm = t2(x.buy).en || t2(x.food).en;
+    if (isExempt(nm) && !(Array.isArray(x.ingredients) && x.ingredients.length)) continue;
+    if ((x.role === "veg" && !isNamedSalad(x)) || x.ready_made || !Array.isArray(x.ingredients) || !x.ingredients.length) { n += 1; continue; }
+    n += x.ingredients.filter((i) => !isExempt(t2(i?.buy).en)).length || 1;
+  }
+  return n;
+}
+const key = (s: string) => s.toLowerCase().replace(/\(.*?\)/g, " ").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+function batchHas(list: T2[], name: string): boolean {
+  const k = key(name);
+  return (list ?? []).some((b) => { const bk = key(t2(b).en); return bk && (k === bk || k.includes(bk) || bk.includes(k)); });
+}
+// a day = the fixed meals (same every day) + the combo's lunch and dinner, in the order of the eating times
+// picks[i] = the option chosen for the i-th fixed eating time (default option 1 = index 0)
+function assembleDay(fixed: FixedSlot[], cb: { lunch: Meal; dinner: Meal }, slots: Slot[], picks: number[] = []): Meal[] {
+  let fi = 0;
+  return slots.map((s) => {
+    const fs = s.slot === "lunch" || s.slot === "dinner" ? null : fixed[fi], pi = fs ? Math.min(Math.max(0, picks[fi] ?? 0), (fs.options?.length ?? 1) - 1) : 0;
+    if (fs) fi++;
+    const ml = s.slot === "lunch" ? cb?.lunch : s.slot === "dinner" ? cb?.dinner : fs?.options?.[pi];
+    if (!ml) return ml as unknown as Meal;
+    const out = { ...ml, slot: s.slot, time: s.time } as Meal;
+    if (s.training) out.training = s.training;
+    if (Array.isArray(out.items)) out.totals = r1(sum(out.items));
+    return out;
   });
+}
+
+type Ctx = { errs: string[]; ans: Answers };
+function checkItem(c: Ctx, where: string, x: Item, ld: { main: Batch; topup: Batch; session: string } | null) {
+  const { errs, ans } = c;
+  for (const k of ["kcal", "p", "c", "f", "g"] as const) (x as any)[k] = n0((x as any)[k]);
+  const nm = t2(x.food).en || "?";
+  if (!(x.g > 0)) errs.push(`${where}: ${nm} has no portion in grams`);
+  if (!/^(g|ml)$/.test(String(x.unit ?? ""))) errs.push(`${where}: ${nm} unit must be g or ml`);
+  if (!t2(x.measure).en) errs.push(`${where}: ${nm} has no household measure`);
+  if (!t2(x.food).ar) errs.push(`${where}: ${nm} has no Arabic name`);
+  const calc = x.p * 4 + x.c * 4 + x.f * 9;
+  if (x.kcal > 40 && Math.abs(calc - x.kcal) / x.kcal > 0.2) errs.push(`${where}: ${nm} kcal does not match its macros`);
+  const text = nm + " | " + t2(x.buy).en + " | " + arr(x.allergens).join(" ") + " | " + (Array.isArray(x.ingredients) ? x.ingredients.map((i) => t2(i?.buy).en).join(" | ") : "");
+  for (const b of breaks(text, ans)) errs.push(`${where}: ${nm} breaks ${b}`.replace(/breaks a food/, "is a food"));
+  const t = (nm + " " + t2(x.buy).en).toLowerCase();
+  if (!x.ready_made && COMPLEX_WORDS.some((w) => wordRe(w).test(t))) errs.push(`${where}: ${nm} is too complicated to cook: make it "buy ready-made" or leave it out`);
+  if (!x.ready_made && Array.isArray(x.ingredients) && x.ingredients.filter((i) => !isExempt(t2(i?.buy).en)).length > MAX_INGREDIENTS) errs.push(`${where}: ${nm} needs too many ingredients: buy it ready-made or simplify`);
+  if (ld && !isExempt(t2(x.buy).en || nm)) {
+    const bn = t2(x.buy).en || nm, b = ld.session === "main" ? ld.main : ld.topup, sname = ld.session === "main" ? "main prep" : "mid-week top-up";
+    if (x.role === "protein") { if (!batchHas(b?.proteins, bn)) errs.push(`${where}: protein ${bn} is not cooked in the ${sname} (${(b?.proteins ?? []).map((y) => t2(y).en).join(", ")})`); }
+    else if (x.role === "carb") { if (!batchHas(b?.carbs, bn)) errs.push(`${where}: carb ${bn} is not cooked in the ${sname} (${(b?.carbs ?? []).map((y) => t2(y).en).join(", ")})`); }
+    else if (x.role === "veg") { if (x.state !== "raw" && !x.ready_made) errs.push(`${where}: ${nm}: lunch and dinner vegetables are a raw side (or a ready-made salad)`); }
+    else if (!x.ready_made) errs.push(`${where}: ${nm} must be a prepped protein, a prepped carb, a raw vegetable side or a ready-made extra (role)`);
+  }
+}
+function checkMeal(c: Ctx, where: string, ml: Meal, ld: { main: Batch; topup: Batch; session: string } | null, needSwap = true): Macros | null {
+  const { errs, ans } = c, mn = t2(ml?.name).en || "?";
+  if (!ml || !Array.isArray(ml.items) || !ml.items.length) { errs.push(`${where}: meal "${mn}" has no items`); return null; }
+  if (!t2(ml.name).ar) errs.push(`${where}: meal "${mn}" has no Arabic name`);
+  for (const b of breaks(mn, ans, false)) errs.push(`${where}: meal "${mn}" breaks ${b}`);
+  ml.items.forEach((x) => checkItem(c, where, x, ld));
+  const ni = ingredientCount(ml.items);
+  if (ni > MAX_INGREDIENTS) errs.push(`${where}: "${mn}" has ${ni} ingredients, at most ${MAX_INGREDIENTS} (oil, salt, spices, lemon, garlic do not count)`);
+  if (ld && !HEAT_METHODS.includes(String(ml.method ?? ""))) errs.push(`${where}: "${mn}" needs a heat-and-assemble method (${HEAT_METHODS.join(", ")})`);
+  const mt = sum(ml.items); ml.totals = r1(mt);
+  const sw = ml.swap;
+  if (!needSwap) return mt;                                   // breakfast and snack options are their own swaps
+  if (!sw || !Array.isArray(sw.items) || !sw.items.length) errs.push(`${where}: meal "${mn}" needs one swap with its own items`);
+  else {
+    for (const b of breaks(t2(sw.name).en, ans, false)) errs.push(`${where}: swap "${t2(sw.name).en}" breaks ${b}`);
+    sw.items.forEach((x) => checkItem(c, where + " swap", x, ld));
+    const ns = ingredientCount(sw.items);
+    if (ns > MAX_INGREDIENTS) errs.push(`${where}: swap "${t2(sw.name).en}" has ${ns} ingredients, at most ${MAX_INGREDIENTS}`);
+    const st = sum(sw.items);
+    if (Math.abs(st.kcal - mt.kcal) > Math.max(SWAP_TOL.kcalAbs, SWAP_TOL.kcal * mt.kcal)) errs.push(`${where}: swap for "${mn}" is ${Math.round(st.kcal)} kcal, the meal is ${Math.round(mt.kcal)} (same macros)`);
+    if (Math.abs(st.p - mt.p) > Math.max(SWAP_TOL.pAbs, SWAP_TOL.p * mt.p)) errs.push(`${where}: swap for "${mn}" has ${Math.round(st.p)} g protein, the meal ${Math.round(mt.p)} g (same macros)`);
+  }
+  return mt;
+}
+// breakfast and snacks: 4 options per eating time, every option checked, options matched to each other
+function fixedSlotsOf(slots: Slot[]): Slot[] { return slots.filter((s) => s.slot !== "lunch" && s.slot !== "dinner"); }
+function validateFixed(fixed: FixedSlot[], ans: Answers, slots: Slot[]): string[] {
+  const c: Ctx = { errs: [], ans }, fs = fixedSlotsOf(slots);
+  if (!Array.isArray(fixed) || fixed.length !== fs.length) c.errs.push(`Write exactly ${fs.length} breakfast/snack eating time(s) (${fs.map((s) => s.slot).join(", ") || "none"}) with ${OPTIONS} options each, not ${Array.isArray(fixed) ? fixed.length : 0}`);
+  (fixed ?? []).forEach((f, i) => {
+    const nm = fs[i]?.slot ?? "meal " + (i + 1), opts = Array.isArray(f?.options) ? f.options : [];
+    if (opts.length !== OPTIONS) c.errs.push(`${nm}: write exactly ${OPTIONS} options, not ${opts.length}`);
+    const tots = opts.map((ml, oi) => checkMeal(c, `${nm} option ${oi + 1}`, ml, null, false)).filter(Boolean) as Macros[];
+    if (tots.length) {
+      const ak = tots.reduce((t, x) => t + x.kcal, 0) / tots.length, ap = tots.reduce((t, x) => t + x.p, 0) / tots.length;
+      tots.forEach((x, oi) => {
+        if (Math.abs(x.kcal - ak) > OPT_TOL.kcal * ak) c.errs.push(`${nm} option ${oi + 1} is ${Math.round(x.kcal)} kcal: the ${nm} options must be within 5% of each other (about ${Math.round(ak)})`);
+        if (Math.abs(x.p - ap) > Math.max(OPT_TOL.pAbs, OPT_TOL.p * ap)) c.errs.push(`${nm} option ${oi + 1} has ${Math.round(x.p)} g protein: the ${nm} options must be within 5% of each other (about ${Math.round(ap)} g)`);
+      });
+    }
+    if (opts.some((ml) => (ml?.items ?? []).some(isNamedSalad)) && saladMax(ans) < 7) c.errs.push(`${nm}: no named salad in breakfast or snack options (the client wants salads ${ans.salad_freq === "rarely" ? "rarely" : "only 1 to 2 times a week"})`);
+  });
+  return [...new Set(c.errs)];
+}
+// one week: 4 lunch/dinner pairs (A Mon-Tue, B Wed-Thu, C Fri-Sat, D Sun), the 2 prep sessions, the day totals, salads
+function validateWeek(fixed: FixedSlot[], wk: AiWeek, m: Macros, ans: Answers, o: { slots?: Slot[]; sport?: boolean; label?: string } = {}): string[] {
+  const c: Ctx = { errs: [], ans }, errs = c.errs, slots = o.slots ?? mealSlots(ans), W = o.label ?? "Week 1";
+  const combos = Array.isArray(wk?.combos) ? wk.combos : [], main = wk?.batch?.main ?? ({} as Batch), topup = wk?.batch?.topup ?? ({} as Batch);
+  if (combos.length !== 4) errs.push(`${W}: write exactly 4 lunch/dinner pairs (A Mon-Tue, B Wed-Thu, C Fri-Sat, D Sun), not ${combos.length}`);
+  for (const [nm, b] of [["main prep", main], ["mid-week top-up", topup]] as [string, Batch][]) {
+    const np = Array.isArray(b.proteins) ? b.proteins.length : 0, nc = Array.isArray(b.carbs) ? b.carbs.length : 0;
+    if (!np || np > 2) errs.push(`${W}: the ${nm} cooks 1 or 2 proteins, not ${np}`);
+    if (!nc || nc > 2) errs.push(`${W}: the ${nm} cooks 1 or 2 carbs, not ${nc}`);
+  }
+  // the fixed part of the day with the default picks, and every other option in its place (one eating time at a time)
+  const fsum = (picks: number[]) => (fixed ?? []).reduce((t, x, i) => { const y = sum(x?.options?.[picks[i] ?? 0]?.items ?? []); return { kcal: t.kcal + y.kcal, p: t.p + y.p, c: t.c + y.c, f: t.f + y.f }; }, { kcal: 0, p: 0, c: 0, f: 0 });
+  const variants: { picks: number[]; label: string }[] = [{ picks: [], label: "" }];
+  (fixed ?? []).forEach((x, i) => (x?.options ?? []).forEach((_, oi) => { if (oi) { const p = (fixed ?? []).map(() => 0); p[i] = oi; variants.push({ picks: p, label: ` with ${fixedSlotsOf(slots)[i]?.slot ?? "meal"} option ${oi + 1}` }); } }));
+  let salads = 0;
+  combos.slice(0, 4).forEach((cb, ci) => {
+    const k = COMBO_KEYS[ci], ld = { main, topup, session: SESSION_OF[ci] };
+    const lt = checkMeal(c, `${W} pair ${k}: lunch`, cb?.lunch, ld), dt = checkMeal(c, `${W} pair ${k}: dinner`, cb?.dinner, ld);
+    const daysUsed = BLOCKS.filter((b) => b === ci).length;
+    salads += [cb?.lunch, cb?.dinner].reduce((s, ml) => s + ((ml?.items ?? []).some(isNamedSalad) ? 1 : 0), 0) * daysUsed;
+    if (!lt || !dt) return;
+    let t = { kcal: 0, p: 0, c: 0, f: 0 };
+    for (const v of variants) {
+      const ft = fsum(v.picks), tv = { kcal: ft.kcal + lt.kcal + dt.kcal, p: ft.p + lt.p + dt.p, c: ft.c + lt.c + dt.c, f: ft.f + lt.f + dt.f };
+      if (!v.label) t = tv;
+      for (const kk of ["kcal", "p", "c", "f"] as const) {
+        const want = m[kk];
+        if (want && Math.abs(tv[kk] - want) / want > TOL[kk]) errs.push(`${W} day with pair ${k}${v.label}: ${kk} is ${Math.round(tv[kk])}, needs ${want} (within ${Math.round(TOL[kk] * 100)}%)`);
+      }
+    }
+    if (o.sport) {
+      const day = assembleDay(fixed ?? [], cb, slots), avg = t.c / slots.length;
+      slots.forEach((s, i) => { if (s.training && (day[i]?.totals?.c ?? 0) < avg) errs.push(`${W} day with pair ${k}: the meal ${s.training === "pre" ? "before" : "after"} training (${s.time}) needs a bigger carb portion than an average meal`); });
+    }
+  });
+  const mx = saladMax(ans);
+  if (salads > mx) errs.push(`${W}: named salads (fattoush, tabbouleh, any salad) on ${salads} meals, the client wants ${mx === 0 ? "none (rarely)" : "at most " + mx + " a week"}; use a raw cucumber and tomato side instead`);
   return [...new Set(errs)];
+}
+// week 1 with the fixed meals (what the AI writes first)
+function validate(ai: AiPlan, m: Macros, ans: Answers, o: { slots?: Slot[]; sport?: boolean } = {}): string[] {
+  if (!ai || typeof ai !== "object") return ["No plan"];
+  const slots = o.slots ?? mealSlots(ans);
+  return [...new Set(validateFixed(ai.fixed ?? [], ans, slots).concat(validateWeek(ai.fixed ?? [], ai.week, m, ans, { slots, sport: o.sport, label: "Week 1" })))];
 }
 
 // ---------------------------------------------------------------------
-// the prompt (nutSystem_, nutSchema_, nutBrief_)
+// the prompts (nutSystem_, nutSchema_, nutBrief_), client memory, change requests
 // ---------------------------------------------------------------------
 function system(): string {
   return "You are the head nutrition coach at Wellbe Health Center in Lebanon (physiotherapy and semi-private training). " +
-    "You turn calorie and macro targets that are ALREADY CALCULATED into a practical meal plan. Never change the targets. " +
-    "Rules: use foods easy to buy in Lebanon and the dishes and food styles the client likes; respect every allergy, intolerance, food rule and dislike with zero exceptions, in the meals AND the swaps; " +
-    "use exactly the eating times given (slot and time); match the breakfast habit, training time (carbs around training), cooking skill, cooking time, who cooks, budget and eating-out habits; " +
-    "when the household is more than one person, choose family-friendly dishes the whole family can eat, but every portion is for the client only; " +
-    "give exact portions in grams (or ml for liquids) as eaten, say if that weight is raw, cooked or ready to eat, AND a household measure (cups, spoons, pieces, palm, hand); " +
-    "per item give kcal, protein p, carbs c, fat f in grams, consistent with standard food tables (kcal close to 4p + 4c + 9f), and a simple shopping name (buy) the same for the same product every day; " +
-    "for a mixed home-cooked dish (tabbouleh, mjadra, loubieh, soups, stews) also list the raw ingredients of THAT portion (buy name, grams raw or dry, aisle) for the grocery list; ingredients is empty for simple foods; " +
-    "each day must hit the daily targets: kcal and protein within 4%, carbs and fat within 8%; " +
-    "one realistic swap per meal with its own items and the same macros as the meal (kcal within 8%, same protein); short, warm, simple coaching notes; " +
-    "no medical claims, no supplements beyond what they already take, no extreme foods. " +
+    "You turn calorie and macro targets that are ALREADY CALCULATED into a very SIMPLE practical meal plan. Never change the targets. " +
+    "Simplicity rules (checked by code, zero exceptions): breakfast and each snack have 4 options each, built for THIS client (scaled to their targets, from the foods they like, their food style, budget, cooking skill and prep time), matched within 5% of kcal and protein, used for the whole 3 weeks (option 1 is the default; the client may exchange them on any day); never a generic list; " +
+    "lunch and dinner change every 2 days: one lunch/dinner pair per block, A = Monday-Tuesday, B = Wednesday-Thursday, C = Friday-Saturday, D = Sunday; " +
+    "two prep sessions a week: the main prep at the client's prep day and time cooks for A and B, a short mid-week top-up (about 30 minutes) cooks for C and D; " +
+    "each session cooks at most 2 proteins and at most 2 carbs; weekday lunches and dinners are heat-and-assemble with one method: grill, oven tray, rice cooker, pan, heat, assemble, boil or air fryer; " +
+    "each meal has at most 3 ingredients (oil, salt, spices, lemon and garlic do not count; a raw vegetable side counts as one); " +
+    "no salad by default: a raw cucumber and tomato side is fine, named salads (fattoush, tabbouleh, any salad) only as often as the client said; " +
+    "anything complicated (kibbeh, mehshi, warak enab, mloukhieh, fatteh...) only as ready_made true (bought ready), or leave it out; no alcohol. " +
+    "Other rules: foods easy to buy in Lebanon and food the client likes; respect every allergy, intolerance, food rule, dislike and the client's notes, in the meals AND the swaps; " +
+    "use exactly the eating times given; match the breakfast habit, training time (carbs around training), cooking skill, budget; " +
+    "when the household is more than one person, choose family-friendly dishes, but every portion is for the client only; " +
+    "exact portions in grams (or ml for liquids) as eaten, say if that weight is raw, cooked or ready to eat, AND a household measure; " +
+    "per item kcal, protein p, carbs c, fat f in grams from standard food tables (kcal close to 4p + 4c + 9f), a shopping name (buy) the same for the same product every time, " +
+    "and for lunch and dinner items a role: protein, carb, veg (raw vegetable side) or extra (only if ready_made); " +
+    "every day (any breakfast/snack option + one pair) hits the daily targets: kcal and protein within 4%, carbs and fat within 8%; " +
+    "one realistic swap per lunch and dinner with its own items, the same rules and the same macros (kcal within 8%, same protein); " +
+    "short, warm, simple coaching notes and the steps of each prep session; no medical claims, no supplements beyond what they already take. " +
     "All text in English and Lebanese-friendly Arabic. Answer ONLY with JSON, no markdown.";
 }
 const AISLE_LIST = "produce|meat|fish|dairy|bakery|grains|canned|frozen|drinks|pantry|other";
-const ITEM = '{"food":{"en":"","ar":""},"buy":{"en":"","ar":""},"g":0,"unit":"g|ml","state":"raw|cooked|ready","measure":{"en":"","ar":""},"kcal":0,"p":0,"c":0,"f":0,"aisle":"' + AISLE_LIST + '","allergens":[],' +
-  '"ingredients":[{"buy":{"en":"","ar":""},"g":0,"unit":"g|ml","aisle":"' + AISLE_LIST + '"}]}';
-function schema(): string {
-  return '{"days":[{"key":"A","name":{"en":"","ar":""},"meals":[{"slot":"breakfast|lunch|dinner|snack","time":"HH:MM","name":{"en":"","ar":""},"items":[' + ITEM + '],"swap":{"name":{"en":"","ar":""},"items":[' + ITEM + ']}}]}],"notes":{"en":["",""],"ar":["",""]}}';
+const ITEM = '{"food":{"en":"","ar":""},"buy":{"en":"","ar":""},"g":0,"unit":"g|ml","state":"raw|cooked|ready","measure":{"en":"","ar":""},"kcal":0,"p":0,"c":0,"f":0,"aisle":"' + AISLE_LIST + '","allergens":[],"role":"protein|carb|veg|extra","ready_made":false}';
+const MEAL = '{"name":{"en":"","ar":""},"method":"grill|oven tray|rice cooker|pan|heat|assemble|boil|air fryer","items":[' + ITEM + '],"swap":{"name":{"en":"","ar":""},"method":"","items":[' + ITEM + ']}}';
+const OPTION = '{"name":{"en":"","ar":""},"items":[' + ITEM + ']}';
+const BATCH = '{"proteins":[{"en":"","ar":""}],"carbs":[{"en":"","ar":""}],"veg":[{"en":"","ar":""}],"steps":{"en":[""],"ar":[""]}}';
+const WEEK = '{"combos":[{"key":"A","name":{"en":"","ar":""},"lunch":' + MEAL + ',"dinner":' + MEAL + '}],"batch":{"main":' + BATCH + ',"topup":' + BATCH + '}}';
+function schema(withFixed: boolean): string {
+  return withFixed ? '{"fixed":[{"slot":"breakfast|snack","options":[' + OPTION + ',"... 4 options"]}],"week":' + WEEK + ',"notes":{"en":["",""],"ar":["",""]}}' : '{"week":' + WEEK + '}';
 }
-const VARIETY_TEXT: Record<string, string> = {
-  same: "the same day every day of the week (1 day template)", two: "2 day templates that alternate", four: "4 day templates that rotate", seven: "a different menu every day of the week (7 day templates)",
-};
-function brief(m: Macros & { goal?: string; sport?: boolean }, ans: Answers, slots: Slot[]): Record<string, unknown> {
-  const hh = Number(ans.household) || 1;
+const PREP_DAY: Record<string, string> = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" };
+const SALAD_TEXT: Record<string, string> = { most_meals: "salad with most meals is welcome", few_week: "named salads at most 1 to 2 times a week, a raw cucumber and tomato side otherwise", rarely: "no named salads, only a raw cucumber and tomato side if any" };
+// the client's notes from earlier cycles (and this one), grouped for the prompt
+function memorySummary(notes: Note[]): Record<string, string[]> | undefined {
+  const g: Record<string, string[]> = {};
+  for (const n of notes ?? []) { const k = ({ dislike: "does_not_eat", swap: "asked_to_swap", portion: "portion_feedback", liked: "liked", request: "asked_for", other: "other" } as Record<string, string>)[n.kind] ?? "other"; (g[k] ??= []).includes(n.text) || g[k].push(String(n.text).slice(0, 160)); }
+  return Object.keys(g).length ? g : undefined;
+}
+function brief(m: Macros & { goal?: string; sport?: boolean }, ans: Answers, slots: Slot[], memory?: Note[]): Record<string, unknown> {
+  const hh = Number(ans.household) || 1, fs = slots.filter((s) => s.slot !== "lunch" && s.slot !== "dinner"), tu = topupOf(ans);
   return {
     targets_per_day: { kcal: m.kcal, protein_g: m.p, carbs_g: m.c, fat_g: m.f },
     eating_times: slots.map((s) => ({ slot: s.slot, time: s.time, ...(s.training ? { training: s.training === "pre" ? "meal before training" : "meal after training" } : {}) })),
+    breakfast_snack_options: fs.map((s) => s.slot + " " + s.time + ": 4 options"),
+    lunch_dinner_pairs: "A Monday-Tuesday, B Wednesday-Thursday, C Friday-Saturday, D Sunday",
+    main_prep: (PREP_DAY[String(ans.prep_day)] ?? "Sunday") + " " + (ans.prep_time || "11:00") + " (cooks for A and B)",
+    mid_week_topup: PREP_DAY[tu.day] + " " + tu.time + " (about 30 minutes, cooks for C and D)",
+    salads: SALAD_TEXT[String(ans.salad_freq)] ?? SALAD_TEXT.few_week,
     goal: ans.goal, why: ans.why, pace: ans.pace, event: ans.event,
     sport_performance: ans.goal === "sport" ? "Maintenance calories, fat 25%. Put the bigger carb portions in the meals before and after training." : undefined,
     job: ans.job, train_days: ans.train_days, train_time: ans.train_time, wake: ans.wake, bed: ans.bed, sleep_h: ans.sleep,
     meals_habit: ans.meals, breakfast: ans.breakfast, cook: ans.cook, cooking_skill: ans.skill, cook_time_min: ans.cook_time, eat_out_per_week: ans.out, budget: ans.budget,
     household: hh > 1 ? `${hh === 4 ? "3 to 4" : hh === 5 ? "5 or more" : hh} people at home: family-friendly dishes, portions for the client only` : "just the client",
-    variety: VARIETY_TEXT[String(ans.variety)] ?? VARIETY_TEXT.four,
     food_styles: ans.style, eats_now: ans.now_day, eats_a_lot: ans.often,
     loves: arr(ans.love).concat(ans.love_other ? [String(ans.love_other)] : []), dislikes: ans.dislike,
     allergies_and_intolerances: arr(ans.allergy).filter((x) => x !== "none").concat(ans.allergy_other ? [String(ans.allergy_other)] : []),
-    rules: ans.rules, digestion: ans.digest, coffee: ans.coffee, sugary_drinks: ans.sugar_drinks, alcohol: ans.alcohol, water_now: ans.water, cravings: ans.cravings,
+    rules: ans.rules, digestion: ans.digest, coffee: ans.coffee, sugary_drinks: ans.sugar_drinks, cravings: ans.cravings,
     weekend: ans.weekend, supplements: ans.supps, coach_note: ans.coach_note || undefined,
+    client_memory: memorySummary(memory ?? []),
   };
 }
-function ask(m: Macros, ans: Answers, slots: Slot[], keys: string[], others: Day[], withNotes: boolean, problems: string[]): string {
-  const b = JSON.stringify(brief(m, ans, slots));
-  let s = "Client brief: " + b + "\n\nWrite day template" + (keys.length > 1 ? "s " : " ") + keys.join(" and ") + " (key" + (keys.length > 1 ? "s " : " ") + keys.join(", ") + "). " +
-    "Every day has exactly " + slots.length + " eating times: " + slots.map((x) => x.slot + " " + x.time).join(", ") + ". " +
-    (keys.length > 1 || others.length ? "Make the days clearly different" + (others.length ? " from these meals: " + others.map((d) => (d.meals ?? []).map((x) => t2(x.name).en).join(", ")).join(" | ") : "") + ". " : "") +
-    (withNotes ? "Include 4 to 6 coaching notes." : "Notes can be empty.") + "\nJSON shape: " + schema();
-  if (problems.length) s += "\n\nYour last answer had these problems, fix all of them: " + problems.slice(0, 20).join("; ");
+function askWeek1(m: Macros, ans: Answers, slots: Slot[], problems: string[], memory?: Note[]): string {
+  const fs = slots.filter((s) => s.slot !== "lunch" && s.slot !== "dinner");
+  let s = "Client brief: " + JSON.stringify(brief(m, ans, slots, memory)) + "\n\nWrite WEEK 1 (a draft the client will review): " +
+    (fs.length ? fs.length + " breakfast/snack eating time(s) in this order: " + fs.map((x) => x.slot + " " + x.time).join(", ") + ", each with 4 options matched within 5% of kcal and protein (used for the 3 weeks); " : "") +
+    "4 lunch/dinner pairs with keys A, B, C, D (A Monday-Tuesday, B Wednesday-Thursday, C Friday-Saturday, D Sunday), clearly different; " +
+    "the main prep (cooks for A and B) and the mid-week top-up (cooks for C and D), each with at most 2 proteins, 2 carbs, the raw vegetables and short steps; 4 to 6 coaching notes.\nJSON shape: " + schema(true);
+  if (problems.length) s += "\n\nYour last answer had these problems, fix all of them: " + problems.slice(0, 25).join("; ");
+  return s;
+}
+function askRevise(m: Macros, ans: Answers, slots: Slot[], previous: any, requests: Note[], problems: string[], memory?: Note[]): string {
+  let s = "Client brief: " + JSON.stringify(brief(m, ans, slots, memory)) + "\n\nThe client reviewed this WEEK 1 draft:\n" + JSON.stringify({ fixed: previous?.fixed, week: previous?.week }) +
+    "\n\nTheir change requests: " + JSON.stringify(requests.map((r) => ({ kind: r.kind, text: r.text }))) +
+    "\nRewrite week 1 with every request applied and everything else kept as close as possible. Keep the daily targets (\"less food\" or \"more food\" means lighter or more filling foods inside the same targets). Same rules, same JSON shape: " + schema(true);
+  if (problems.length) s += "\n\nYour last answer had these problems, fix all of them: " + problems.slice(0, 25).join("; ");
+  return s;
+}
+function askWeekN(n: number, m: Macros, ans: Answers, slots: Slot[], fixed: FixedSlot[], earlier: AiWeek[], problems: string[], memory?: Note[]): string {
+  let s = "Client brief: " + JSON.stringify(brief(m, ans, slots, memory)) + "\n\nThe client approved week 1. The breakfast and snack options stay exactly: " + JSON.stringify(fixed.map((x) => (x?.options ?? []).map((o) => t2(o?.name).en))) +
+    ". Write WEEK " + n + " in the same style: 4 new lunch/dinner pairs A, B, C, D (different from: " + earlier.flatMap((w) => (w?.combos ?? []).map((c) => t2(c?.lunch?.name).en + " / " + t2(c?.dinner?.name).en)).join("; ") +
+    ") and its main prep and mid-week top-up. Every day = any breakfast/snack option + one pair must hit the targets. JSON shape: " + schema(false);
+  if (problems.length) s += "\n\nYour last answer had these problems, fix all of them: " + problems.slice(0, 25).join("; ");
   return s;
 }
 function parseJSON(txt: string): any {
@@ -316,65 +481,191 @@ function parseJSON(txt: string): any {
 }
 
 // ---------------------------------------------------------------------
-// writing a plan step by step: one AI call per step, so each run of the worker stays short.
-// draft = { chunks: [{keys, tries, best:{days, notes, errs}|null, done}], v: 2 }
+// SOCIAL MEALS, FAMILY LUNCH and RESTAURANTS (code; restaurant dishes come from the Wellbe library: estimates)
 // ---------------------------------------------------------------------
-type Job = { macros: Macros & Record<string, any>; answers: Answers; draft?: any; job?: string; model?: string };
-type Chunk = { keys: string[]; tries: number; best: { days: Day[]; notes: any; errs: string[] } | null; done: boolean };
-function newDraft(ans: Answers): { v: number; chunks: Chunk[] } {
-  return { v: 2, chunks: chunks(ans.variety).map((keys) => ({ keys, tries: 0, best: null, done: false })) };
+// dow: 0 = Monday
+const SOCIAL: Record<string, { dow: number; slot: string; night: boolean; family?: boolean; label: T2 }> = {
+  fri_night: { dow: 4, slot: "dinner", night: true, label: { en: "Friday night out", ar: "طلعة الجمعة بالليل" } },
+  sat_night: { dow: 5, slot: "dinner", night: true, label: { en: "Saturday night out", ar: "طلعة السبت بالليل" } },
+  sun_lunch: { dow: 6, slot: "lunch", night: false, label: { en: "Sunday lunch out", ar: "غدا الأحد برا" } },
+  family_lunch: { dow: 6, slot: "lunch", night: false, family: true, label: { en: "Sunday family lunch (BBQ and mezze)", ar: "غدا العيلة نهار الأحد (مشاوي ومازة)" } },
+  midweek_dinner: { dow: 2, slot: "dinner", night: false, label: { en: "Wednesday dinner out", ar: "عشا الأربعا برا" } },
+};
+// the chosen slots; a family lunch takes the Sunday lunch
+function socialKeys(ans: Answers): string[] {
+  const k = arr(ans.social).filter((x) => SOCIAL[x]);
+  return k.includes("family_lunch") ? k.filter((x) => x !== "sun_lunch") : k;
 }
-function isSport(ans: Answers): boolean { return ans.goal === "sport"; }
-
-// one step: writes (or retries) one chunk with one AI call. Returns the new draft and, when every chunk is done,
-// the finished plan with the problems that are left ([] = passed the checks).
-async function step(job: Job, askFn: AskFn, now = new Date()): Promise<{ draft: any; done: boolean; plan?: any; problems?: string[] }> {
-  const ans = job.answers ?? {}, m = job.macros;
-  if (job.job === "recheck" && job.draft?.fixed) {
-    const fixed = job.draft.fixed;
-    return { draft: job.draft, done: true, ...finish(m, ans, fixed.days ?? [], fixed.notes, [], now, job.model ?? "owner edit") };
-  }
-  const slots = mealSlots(ans), sport = isSport(ans);
-  const draft = job.draft?.chunks ? job.draft : newDraft(ans);
-  const ci = draft.chunks.findIndex((c: Chunk) => !c.done);
-  if (ci >= 0) {
-    const c: Chunk = draft.chunks[ci];
-    const others: Day[] = draft.chunks.filter((x: Chunk, i: number) => i !== ci && x.best).flatMap((x: Chunk) => x.best!.days);
-    const prompt = ask(m, ans, slots, c.keys, others, ci === 0, c.best?.errs ?? []);
-    const txt = await askFn(system(), prompt, 16000);   // an AI error throws: the worker counts it, the draft is kept
-    let days: Day[] = [], notes: any = null, errs: string[];
-    try {
-      const j = parseJSON(txt); days = Array.isArray(j.days) ? j.days.slice(0, c.keys.length) : []; notes = j.notes ?? null;
-      days.forEach((d, i) => { d.key = c.keys[i]; });
-      errs = validate(days, m, ans, { keys: c.keys, slots, sport });
-      if (Array.isArray(j.days) && j.days.length !== c.keys.length) errs.unshift(`Write exactly ${c.keys.length} day(s), not ${j.days.length}`);
-    } catch (e) { errs = ["Invalid JSON: " + String((e as Error).message)]; }
-    c.tries++;
-    if (!c.best || errs.length <= c.best.errs.length) c.best = { days, notes, errs };
-    c.done = c.best.errs.length === 0 || c.tries >= 2;   // one retry with the problems listed, then it goes on
-    if (draft.chunks.some((x: Chunk) => !x.done)) return { draft, done: false };
-  }
-  const all: Day[] = draft.chunks.flatMap((x: Chunk) => x.best?.days ?? []);
-  const notes = draft.chunks[0]?.best?.notes;
-  const tries = draft.chunks.reduce((s: number, x: Chunk) => s + x.tries, 0);
-  return { draft, done: true, ...finish(m, ans, all, notes, [], now, job.model ?? "", tries) };
+// drinks: only on social nights, never midweek, never under 18, a health flag, or halal; sometimes 1, usually 2
+function drinksFor(ans: Answers, flags: string[], k: string): number {
+  const s = SOCIAL[k];
+  if (!s || !s.night || (flags ?? []).length || arr(ans.rules).includes("halal")) return 0;
+  return ans.social_drinks === "usually" ? 2 : ans.social_drinks === "sometimes" ? 1 : 0;
 }
-
-// the whole plan: eating times set in code, every check again on all days, the 21 day schedule, the grocery lists
-function finish(m: Macros, ans: Answers, days: Day[], notes: any, extra: string[], now: Date, model: string, tries = 0): { plan: any; problems: string[] } {
-  const slots = mealSlots(ans), keys = KEYS.slice(0, dayCount(ans.variety)).split("");
-  days = (days ?? []).slice(0, keys.length);
-  days.forEach((d, i) => {
-    d.key = keys[i]; d.name = t2(d.name);
-    (d.meals ?? []).forEach((ml, j) => { if (slots[j]) { ml.time = slots[j].time; ml.slot = slots[j].slot; if (slots[j].training) ml.training = slots[j].training; } });
+function restKey(name: string): string {
+  return String(name ?? "").toLowerCase().replace(/&| and | wa | w /g, " ").replace(/[^a-z0-9؀-ۿ]/g, "");
+}
+function restNames(text: unknown): string[] {
+  return String(text ?? "").split(/[,;\/\n]+/).map((s) => s.trim()).filter((s) => s.length > 1).slice(0, 3);
+}
+// simple "ask for" tweaks from the dish name
+function askFor(dish: string): T2 {
+  const d = dish.toLowerCase(), en: string[] = [], ar: string[] = [];
+  if (/fries|chips|potato wedges/.test(d)) { en.push("salad instead of fries"); ar.push("سلطة بدل البطاطا المقلية"); }
+  if (/sauce|garlic|toum|mayo|dressing|aioli|cream|cheese sauce/.test(d) || /burger|sandwich|wrap|shawarma|taouk|tawouk/.test(d)) { en.push("sauce on the side"); ar.push("الصوص عجنب"); }
+  if (/burger/.test(d)) { en.push("no mayo, extra tomato and lettuce"); ar.push("بلا مايونيز، زيادة بندورة وخس"); }
+  if (/salad/.test(d)) { en.push("dressing on the side"); ar.push("التتبيلة عجنب"); }
+  if (/pasta|crepe|pizza/.test(d)) { en.push("a side salad, skip the bread basket"); ar.push("سلطة عجنب، بلا سلة الخبز"); }
+  if (!en.length) { en.push("grilled, sauce on the side"); ar.push("مشوي، الصوص عجنب"); }
+  return { en: en.join(", "), ar: ar.join("، ") };
+}
+// family lunch (mashawi and mezze): portions inside the budget, the client's rules respected
+type Part = { k: string; n: number; step: number; min: number; max: number; en: (n: number) => string; ar: (n: number) => string; kcal: number; p: number; c: number; f: number; check: string };
+function familyGuide(budgetKcal: number, ans: Answers): { items: { en: string; ar: string; kcal: number; p: number }[]; kcal: number; p: number } {
+  const veg = arr(ans.rules).some((r) => r === "vegetarian" || r === "vegan"), lact = arr(ans.allergy).includes("lactose");
+  const half = (n: number) => (n === 0.5 ? "½" : String(n));
+  const all: Part[] = [
+    veg ? (lact ? { k: "veg", n: 2, step: 1, min: 1, max: 3, en: (n) => `${n} plate${n > 1 ? "s" : ""} of grilled vegetables`, ar: (n) => `${n} صحن خضرة مشوية`, kcal: 90, p: 3, c: 12, f: 4, check: "grilled vegetables" }
+                : { k: "skewer", n: 2, step: 1, min: 1, max: 3, en: (n) => `${n} slices of grilled halloumi`, ar: (n) => `${n} شقف حلوم مشوي`, kcal: 100, p: 7, c: 1, f: 8, check: "grilled halloumi" })
+        : { k: "skewer", n: 2, step: 1, min: 1, max: 3, en: (n) => `${n} skewer${n > 1 ? "s" : ""} (taouk or kafta)`, ar: (n) => `${n} سيخ (طاووق أو كفتة)`, kcal: 130, p: 18, c: 1, f: 6, check: "grilled chicken taouk or kafta skewer" },
+    { k: "hummus", n: 3, step: 1, min: 0, max: 3, en: (n) => `${n} tbsp hummus`, ar: (n) => `${n} ملاعق حمص`, kcal: 25, p: 1.2, c: 2.1, f: 1.4, check: "hummus" },
+    saladMax(ans) === 0
+      ? { k: "raw", n: 1, step: 1, min: 1, max: 1, en: () => "raw vegetables (cucumber, tomato, radish), as much as you like", ar: () => "خضرة نية (خيار، بندورة، فجل) قد ما بدك", kcal: 30, p: 1, c: 6, f: 0, check: "cucumber tomato radish" }
+      : { k: "tabbouleh", n: 1, step: 0.5, min: 0, max: 1, en: (n) => `${half(n)} plate tabbouleh`, ar: (n) => `${half(n)} صحن تبولة`, kcal: 180, p: 4, c: 16, f: 11, check: "tabbouleh (bulgur, parsley)" },
+    { k: "bread", n: 1, step: 0.5, min: 0, max: 1, en: (n) => `${half(n)} loaf of bread`, ar: (n) => `${half(n)} رغيف خبز`, kcal: 165, p: 5.4, c: 33, f: 1, check: "lebanese bread" },
+    { k: "fried", n: 2, step: 1, min: 0, max: 2, en: (n) => `at most ${n} fried piece${n > 1 ? "s" : ""} (kibbeh or sambousek)`, ar: (n) => `أكتر شي ${n === 2 ? "قطعتين" : "قطعة"} مقلي (كبة أو سمبوسك)`, kcal: 110, p: 4, c: 9, f: 7, check: "fried kibbeh sambousek" },
+  ];
+  const parts = all.filter((x) => !breaks(x.check, ans).length);
+  const tot = () => parts.reduce((t, x) => t + x.n * x.kcal, 0);
+  for (const k of ["fried", "fried", "bread", "hummus", "tabbouleh", "skewer"]) { const x = parts.find((y) => y.k === k); if (tot() <= budgetKcal) break; if (x && x.n - x.step >= x.min) x.n -= x.step; }
+  const sk = parts.find((y) => y.k === "skewer"); if (sk && tot() + sk.kcal <= budgetKcal && sk.n < sk.max) sk.n += 1;
+  const items = parts.filter((x) => x.n > 0).map((x) => ({ en: x.en(x.n), ar: x.ar(x.n), kcal: Math.round(x.n * x.kcal), p: Math.round(x.n * x.p) }));
+  return { items, kcal: items.reduce((t, x) => t + x.kcal, 0), p: items.reduce((t, x) => t + x.p, 0) };
+}
+// the social slots of the week: the rest of the day's budget, drinks, restaurant dishes or the family guide
+function socialPlan(days: Day[], m: Macros, ans: Answers, flags: string[], rests: Restaurant[]): any[] {
+  return socialKeys(ans).map((k) => {
+    const s = SOCIAL[k], day = days[BLOCKS[s.dow]] ?? days[0];
+    const others = (day?.meals ?? []).filter((x) => x && x.slot !== s.slot).reduce((t, x) => { const y = x.totals ?? sum(x.items ?? []); return { kcal: t.kcal + y.kcal, p: t.p + y.p, c: t.c + y.c, f: t.f + y.f }; }, { kcal: 0, p: 0, c: 0, f: 0 });
+    const budget = { kcal: Math.max(0, Math.round(m.kcal - others.kcal)), p: Math.max(0, Math.round(m.p - others.p)), c: Math.max(0, Math.round(m.c - others.c)), f: Math.max(0, Math.round(m.f - others.f)) };
+    let n = drinksFor(ans, flags, k);
+    while (n > 0 && budget.kcal - n * DRINK_KCAL < budget.kcal * 0.5) n--;             // food first
+    const food = budget.kcal - n * DRINK_KCAL;
+    const drinks = n ? { n, kcal: n * DRINK_KCAL, note: { en: `Up to ${n} drink${n > 1 ? "s" : ""} (a beer, a glass of wine or an arak with water, about ${DRINK_KCAL} kcal each), already inside this budget. Water between drinks.`, ar: `لحد ${n === 2 ? "مشروبين" : "مشروب واحد"} (بيرة، كاس نبيد أو عرق مع مي، حوالي ${DRINK_KCAL} كالوري كل واحد)، محسوبين بهالميزانية. مي بين كل كاس وكاس.` } } : null;
+    const base = { key: k, dow: s.dow, slot: s.slot, label: s.label, budget, food_kcal: food, drinks };
+    if (s.family) {
+      const home = (day?.meals ?? []).find((x) => x && x.slot === s.slot);
+      return { ...base, kind: "family", guide: familyGuide(food, ans), home: home ? { name: home.name, items: home.items, totals: home.totals } : null,
+        tip: { en: "Fill half the plate with grills and raw vegetables first, then the mezze. Eat slowly.", ar: "عبّي نص الصحن مشاوي وخضرة نية أول، بعدين المازة. كول عمهل." } };
+    }
+    // restaurant: dishes from the client's places that fit the food budget and break no rule
+    const pool: (Dish & { score: number })[] = [];
+    for (const r of rests ?? []) for (const d of r.dishes ?? []) {
+      if (!(d.kcal > 0) || d.kcal > food * 1.1 || d.kcal < food * 0.45) continue;
+      if (breaks(d.dish, ans).length) continue;
+      const pGap = d.p != null && budget.p ? Math.max(0, budget.p - Number(d.p)) : 0;
+      pool.push({ ...d, score: Math.abs(food - d.kcal) + pGap * 8 });
+    }
+    pool.sort((a, b) => a.score - b.score);
+    const pick: Dish[] = pool.slice(0, 1);                  // the best, then the best from another place (or the next best)
+    const second = pool.find((d) => pick.length && restKey(d.restaurant) !== restKey(pick[0].restaurant)) ?? pool[1];
+    if (second && !pick.includes(second)) pick.push(second);
+    const notFound = (rests ?? []).filter((r) => r.status === "not_found" || (!r.dishes?.length && r.status !== "found")).map((r) => r.name);
+    return { ...base, kind: "restaurant",
+      suggestions: pick.slice(0, 2).map((d) => ({ restaurant: d.restaurant, dish: d.dish, dish_ar: d.dish_ar ?? "", kcal: d.kcal, p: d.p ?? null, c: d.c ?? null, f: d.f ?? null, estimate: true, checked: !!d.checked, source_url: d.source_url ?? "", ask_for: askFor(d.dish) })),
+      not_found: notFound.map((nm) => ({ restaurant: nm, msg: { en: "Menu not found, coach will add it.", ar: "ما لقينا المنيو، المدرب رح يزيده." } })),
+      tip: { en: `Pick a grilled protein with vegetables, about ${food} kcal and ${budget.p} g protein.`, ar: `اختار بروتين مشوي مع خضرة، حوالي ${food} كالوري و${budget.p} غرام بروتين.` } };
   });
-  const problems = extra.concat(validate(days, m, ans, { keys, slots, sport: isSport(ans) }));
-  const sch = schedule(ans.variety);
+}
+// the web search prompt for one restaurant (index.ts runs it with the web search tool). Never invent dishes.
+function searchPrompt(name: string): { system: string; user: string } {
+  return {
+    system: "You look up real restaurant menus in Lebanon with web search. Use only dishes you find on a real page for THIS restaurant (its menu, a delivery app like Toters or Talabat, or a nutrition site). Never invent dishes. Estimate kcal, protein p, carbs c and fat f per serving only when the page does not give them. Answer ONLY with JSON.",
+    user: `Restaurant: "${name}" (Lebanon). Find up to 8 main dishes that could suit someone eating healthily (grills, salads, wraps, bowls). JSON: {"found":true|false,"dishes":[{"dish":"","dish_ar":"","kcal":0,"p":0,"c":0,"f":0,"source_url":"https://...","estimated":true}]}. If you cannot find this restaurant's menu, answer {"found":false,"dishes":[]}.`,
+  };
+}
+// keeps only dishes with a real source and sane numbers
+function parseSearch(txt: string): Dish[] {
+  let j: any; try { j = parseJSON(txt); } catch { return []; }
+  if (!j || j.found === false || !Array.isArray(j.dishes)) return [];
+  return j.dishes.filter((d: any) => d && typeof d.dish === "string" && d.dish.trim().length > 1 && /^https?:\/\/\S+$/.test(String(d.source_url ?? "")) && n0(d.kcal) >= 50 && n0(d.kcal) <= 3000)
+    .slice(0, 12).map((d: any) => ({ restaurant: "", dish: String(d.dish).trim().slice(0, 120), dish_ar: String(d.dish_ar ?? "").slice(0, 120), kcal: Math.round(n0(d.kcal)),
+      p: d.p == null ? null : Math.round(n0(d.p)), c: d.c == null ? null : Math.round(n0(d.c)), f: d.f == null ? null : Math.round(n0(d.f)), source_url: String(d.source_url).slice(0, 500) }));
+}
+
+// ---------------------------------------------------------------------
+// writing a plan, one AI call per step (the worker saves the draft between steps):
+//   job write   -> week 1 draft            job revise -> week 1 again with the client's requests
+//   job full    -> weeks 2 and 3 (one call each), week 1 kept       job recheck -> the owner's edit, code only
+// ---------------------------------------------------------------------
+type Job = { macros: Macros & Record<string, any>; answers: Answers; draft?: any; job?: string; model?: string; flags?: string[]; restaurants?: Restaurant[]; base?: any; memory?: Note[]; requests?: Note[] };
+function isSport(ans: Answers): boolean { return ans.goal === "sport"; }
+type Try = { tries: number; best: { ai: any; errs: string[] } | null; done: boolean };
+async function tryOnce(t: Try, askFn: AskFn, prompt: (errs: string[]) => string, check: (ai: any) => string[]): Promise<Try> {
+  const txt = await askFn(system(), prompt(t.best?.errs ?? []), 16000);   // an AI error throws: counted by the worker, the draft is kept
+  let ai: any = null, errs: string[];
+  try { ai = parseJSON(txt); errs = check(ai); } catch (e) { errs = ["Invalid JSON: " + String((e as Error).message)]; }
+  t.tries++;
+  if (!t.best || errs.length <= t.best.errs.length) t.best = { ai, errs };
+  t.done = t.best.errs.length === 0 || t.tries >= 2;   // one retry with the problems listed, then it goes on
+  return t;
+}
+async function step(job: Job, askFn: AskFn, now = new Date()): Promise<{ draft: any; done: boolean; plan?: any; problems?: string[] }> {
+  const ans = job.answers ?? {}, m = job.macros, flags = job.flags ?? [], slots = mealSlots(ans), sport = isSport(ans), kind = job.job ?? "write";
+  const done = (r: { plan: any; problems: string[] }) => ({ draft: null, done: true, ...r });
+  if (kind === "recheck" && job.draft?.fixed) {
+    const p = job.draft.fixed;   // {fixed:{meals}, weeks:[AiWeek...], notes}
+    return done(finish(m, ans, p.fixed ?? [], p.weeks ?? [], p.notes, flags, job.restaurants ?? [], now, job.model ?? "owner edit", 0, (p.weeks ?? []).length > 1 ? "final" : "draft"));
+  }
+  if (kind === "full") {
+    const base = job.base ?? {}, fixed: FixedSlot[] = base.fixed ?? [], w1: AiWeek = base.weeks?.[0];
+    const d = job.draft?.v === 4 && job.draft.full ? job.draft : { v: 4, full: true, weeks: { 2: { tries: 0, best: null, done: false }, 3: { tries: 0, best: null, done: false } } };
+    for (const n of [2, 3]) {
+      const t: Try = d.weeks[n]; if (t.done) continue;
+      const earlier = [w1, ...[2, 3].filter((x) => x < n).map((x) => d.weeks[x].best?.ai?.week)].filter(Boolean);
+      await tryOnce(t, askFn, (errs) => askWeekN(n, m, ans, slots, fixed, earlier, errs, job.memory), (ai) => validateWeek(fixed, ai?.week, m, ans, { slots, sport, label: "Week " + n }));
+      if (!(d.weeks[2].done && d.weeks[3].done)) return { draft: d, done: false };
+      break;
+    }
+    const weeks = [w1, d.weeks[2].best?.ai?.week, d.weeks[3].best?.ai?.week];
+    return done(finish(m, ans, fixed, weeks, base.notes, flags, job.restaurants ?? [], now, job.model ?? "", d.weeks[2].tries + d.weeks[3].tries, "final"));
+  }
+  // write / revise: week 1
+  const d = job.draft?.v === 4 && !job.draft.full ? job.draft : { v: 4, tries: 0, best: null, done: false };
+  if (!d.done) {
+    const prompt = kind === "revise"
+      ? (errs: string[]) => askRevise(m, ans, slots, { fixed: job.base?.fixed, week: job.base?.weeks?.[0] }, job.requests ?? [], errs, job.memory)
+      : (errs: string[]) => askWeek1(m, ans, slots, errs, job.memory);
+    await tryOnce(d, askFn, prompt, (ai) => validate(ai, m, ans, { slots, sport }));
+    if (!d.done) return { draft: d, done: false };
+  }
+  const ai = d.best?.ai ?? {};
+  return done(finish(m, ans, ai.fixed ?? [], [ai.week], ai.notes, flags, job.restaurants ?? [], now, job.model ?? "", d.tries, "draft"));
+}
+
+// the plan as stored and shown: weeks with their 4 day templates, the social slots, the grocery lists
+function finish(m: Macros, ans: Answers, fixed: FixedSlot[], aiWeeks: AiWeek[], notes: any, flags: string[], rests: Restaurant[], now: Date, model: string, tries = 0, stage = "final"): { plan: any; problems: string[] } {
+  const slots = mealSlots(ans), sport = isSport(ans);
+  const problems = validateFixed(fixed, ans, slots);
+  aiWeeks.forEach((w, i) => problems.push(...validateWeek(fixed, w, m, ans, { slots, sport, label: "Week " + (i + 1) })));
+  const tu = topupOf(ans);
+  const weeks = aiWeeks.map((w, wi) => {
+    const days: Day[] = (w?.combos ?? []).slice(0, 4).map((cb, i) => {
+      const meals = assembleDay(fixed, cb, slots).filter(Boolean);
+      const t = meals.reduce((a, x) => { const y = x.totals ?? sum(x.items ?? []); return { kcal: a.kcal + y.kcal, p: a.p + y.p, c: a.c + y.c, f: a.f + y.f }; }, { kcal: 0, p: 0, c: 0, f: 0 });
+      return { key: COMBO_KEYS[i], name: t2(cb?.name).en ? t2(cb.name) : { en: "Pair " + COMBO_KEYS[i], ar: "تشكيلة " + COMBO_KEYS[i] }, meals, totals: r1(t) };
+    });
+    return { week: wi + 1, combos: w?.combos ?? [], days, batch: { main: { ...(w?.batch?.main ?? {}), day: ans.prep_day || "sun", time: ans.prep_time || "11:00", for: ["A", "B"] }, topup: { ...(w?.batch?.topup ?? {}), day: tu.day, time: tu.time, minutes: 30, for: ["C", "D"] } } };
+  });
+  const social = socialPlan(weeks[0]?.days ?? [], m, ans, flags, rests);
+  // fixed eating times with their slot and time; grocery: lunch/dinner per week + one list per breakfast/snack option (7 days)
+  const fixedOut = fixedSlotsOf(slots).map((s, i) => ({ slot: s.slot, time: s.time, ...(s.training ? { training: s.training } : {}), options: (fixed?.[i]?.options ?? []).map((o) => ({ ...o, totals: r1(sum(o?.items ?? [])) })) }));
+  weeks.forEach((w: any) => { w.grocery = grocery(w.days, social); });
+  const options_grocery = fixedOut.map((f) => f.options.map((o) => groceryOf([o], 7)));
   const plan = {
-    v: 2, days, schedule: sch, week: sch.slice(0, 7), variety: ans.variety ?? "four", eating_times: slots,
-    notes: { en: arr(notes?.en).slice(0, 8), ar: arr(notes?.ar).slice(0, 8) },
-    macros: { kcal: m.kcal, p: m.p, c: m.c, f: m.f }, disclaimer: DISCLAIMER,
-    grocery: grocery(days, sch), made: now.toISOString(), model, tries,
+    v: 4, stage, fixed: fixedOut, options_grocery, weeks, blocks: BLOCKS, eating_times: slots, salad_freq: ans.salad_freq || "few_week",
+    social, notes: { en: arr(notes?.en).slice(0, 8), ar: arr(notes?.ar).slice(0, 8) },
+    macros: { kcal: m.kcal, p: m.p, c: m.c, f: m.f }, disclaimer: DISCLAIMER, made: now.toISOString(), model, tries,
   };
   return { plan, problems: [...new Set(problems)] };
 }
@@ -475,15 +766,23 @@ function shopQty(name: string, aisle: string, grams: number, unit: string): { qt
   return { qty: { en: "about " + q, ar: "حوالي " + AR_UNIT(q) }, packs: 0 };
 }
 type GroceryItem = { key: string; en: string; ar: string; g: number; unit: string; qty: T2; packs: number };
-type GroceryWeek = { week: number; aisles: { key: string; aisle: T2; items: GroceryItem[] }[]; pantry: { title: T2; items: GroceryItem[] } };
-// sch: day template per cycle day (21). Week w = days 7w .. 7w+6. Main portions only (swaps are not added).
-function grocery(days: Day[], sch: number[]): GroceryWeek[] {
-  const weeks: GroceryWeek[] = [];
-  for (let w = 0; w < Math.ceil(sch.length / 7); w++) {
-    const by: Record<string, { en: string; ar: string; aisle: string; g: number; unit: string; pantry: boolean }> = {};
-    for (const di of sch.slice(w * 7, w * 7 + 7)) {
-      const d = days[di]; if (!d) continue;
-      for (const ml of d.meals ?? []) for (const x of ml.items ?? []) {
+type GroceryWeek = { aisles: { key: string; aisle: T2; items: GroceryItem[] }[]; pantry: { title: T2; items: GroceryItem[] } };
+// one week of lunches and dinners: Monday..Sunday each once (pairs per BLOCKS). Main portions only (swaps are not added);
+// meals eaten out (social and family slots) are left out. Breakfast and snacks have their own list per option (groceryOf).
+function grocery(days: Day[], social: { dow: number; slot: string }[] = []): GroceryWeek {
+  const meals: Meal[] = [];
+  BLOCKS.forEach((di, dow) => {
+    for (const ml of days[di]?.meals ?? []) if (ml && (ml.slot === "lunch" || ml.slot === "dinner") && !social.some((s) => s.dow === dow && s.slot === ml.slot)) meals.push(ml);
+  });
+  return groceryOf(meals, 1);
+}
+// a list from meals, each eaten `times` times
+function groceryOf(mealList: Meal[], times = 1): GroceryWeek {
+  const by: Record<string, { en: string; ar: string; aisle: string; g: number; unit: string; pantry: boolean }> = {};
+  for (let rep = 0; rep < times; rep++) {
+    for (const ml of mealList) {
+      if (!ml) continue;
+      for (const x of ml.items ?? []) {
         // a mixed dish: its raw ingredients; a simple food: itself
         const parts: { name: T2; g: number; unit: string; aisle: string }[] = Array.isArray(x.ingredients) && x.ingredients.some((i) => t2(i?.buy).en && n0(i?.g) > 0)
           ? x.ingredients.filter((i) => t2(i?.buy).en && n0(i?.g) > 0).map((i) => ({ name: t2(i.buy), g: n0(i.g), unit: i.unit === "ml" ? "ml" : "g", aisle: String(i.aisle ?? "") }))
@@ -495,29 +794,25 @@ function grocery(days: Day[], sch: number[]): GroceryWeek[] {
         }
       }
     }
-    const aisles: Record<string, GroceryItem[]> = {}, pantry: GroceryItem[] = [];
-    for (const k of Object.keys(by)) {
-      const e = by[k];
-      if (e.pantry) { const q = fmtG(e.g, e.unit); pantry.push({ key: k, en: e.en, ar: e.ar, g: Math.round(e.g), unit: e.unit, qty: { en: "about " + q + " this week", ar: "حوالي " + AR_UNIT(q) + " بالأسبوع" }, packs: 0 }); continue; }
-      const s = shopQty(e.en, e.aisle, e.g, e.unit);
-      (aisles[e.aisle] ??= []).push({ key: k, en: e.en, ar: e.ar, g: Math.round(e.g), unit: e.unit, qty: s.qty, packs: s.packs });
-    }
-    const sortI = (a: GroceryItem, b: GroceryItem) => (a.en < b.en ? -1 : 1);
-    weeks.push({
-      week: w + 1,
-      aisles: AISLE_ORDER.filter((a) => aisles[a]).map((a) => ({ key: a, aisle: AISLES[a], items: aisles[a].sort(sortI) })),
-      pantry: { title: PANTRY_TITLE, items: pantry.sort(sortI) },
-    });
   }
-  return weeks;
+  const aisles: Record<string, GroceryItem[]> = {}, pantry: GroceryItem[] = [];
+  for (const k of Object.keys(by)) {
+    const e = by[k];
+    if (e.pantry) { const q = fmtG(e.g, e.unit); pantry.push({ key: k, en: e.en, ar: e.ar, g: Math.round(e.g), unit: e.unit, qty: { en: "about " + q + " this week", ar: "حوالي " + AR_UNIT(q) + " بالأسبوع" }, packs: 0 }); continue; }
+    const s = shopQty(e.en, e.aisle, e.g, e.unit);
+    (aisles[e.aisle] ??= []).push({ key: k, en: e.en, ar: e.ar, g: Math.round(e.g), unit: e.unit, qty: s.qty, packs: s.packs });
+  }
+  const sortI = (a: GroceryItem, b: GroceryItem) => (a.en < b.en ? -1 : 1);
+  return { aisles: AISLE_ORDER.filter((a) => aisles[a]).map((a) => ({ key: a, aisle: AISLES[a], items: aisles[a].sort(sortI) })), pantry: { title: PANTRY_TITLE, items: pantry.sort(sortI) } };
 }
 
 // ---------- the function ----------
 // =====================================================================
 // nutrition-worker: writes the queued v2 nutrition plans with the AI (Nutrition.gs nutWorker, approved v2 rules).
 // Called every 5 minutes by pg_cron (migrations/0004_jobs.sql) with the service key; deploy with Verify JWT ON.
-// One AI call per run (2 days of meals), the progress is saved in nutrition_plans.draft, and the run starts the
-// next one at once, so no run comes near the edge function time limit. The numbers come from the database
+// One AI call per run, the progress is saved in nutrition_plans.draft, and the run starts the next one at once,
+// so no run comes near the edge function time limit. Before the plan, each of the client's restaurants that is not in
+// the Wellbe library is looked up once with the AI's web search (dishes saved unchecked for the owner). The numbers come from the database
 // (macros, computed in code); the AI only writes meals; plan.ts checks them, retries once with the problems,
 // adds up the grocery list. Then public.wb_nut_finish decides: shown at once, or to the owner.
 // Secrets (Supabase > Edge Functions > Secrets): ANTHROPIC_KEY (required to write plans), NUTRITION_MODEL (optional).
@@ -539,16 +834,42 @@ export function anthropic(key: string, model = MODEL, fetcher: typeof fetch = fe
   };
 }
 
+export type SearchFn = (name: string) => Promise<string>;
+// the restaurant lookup: the AI with the web search tool, only real pages, never invented dishes
+export function anthropicSearch(key: string, model = MODEL, fetcher: typeof fetch = fetch): SearchFn {
+  return async (name) => {
+    const p = searchPrompt(name);
+    const r = await fetcher("https://api.anthropic.com/v1/messages", {
+      method: "POST", signal: AbortSignal.timeout(120_000),
+      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model, max_tokens: 4000, system: p.system, messages: [{ role: "user", content: p.user }], tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }] }),
+    });
+    const t = await r.text();
+    if (!r.ok) throw new Error("AI search " + r.status + ": " + t.slice(0, 300));
+    return (JSON.parse(t).content ?? []).filter((c: { type?: string }) => c.type === "text").map((c: { text?: string }) => c.text ?? "").join("");
+  };
+}
+
 type Rpc = { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: any; error: { message: string } | null }> };
 
 // one run: take a plan, do one step, save. ask = null: only owner edits are re-checked (no AI).
-export async function runOnce(db: Rpc, ask: AskFn | null, now = new Date()): Promise<Record<string, unknown>> {
+export async function runOnce(db: Rpc, ask: AskFn | null, now = new Date(), search: SearchFn | null = null): Promise<Record<string, unknown>> {
   const { data: job, error } = await db.rpc("wb_nut_claim", { p_lease_s: 240, p_recheck_only: !ask });
   if (error) throw new Error(error.message);
   if (!job) return { idle: true };
   if (job.skip) return { id: job.id, stopped: true, more: true };
   try {
-    const r = await step({ macros: job.macros, answers: job.answers ?? {}, draft: job.draft, job: job.job, model: MODEL }, ask ?? (() => Promise.reject(new Error("no AI key"))), now);
+    // a restaurant the library does not know yet: look it up first (one per run)
+    const unknown = job.job !== "recheck" && search ? (job.restaurants ?? []).find((x: { status: string }) => x.status === "unknown") : null;
+    if (unknown && search) {
+      const dishes = parseSearch(await search(unknown.name));
+      const f = await db.rpc("wb_nut_rest_found", { p_name: unknown.name, p_dishes: dishes });
+      if (f.error) throw new Error(f.error.message);
+      const s = await db.rpc("wb_nut_save", { p_id: job.id, p_draft: job.draft });
+      if (s.error) throw new Error(s.error.message);
+      return { id: job.legacy, looked_up: unknown.name, found: dishes.length, more: true };
+    }
+    const r = await step({ macros: job.macros, answers: job.answers ?? {}, draft: job.draft, job: job.job, model: MODEL, flags: job.flags ?? [], restaurants: job.restaurants ?? [], base: job.base, memory: job.memory ?? [], requests: job.requests ?? [] }, ask ?? (() => Promise.reject(new Error("no AI key"))), now);
     if (!r.done) {
       const s = await db.rpc("wb_nut_save", { p_id: job.id, p_draft: r.draft });
       if (s.error) throw new Error(s.error.message);
@@ -576,7 +897,7 @@ if (!Deno.env.get("WB_TEST")) Deno.serve(async (req) => {
   if (!isService(req)) return json({ ok: false, error: "forbidden" }, 403);
   const key = Deno.env.get("ANTHROPIC_KEY") ?? "";
   try {
-    const r = await runOnce(asService(), key ? anthropic(key) : null);
+    const r = await runOnce(asService(), key ? anthropic(key) : null, new Date(), key ? anthropicSearch(key) : null);
     if (r.more) {                       // go on with the next step / the next plan in a fresh run
       const next = fetch(Deno.env.get("SUPABASE_URL") + "/functions/v1/nutrition-worker", { method: "POST", headers: { Authorization: req.headers.get("Authorization")!, "Content-Type": "application/json" }, body: "{}" }).catch(() => null);
       // deno-lint-ignore no-explicit-any

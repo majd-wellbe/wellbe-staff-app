@@ -14,13 +14,14 @@ begin
   return public.default_present();
 end $$;
 
-create or replace function app.call_function(name text) returns void language plpgsql security definer as $$
-declare u text; k text;
+create or replace function app.call_function(name text) returns void language plpgsql security definer set search_path = public as $$
+-- the parameter "name" would clash with vault.decrypted_secrets.name: the table is aliased and the parameter copied to fn (fixed live 27 Oct 2026)
+declare u text; k text; fn text := name;
 begin
-  select decrypted_secret into u from vault.decrypted_secrets where name = 'project_url';
-  select decrypted_secret into k from vault.decrypted_secrets where name = 'service_role_key';
+  select s.decrypted_secret into u from vault.decrypted_secrets s where s.name = 'project_url';
+  select s.decrypted_secret into k from vault.decrypted_secrets s where s.name = 'service_role_key';
   if u is null or k is null then return; end if;     -- not set up yet: nothing is sent
-  perform net.http_post(url := u || '/functions/v1/' || name, headers := jsonb_build_object('Authorization', 'Bearer ' || k, 'Content-Type', 'application/json'), body := '{}'::jsonb);
+  perform net.http_post(url := u || '/functions/v1/' || fn, headers := jsonb_build_object('Authorization', 'Bearer ' || k, 'Content-Type', 'application/json'), body := '{}'::jsonb);
 end $$;
 
 do $$ begin
