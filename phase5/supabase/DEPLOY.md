@@ -234,3 +234,27 @@ update public.settings set value = '{"use":"apps"}'::jsonb, updated_at = now() w
 
 3. Phones move back at their next open. For one phone at once: `?wb=apps`.
 4. Honest warning: anything done on Supabase between the switch and the rollback (sales, payments, attendance) is not in the sheets. I make you the list from Supabase so Romy can enter it in the sheets. Nothing is ever deleted on the Apps Script side, so going back is always possible.
+
+
+## Step 8. Nutrition v2 (built 27 Oct 2026, NOT applied yet)
+
+The paid 3-week plan stays locked for clients ("coming soon") until you open it. Testers can use it before that.
+
+1. Database: run `migrations/0012_nutrition.sql` in the SQL Editor (or with the Supabase tools). It ends with `app.api_sync()`.
+   Check: actions 60 (58 + `app_nut_cycle`, `app_nut_settings`), tables_without_rls 0, backend `{"use":"apps"}`.
+2. Edge function `nutrition-worker`: deploy `functions/nutrition-worker` (index.ts + plan.ts + `_shared/supabase.ts`), **Verify JWT ON**
+   (only the scheduler and itself call it, with the service key). Dashboard way: paste `functions/dist/nutrition-worker.ts`.
+   CLI: `npx supabase functions deploy nutrition-worker`.
+3. Secrets (Edge Functions, Secrets): `ANTHROPIC_KEY` (yours, never in the chat). Optional `NUTRITION_MODEL` (default `claude-sonnet-5-5`, the same default as Nutrition.gs; check it is a model your key can use).
+   Without the key the worker writes nothing (it only re-checks plans you edited).
+4. The scheduler calls the worker every 5 minutes only when the Vault has `project_url` and `service_role_key` (the legacy JWT service key, because Verify JWT is on). They are not set yet.
+5. Test it yourself: your own client account (same email as your staff row) is a tester. Or in the staff app, open a client, Nutrition plan, "3-week cycle and test access", Make tester / Start a test cycle.
+6. Open it for everyone: staff app, My day, "Open it for all clients" (or `update public.settings set value = jsonb_set(value, '{paid_open}', 'true') where key = 'nutrition';`).
+   There is no payment provider yet: until there is, a cycle is started by you (staff app) or by a tester.
+
+What clients get: the free calculator (everyone signed in, guests too), and with a cycle: the plan by day for 21 days, one swap per meal,
+3 weekly grocery lists with ticks, reminder settings, the disclaimer. Flagged clients (any health answer or under 18) see no numbers;
+their plan comes to you only, and their 21 days start when you approve.
+
+**Reminders: push delivery is pending.** The schedule (meals, water every 2 hours between wake and bed, weekly meal prep, quiet hours,
+snooze, mute) is stored and served by `app_cl_nut op reminders`; nothing is sent to phones until FCM is set up (`FCM_SERVER_KEY`, outbox worker, mobile app).

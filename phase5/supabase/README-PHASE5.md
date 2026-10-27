@@ -29,7 +29,7 @@ Run: `tests/lib/snapshot.sh` then `cd tests && npm install && node run.js`. Resu
 
 * Money is exact. Today a 3 month bundle at 130.20 a month shows "$323.40000000000003" in a request text; here it is "$323.4".
 * Romy no longer receives staff pay in the settings. Only the owner, and each trainer their own.
-* Clients only see a nutrition plan after a coach approves it, enforced by the database itself.
+* Nutrition v2 (27 Oct 2026): plans that pass the code checks go to the client by themselves; flagged clients and plans that fail the checks twice go to the owner only. Clients read a plan only while it is approved and its 3 weeks run, enforced by the database itself.
 * WhatsApp and emails are written to an outbox and sent after the change is saved, so a booking never waits for a message.
 
 ## Questions found, NOT changed (same as today until you decide)
@@ -44,7 +44,7 @@ Run: `tests/lib/snapshot.sh` then `cd tests && npm install && node run.js`. Resu
 
 * **Boot**: the big read each app does when it opens (staff boot, client boot, guest boot). The tables and security are ready; the boot views are the next piece and the largest.
 * **Workouts**: programs, logging weights, decisions, the exercise list.
-* **Nutrition**: the calculator and the AI prompt with its checks (Nutrition.gs). Until then plans keep being written by Apps Script.
+* **Nutrition v2** is built (`migrations/0012_nutrition.sql`, `functions/nutrition-worker/`, client and staff app screens, tests `tests/nutrition.js` and `tests/deno/nutrition_test.ts`). The paid 3-week plan stays LOCKED (`nutrition.paid_open = false`) until the owner opens it. Not built yet: push delivery of reminders (FCM), a payment provider for the 3-week cycle. Needs the secret `ANTHROPIC_KEY`. See DEPLOY.md Step 8.
 * **Landing page leads** (Code.gs: free slots, saving a lead, the W40 alerts), **guest sign up** (Guest.gs), **change session** (move, change trainer), **week template**, **insurance claims**, **POS sale and stock**, **expense logging**, **client requests of the other kinds**, **delete account**, **game op get and the old upgrades shop**.
 * Photos and client files: they need uploading to Storage once (they are not in the CSVs).
 

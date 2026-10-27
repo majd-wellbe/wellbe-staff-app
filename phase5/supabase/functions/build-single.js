@@ -4,7 +4,7 @@
 // The code is the same: the _shared files are copied in above the function, their "export" words removed.
 // Run: node build-single.js   (the CLI deploy does not need this: it reads functions/<name>/index.ts)
 const fs = require('fs'), path = require('path');
-const DIR = __dirname, OUT = path.join(DIR, 'dist'), NAMES = ['api', 'login-code', 'upload'];
+const DIR = __dirname, OUT = path.join(DIR, 'dist'), NAMES = ['api', 'login-code', 'upload', 'nutrition-worker'];
 const SHARED_ORDER = ['supabase.ts', 'login.ts'];
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -19,7 +19,14 @@ NAMES.forEach(n => {
   const need = new Set(used);
   used.forEach(f => split(fs.readFileSync(path.join(DIR, '_shared', f), 'utf8')).imports.forEach(l => { const m = /\.\/([\w.]+)"/.exec(l); if (m) need.add(m[1]); }));
   const files = SHARED_ORDER.filter(f => need.has(f));
-  const ext = new Set(main.imports.filter(l => !/\.\.\/_shared\//.test(l)));
+  const isLocal = l => /from "\.\/[\w.]+"/.test(l);
+  const ext = new Set(main.imports.filter(l => !/\.\.\/_shared\//.test(l) && !isLocal(l)));
+  // files next to index.ts (e.g. nutrition-worker/plan.ts) are copied in too
+  const locals = main.imports.filter(isLocal).map(l => /from "\.\/([\w.]+)"/.exec(l)[1]).map(f => {
+    const s = split(fs.readFileSync(path.join(DIR, n, f), 'utf8'));
+    s.imports.forEach(l => ext.add(l));
+    return `// ---------- from ${n}/${f} ----------\n` + s.body.replace(/^export (async function|function|const|let|type|interface)/gm, '$1');
+  });
   const parts = files.map(f => {
     const s = split(fs.readFileSync(path.join(DIR, '_shared', f), 'utf8'));
     s.imports.filter(l => !/from "\.\//.test(l)).forEach(l => ext.add(l));
@@ -30,6 +37,6 @@ NAMES.forEach(n => {
   const byMod = {};                   // one import line per module, names merged
   [...ext].forEach(l => { const m = /^import (?:type )?\{([^}]*)\} from "([^"]+)";/.exec(l); if (!m) { byMod[l] = null; return; } (byMod[m[2]] = byMod[m[2]] || new Set()); m[1].split(',').map(x => x.trim()).filter(Boolean).forEach(x => byMod[m[2]].add(x)); });
   const imp = Object.keys(byMod).map(k => byMod[k] ? `import { ${[...byMod[k]].join(', ')} } from "${k}";` : k);
-  fs.writeFileSync(path.join(OUT, n + '.ts'), head + imp.join('\n') + '\n\n' + parts.join('\n') + '\n// ---------- the function ----------\n' + body);
+  fs.writeFileSync(path.join(OUT, n + '.ts'), head + imp.join('\n') + '\n\n' + parts.concat(locals).join('\n') + '\n// ---------- the function ----------\n' + body);
   console.log('dist/' + n + '.ts');
 });
