@@ -3,6 +3,17 @@
    Everything lives on window.WB. Apps keep their short local names (esc, ymd, ...) as aliases.
    Business settings (staff, prices, hours, offers, game rules) are NOT here: they come from the
    server in boot as d.cfg and are read with WB.cfg / WB.get(path, fallback). */
+
+/* Site root = staff app. A visitor with no staff link (no #k= and no saved key on this phone)
+   is a client, so send them to the client app. Runs only on the root page, never on /client/. */
+(function () {
+  try {
+    if (!/^\/(wellbe-staff-app\/)?(index\.html)?$/.test(location.pathname)) return;
+    if (/[#&]k=/.test(location.hash)) return;
+    var k = null; try { k = localStorage.getItem('wb_key'); } catch (e) { k = null; }
+    if (!k) location.replace('client/' + location.search);
+  } catch (e) {}
+})();
 (function (w) {
   'use strict';
   var WB = w.WB || {};
