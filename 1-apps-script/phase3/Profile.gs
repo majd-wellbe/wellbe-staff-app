@@ -76,7 +76,9 @@ function profBoot_(d) {
   return d;
 }
 // action app_cl_profile  op: photo { photo: 'data:image/jpeg;base64,...' } | rate { stars 1-5, note }
+//   | state | help | help_reset | steps (Help.gs: in-app help and the durable profile steps)
 function profClient_(b, cid, who) {
+  if (typeof helpClient_ === 'function' && helpOp_(b.op)) return helpClient_(b, cid, who);   // help + profile steps (Help.gs)
   var ops = SpreadsheetApp.openById(CFG.OPS_ID), op = String(b.op || ''), name = (appClientInfo_(cid) || {}).name || cid;
   if (op === 'photo') {
     var p = String(b.photo || '');

@@ -274,3 +274,10 @@ How a plan is made (owner rules, 27 Oct):
 **Reminders: push delivery is pending.** The schedule (meals, water every 2 hours between wake and bed, main prep, top-up,
 weekly weigh-in the day after the prep day at wake time, quiet hours, snooze, mute) is stored and served by `app_cl_nut op reminders`;
 nothing is sent to phones until push is set up (FCM, mobile app).
+
+
+## Step 9. In-app help and profile steps (onboarding branch)
+
+1. Database: run `migrations/0013_help_steps.sql` in the SQL Editor, after `0012_nutrition.sql`. It adds the table
+   `public.client_app_state` and the help ops (`state`, `help`, `help_reset`, `steps`) in `api_app_cl_profile`. No new actions.
+2. Test: `node phase5/supabase/tests/run_help.js` (same calls and answers as Help.gs). Details: `1-apps-script/phase3/INSTALL-onboarding.txt`.

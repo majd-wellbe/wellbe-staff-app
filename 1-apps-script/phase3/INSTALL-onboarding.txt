@@ -1,0 +1,29 @@
+ONBOARDING: welcome tour, page help (?), Help settings, durable "Complete your profile"
+=====================================================================================
+Project: "Wellbe W40 Backend" (Apps Script). Nothing else changes on the server.
+
+1. ADD a new file called "Help" and paste 1-apps-script/phase3/Help.gs into it.
+2. REPLACE the file "Profile" with 1-apps-script/phase3/Profile.gs
+   (one new line at the top of profClient_: the help ops go to Help.gs).
+3. REPLACE the file "Client" with 1-apps-script/phase3/Client.gs
+   (one new line in clReadOnly_: op state of app_cl_profile is read without the lock).
+4. Run helpTest() once from the editor. It makes the tab CLIENT APP STATE in the Operations sheet
+   (Client ID | Name | Help | Steps | Updated). One row per client, written by the app.
+5. Deploy > Manage deployments > edit the live deployment > Version: New version > Deploy.
+   Same /exec URL, nothing to change in the apps.
+
+Then push the client app (client/index.html and the new folder client/help/). Order does not matter:
+- new app + old server: the app keeps help and profile steps on the phone only (server answers "unknown").
+- old app + new server: nothing changes for it.
+
+What the server stores (action app_cl_profile, ops state | help | help_reset | steps):
+- help: tips on/off, how many times the tour question was asked (max 2), tour done/skipped,
+  the Skip toast shown once, and per page: in progress (step N) / done / dismissed.
+  Done and dismissed never go back (only "Reset all tips" clears pages).
+- steps: photo, promise, body, intake, run, credit -> {doneAt}. Written the first time the step is met,
+  never removed. Existing clients: their steps that are already met get a doneAt the first time they open the app.
+
+Tests (node, no Google needed): node 1-apps-script/phase3/tests/help.test.js
+
+Supabase (after the move): run phase5/supabase/migrations/0013_help_steps.sql
+(table public.client_app_state + the same ops in api_app_cl_profile). Test: node phase5/supabase/tests/run_help.js

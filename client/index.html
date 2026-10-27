@@ -783,6 +783,7 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 :root nav.tabs.v3 a.tb .icon{width:24px;height:24px}
 :root nav.tabs.v3 .dot{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:11px;display:grid;place-items:center}
 .cart{bottom:calc(88px + env(safe-area-inset-bottom,0px)) !important}
+main.has-cart{padding-bottom:calc(172px + env(safe-area-inset-bottom,0px)) !important}   /* the fixed order bar never covers the last card */
 .toast{bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:80}
 .rd-up button.r,.rd-pk button.r,.rd-nut button.meal,button.rd-promise,.rd-ck button.c{width:100%;text-align:left;color:inherit;font:inherit}
 .rd-up .r.past{opacity:.75}
@@ -813,6 +814,55 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 .rd-wh .nt-lang{margin:0}
 .cart:not(.on){visibility:hidden;pointer-events:none}
 :root nav.tabs.v3 a.tb,:root nav.tabs.v3 a.tb:hover{text-decoration:none}
+/* ===== help, tour and profile steps (approved design, 27 Oct) ===== */
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hq{position:relative;width:44px;height:44px;margin:0 -4px;display:grid;place-items:center;flex:none;border-radius:50%}
+.hq-c{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 19px/1 var(--display);background:var(--card2,var(--card));box-shadow:inset 0 0 0 1px var(--line);color:var(--ink)}
+.hq-dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+.coach{position:fixed;inset:0;z-index:80;display:none;touch-action:none}
+.coach.on{display:block}
+nav.tabs.coach-lift{z-index:81;pointer-events:none}
+.coach-ring{position:fixed;border-radius:16px;box-shadow:0 0 0 2px var(--mint),0 0 0 9999px rgba(3,7,8,.74);pointer-events:none;transition:left .3s,top .3s,width .3s,height .3s}
+.coach-tip{position:fixed;background:var(--card);color:var(--ink);border-radius:18px;padding:12px 14px 14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.5),inset 0 0 0 1px var(--line);opacity:0;transform:translateY(6px);transition:opacity .2s,transform .25s}
+.coach-tip.in{opacity:1;transform:none}
+.coach-tip:focus,.coach-tip:focus-visible{outline:none}
+.coach-hd{display:flex;align-items:center;justify-content:space-between}
+.coach-n{font-size:13px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.coach-x{width:44px;height:44px;margin:-10px -10px -8px 0;border-radius:50%;display:grid;place-items:center;color:var(--ink-2)}
+.coach-tip b{display:block;font:800 23px/1.1 var(--display);padding-right:8px}
+.coach-tip p{font-size:16px;color:var(--ink-2);margin-top:4px;line-height:1.35}
+.coach-ft{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.coach-ft .btn{min-height:44px;min-width:92px}
+.coach-ar{position:absolute;width:14px;height:14px;background:var(--card);transform:translateX(-50%) rotate(45deg)}
+.coach-ar.up{top:-7px;box-shadow:inset 1px 1px 0 var(--line)}.coach-ar.dn{bottom:-7px;box-shadow:inset -1px -1px 0 var(--line)}
+.hq-l{list-style:none;display:grid;gap:14px;margin:4px 0 6px}
+.hq-l li{display:flex;gap:12px;align-items:flex-start;font-size:16px;line-height:1.4;color:var(--ink-2)}
+.hq-l b{color:var(--ink)}
+.hq-b{width:8px;height:8px;border-radius:50%;background:var(--mint);margin-top:8px;flex:none}
+.sw{display:inline-block;width:46px;height:28px;border-radius:999px;background:var(--track);box-shadow:inset 0 0 0 1px var(--line);position:relative;vertical-align:middle;transition:background .2s}
+.sw i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw.on{background:var(--mint-deep)}.sw.on i{transform:translateX(18px)}
+.pf{background:var(--card);border-radius:20px;padding:16px;box-shadow:var(--shadow);margin-top:14px}
+.pf-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.pf-h b{font:800 22px/1.1 var(--display)}.pf-h span{font-size:14px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+.pf-bar{height:8px;border-radius:99px;background:var(--track);margin:10px 0 6px;overflow:hidden}.pf-bar i{display:block;height:100%;border-radius:inherit;background:var(--mint)}
+.pf-l{display:grid}
+.pf-r{display:flex;align-items:center;gap:12px;min-height:50px;text-align:left;padding:6px 0;border-top:1px solid var(--line);width:100%}
+.pf-r:first-child{border-top:0}
+.pf-r i{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:14px;box-shadow:inset 0 0 0 2px var(--line);color:transparent}
+.pf-r.on i{background:var(--mint);box-shadow:none;color:#0b1a16}
+.pf-r>span{flex:1;font-size:15.5px;font-weight:600;line-height:1.3}
+.pf-r.on>span{color:var(--ink-2)}
+.pf-r em{font-style:normal;font-size:13.5px;font-weight:700;color:var(--mint-deep);padding:6px 12px;border-radius:999px;background:var(--mint-soft);white-space:nowrap}
+.pf-r em.pf-rv{color:var(--amber);background:var(--amber-soft)}
+.pf-done{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 16px}
+.pf-done b{font-size:17px;white-space:nowrap}
+.pf-ln{min-height:44px;padding:0 6px;font-weight:700;font-size:16px;color:var(--mint-deep);text-decoration:underline;text-underline-offset:3px}
+.pf-rvb{margin-left:auto;min-height:44px;padding:0 12px;border-radius:999px;font-weight:700;font-size:13.5px;color:var(--amber);background:var(--amber-soft)}
+.pf-ok{width:24px;height:24px;border-radius:50%;background:var(--mint);color:#0b1a16;display:inline-grid;place-items:center;font-weight:800;font-size:13px}
+.pf-sep{color:var(--ink-3)}
+.pf-ed{min-height:44px;padding:0 16px;border-radius:999px;font-weight:700;color:var(--mint-deep);background:var(--mint-soft)}
+@media (prefers-reduced-motion: reduce){.coach-ring,.coach-tip,.sw,.sw i{transition:none}}
 </style>
 </head>
 <body>
@@ -855,6 +905,22 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 
 <script src="../core/wb-core.js?v=1"></script>
 <script src="../core/wb-backend.js?v=1"></script>
+<script>/* help content registry: client/help/<pageId>.js call WBHelp.page(id, def) and client/help/tour.js calls WBHelp.tour(kind, def). The app reads them when it draws (see HELP + PROFILE STEPS) */
+window.WBHelp={v:1,pages:{},tours:{},page:function(id,def){this.pages[id]=def||{}},tour:function(kind,def){this.tours[kind]=def||{}}};</script>
+<script src="help/tour.js?v=1"></script>
+<script src="help/center.js?v=1"></script>
+<script src="help/basic.js?v=1"></script>
+<script src="help/wellbe.js?v=1"></script>
+<script src="help/plan_wo.js?v=1"></script>
+<script src="help/plan_nut.js?v=1"></script>
+<script src="help/nut_body.js?v=1"></script>
+<script src="help/nut_plan.js?v=1"></script>
+<script src="help/nut_grocery.js?v=1"></script>
+<script src="help/nut_opts.js?v=1"></script>
+<script src="help/nut_rem.js?v=1"></script>
+<script src="help/play.js?v=1"></script>
+<script src="help/shop.js?v=1"></script>
+<script src="help/me.js?v=1"></script>
 <script src="nut-pdf.js?v=1"></script>
 <script>
 /* ---------- content: texts and lists the app shows (not business settings, those are in cfg) ---------- */
@@ -1056,11 +1122,12 @@ function render(){
   if(!full)VIEW='home';
   if(SEC==='work'){SEC='plan';PLANTAB='wo'}else if(SEC==='nut'){SEC='plan';PLANTAB='nut'}if(SEC==='shop'&&D.guest)SEC='center';
   var body=(SEC==='center'&&!D.guest?noticeCards():'')+(SEC==='play'?VIEWS.play():SEC==='plan'?VIEWS.myplan():SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic());
-  setApp(app,'<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+''+DESK()+'</a><button class="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+avatar(a)+'</button></div></div>'+
-   '<main>'+((SEC==='center'||SEC==='me')&&D.accounts.length>1?'<div class="accs" role="tablist" aria-label="Accounts">'+D.accounts.map(function(x,i){return '<button class="acc" aria-pressed="'+(i===A)+'" data-acc="'+i+'">'+esc(x.first)+'</button>'}).join('')+'</div>':'')+body+'</main>'+
+  setApp(app,'<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" data-help="whatsapp" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+''+DESK()+'</a>'+hqBtn()+'<button class="me" data-help="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+avatar(a)+'</button></div></div>'+
+   '<main'+((SEC==='center'||SEC==='shop')&&!D.guest&&full&&cartTotal().n?' class="has-cart"':'')+'>'+((SEC==='center'||SEC==='me')&&D.accounts.length>1?'<div class="accs" role="tablist" aria-label="Accounts">'+D.accounts.map(function(x,i){return '<button class="acc" aria-pressed="'+(i===A)+'" data-acc="'+i+'">'+esc(x.first)+'</button>'}).join('')+'</div>':'')+body+'</main>'+
    tabsView()+((SEC==='center'||SEC==='shop')&&!D.guest?cartBar():'')+modalView());
   bind();if(SEC==='plan'&&PLANTAB==='wo'&&!D.guest)woBindView();if(D.guest)bindGuest();if(SEC==='plan'&&PLANTAB==='nut')nutBind();rdBind();
   if(full||a.goal)loadStreak(a);
+  helpTick();
 }
 var SEC=(function(){var v=store('wbc_sec');return v==='play'||v==='plan'||v==='shop'?v:v==='work'?'plan':'center'})();
 function initials(n){n=String(n||'').trim().split(/\s+/);return ((n[0]||'')[0]||'').toUpperCase()+((n[1]||'')[0]||'').toUpperCase()}
@@ -1166,9 +1233,9 @@ function rewardSheet(){openSheet('',' <div class="done"><div class="ok" style="b
 function streakDays(a){try{return JSON.parse(store('wbc_streak_'+a.cid)||'{}')}catch(e){return {}}}
 function streak(a){var z=STK[a.cid];if(z&&!z.off&&z.streak!=null)return z.streak;var st=streakDays(a),n=0,d=D.today;if(!st[d])d=addDays(d,-1);while(st[d]){n++;d=addDays(d,-1)}return n}
 function promiseCard(a){
-  if(!a.goal)return '<button class="promise" data-act="goal" style="width:100%;text-align:left;display:block"><div class="tag">Your promise</div><blockquote>What do you promise yourself to achieve with Wellbe?</blockquote><span class="btn sm" style="background:var(--pink);display:inline-flex">Write my promise</span></button>';
+  if(!a.goal)return '<button class="promise" data-help="promise" data-act="goal" style="width:100%;text-align:left;display:block"><div class="tag">Your promise</div><blockquote>What do you promise yourself to achieve with Wellbe?</blockquote><span class="btn sm" style="background:var(--pink);display:inline-flex">Write my promise</span></button>';
   var k=keyState(a),done=k.filter(Boolean).length,sk=streak(a);
-  return '<div class="promise"><button class="edit" data-act="goal" aria-label="Change my promise">'+ICON('i-edit','width:18px;height:18px')+'</button><div class="tag">My promise</div><blockquote>“'+esc(a.goal.promise)+'”</blockquote>'+
+  return '<div class="promise" data-help="promise"><button class="edit" data-act="goal" aria-label="Change my promise">'+ICON('i-edit','width:18px;height:18px')+'</button><div class="tag">My promise</div><blockquote>“'+esc(a.goal.promise)+'”</blockquote>'+
    '<div class="hlabel">'+(trainDay(a)?'Training day · My 3 habits':'Rest day · My 3 habits')+'</div><div class="keys">'+todayHabits(a).map(function(x,i){return '<button class="key" aria-pressed="'+!!k[i]+'" data-key="'+i+'"><span class="n">'+(k[i]?'✓':(i+1))+'</span><span class="t">'+esc(x)+'</span></button>'}).join('')+'</div>'+
    (!trainDay(a)&&!k[2]?'<div class="stepnote">Tick your steps yourself for now. Soon the Wellbe app counts them for you.</div>':'')+'<div class="foot"><span>'+done+' of 3 today</span><span>'+(sk?'🔥 '+sk+' day'+(sk>1?'s':'')+' in a row':'Tick them as you go')+'</span></div>'+rewardBar(a)+'</div>'}
 function reviewCard(always){return '<div class="review"><div class="grow"><div class="stars">★★★★★</div><b style="display:block;margin-top:4px">'+(always?'Review Wellbe on Google':'Enjoying Wellbe?')+'</b><div class="muted" style="font-size:14px">'+(always?'It takes 30 seconds and helps others find us.':'A 30 second Google review helps other people find us.')+'</div></div><button class="btn sm" style="background:#e8a400" data-review="1">Review</button></div>'}
@@ -1222,54 +1289,54 @@ VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=sto
    '<div class="stage"><div class="hero"><img alt="" src="'+esc(store('cr_avimg')||RUN_IMG+(mine||RUNNERS[0])[2]+'.png')+'"></div>'+
    '<h1 class="ttl"><span>Corniche</span><span>Run</span></h1>'+
    '<p class="tag">Four lanes along Beirut’s sea. Your coach is right behind you.</p></div>'+
-   '<div class="stats"><div><b>'+(score?score.toLocaleString():'0')+'</b><small>Best</small></div><div><b class="gold">'+coins.toLocaleString()+'</b><small>🪙 Coins</small></div><div><b>'+(dist?dist.toLocaleString()+' m':'0 m')+'</b><small>Farthest</small></div></div>'+
-   '<button class="play" data-act="run">'+SVGI('<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>',1)+(score?'Beat your best':'Start running')+'</button>'+
-   '<button class="alt" data-act="runpick">'+(store('cr_av')?'Edit your runner':'Build your runner')+'</button></section>';
+   '<div class="stats" data-help="run-stats"><div><b>'+(score?score.toLocaleString():'0')+'</b><small>Best</small></div><div><b class="gold">'+coins.toLocaleString()+'</b><small>🪙 Coins</small></div><div><b>'+(dist?dist.toLocaleString()+' m':'0 m')+'</b><small>Farthest</small></div></div>'+
+   '<button class="play" data-help="run" data-act="run">'+SVGI('<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>',1)+(score?'Beat your best':'Start running')+'</button>'+
+   '<button class="alt" data-help="runner" data-act="runpick">'+(store('cr_av')?'Edit your runner':'Build your runner')+'</button></section>';
   if(!RS)h+='<div class="skel2">Loading your missions and leaderboard…</div>';
   else{
     h+=RS.boost?'<div class="boost">'+SVGI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',1)+'<div><b>Training boost on</b><br>You trained, so your coins count double today.</div></div>':'<div class="boost off">'+SVGI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>')+'<div>Train at Wellbe today and your coins count <b style="color:#f2c46b;font-size:15px">double</b>.</div></div>';
-    h+='<div class="gh"><h2>Today’s missions</h2><small>All 3: +'+RS.allBonus+'</small></div><div class="rcard">'+RS.missions.map(function(m){return '<div class="mis'+(m.done?' done':'')+'"><div class="ck">'+SVGI('<path d="M5 12l5 5 9-10"/>')+'</div><div style="flex:1"><div class="t">'+esc(m.t)+'</div><div class="bar"><i style="width:'+Math.round(m.p/m.n*100)+'%"></i></div></div><div class="rw">+'+m.r+'</div></div>'}).join('')+'</div>';
-    if(RS.word!=null){var wn=Math.min(7,RS.word);h+='<div class="gh"><h2>WELLBE hunt</h2><small>All 7 today: +'+(RS.wordBonus||1000).toLocaleString()+'</small></div><div class="rcard"><div class="wh">'+'WELLBE'.split('').map(function(c,i){return '<i class="'+(i<wn?'on':'')+'">'+c+'</i>'}).join('')+'<img src="logo-mark.webp" class="'+(wn>=7?'on':'')+'" alt="Wellbe sign"></div><p class="whp">'+(wn>=7?'Done for today. New hunt tomorrow.':'Find the letters on the Corniche, then the golden Wellbe sign. Up to 2 per run.')+'</p></div>'}
+    h+='<div class="gh"><h2>Today’s missions</h2><small>All 3: +'+RS.allBonus+'</small></div><div class="rcard" data-help="missions">'+RS.missions.map(function(m){return '<div class="mis'+(m.done?' done':'')+'"><div class="ck">'+SVGI('<path d="M5 12l5 5 9-10"/>')+'</div><div style="flex:1"><div class="t">'+esc(m.t)+'</div><div class="bar"><i style="width:'+Math.round(m.p/m.n*100)+'%"></i></div></div><div class="rw">+'+m.r+'</div></div>'}).join('')+'</div>';
+    if(RS.word!=null){var wn=Math.min(7,RS.word);h+='<div class="gh"><h2>WELLBE hunt</h2><small>All 7 today: +'+(RS.wordBonus||1000).toLocaleString()+'</small></div><div class="rcard" data-help="hunt"><div class="wh">'+'WELLBE'.split('').map(function(c,i){return '<i class="'+(i<wn?'on':'')+'">'+c+'</i>'}).join('')+'<img src="logo-mark.webp" class="'+(wn>=7?'on':'')+'" alt="Wellbe sign"></div><p class="whp">'+(wn>=7?'Done for today. New hunt tomorrow.':'Find the letters on the Corniche, then the golden Wellbe sign. Up to 2 per run.')+'</p></div>'}
     var L=(RS.boards||{})[RUNTAB]||[],rk=(RS.rank||{})[RUNTAB];
-    h+='<div class="gh"><h2>Leaderboard</h2><small>'+(rk?'You are #'+rk:'Not ranked yet')+'</small></div><div class="rcard"><div class="tabs3" style="margin-top:8px">'+[['day','Today'],['week','Week'],['all','All time']].map(function(t){return '<button data-act="rtab|'+t[0]+'" class="'+(RUNTAB===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('')+'</div>'+
+    h+='<div class="gh"><h2>Leaderboard</h2><small>'+(rk?'You are #'+rk:'Not ranked yet')+'</small></div><div class="rcard" data-help="leaderboard"><div class="tabs3" style="margin-top:8px">'+[['day','Today'],['week','Week'],['all','All time']].map(function(t){return '<button data-act="rtab|'+t[0]+'" class="'+(RUNTAB===t[0]?'on':'')+'">'+t[1]+'</button>'}).join('')+'</div>'+
       (L.length?L.map(function(r){return '<div class="lb'+(r.i<=3?' top':'')+(r.me?' mine':'')+'"><div class="n">'+(r.i===1?'🥇':r.i===2?'🥈':r.i===3?'🥉':r.i)+'</div><div class="nm">'+esc(r.n)+'</div><div class="sc">'+r.s.toLocaleString()+'</div></div>'}).join(''):'<div class="lbe">No runs yet. Be the first on the board.</div>')+
       (rk>10?'<div class="lb mine"><div class="n">'+rk+'</div><div class="nm">Your best</div><div class="sc">'+(RUNTAB==='all'?RS.best:'').toLocaleString()+'</div></div>':'')+'</div>';
     var GC=cfg('game.cash'),C=RS.cash||{bal:0,today:0,dayMax:GC.DAY_MAX,minM:GC.MIN_M,cents:GC.CENTS,min:GC.REDEEM_MIN,max:GC.REDEEM_MAX,trained:false,pending:0},km=(C.minM||GC.MIN_M)/1000+' km',usd=function(x){return '$'+(x/100).toFixed(2)},cp=Math.min(100,Math.round(C.today/C.dayMax*100)),use=Math.min(C.bal,C.max);
-    h+='<div class="gh"><h2>💳 Your Wellbe Credit</h2><small>Loyalty credit for your next package or online workout</small></div><div class="prize cashc"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' every run that passes '+km+', up to '+usd(C.dayMax)+' a day. Save it up and use up to '+usd(C.max)+' of Wellbe Credit on your next package or online workout.</p>'+
+    h+='<div class="gh"><h2>💳 Your Wellbe Credit</h2><small>Loyalty credit for your next package or online workout</small></div><div class="prize cashc" data-help="credit"><b>'+usd(C.bal)+'</b><p>Earn '+usd(C.cents)+' every run that passes '+km+', up to '+usd(C.dayMax)+' a day. Save it up and use up to '+usd(C.max)+' of Wellbe Credit on your next package or online workout.</p>'+
       '<div class="bar"><i style="width:'+cp+'%"></i></div><small>Today '+usd(C.today)+' of '+usd(C.dayMax)+(C.today<C.dayMax&&C.trained?' · '+Math.round((C.dayMax-C.today)/C.cents)+' more '+km+' run'+((C.dayMax-C.today)/C.cents>1?'s':'')+' today':'')+'</small>'+
       
       (C.pending?'<div class="cnote ok">'+usd(C.pending)+' is waiting for your next renewal.</div>':C.bal>=C.min?'<button class="btn block" data-act="rredeem">Use '+usd(use)+' at my next renewal</button>':'<div class="cnote">You can use Wellbe Credit from '+usd(C.min)+'. Max '+usd(C.max)+' per renewal.</div>')+'</div>';
     h+=hubRows(RS);
   }
-  h+='<div class="gh"><h2>Controls</h2><small>Swipe anywhere</small></div><div class="moves">'+[
+  h+='<div class="gh"><h2>Controls</h2><small>Swipe anywhere</small></div><div class="moves" data-help="controls">'+[
     ['<path d="M15 6l-6 6 6 6"/>','Left','Lane'],['<path d="M9 6l6 6-6 6"/>','Right','Lane'],['<path d="M6 15l6-6 6 6"/>','Up','Jump'],['<path d="M6 9l6 6 6-6"/>','Down','Slide']
    ].map(function(m){return '<div class="mv"><div class="o">'+SVGI(m[0])+'</div><b>'+m[1]+'</b><span>'+m[2]+'</span></div>'}).join('')+'</div>';
-  h+='<div class="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Your points multiply up to x5 the longer you last.</p></div>';
+  h+='<div class="chase" data-help="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Your points multiply up to x5 the longer you last.</p></div>';
   return h};
 addEventListener('message',function(e){if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play')render()}});
 // Profile: everything about the person
 // ---------- not a client yet: why Wellbe, services, packages, and 3 ways in
 function gTrialCard(){var t=D.guest.trial;if(!t)return '';
-  return '<div class="gstat"><span class="wi">'+ICON('i-check')+'</span><div class="grow"><b>Your free trial'+(t.status==='Confirmed'?' is confirmed':' is booked')+'</b><span>'+dayLong(t.date)+' at '+esc(t.time)+(t.status==='Confirmed'?'':' · '+DESK()+' will confirm on WhatsApp')+'</span></div></div>'}
+  return '<div class="gstat" data-help="trial-booked"><span class="wi">'+ICON('i-check')+'</span><div class="grow"><b>Your free trial'+(t.status==='Confirmed'?' is confirmed':' is booked')+'</b><span>'+dayLong(t.date)+' at '+esc(t.time)+(t.status==='Confirmed'?'':' · '+DESK()+' will confirm on WhatsApp')+'</span></div></div>'}
 VIEWS.wellbe=function(){var a=ACC(),G=D.guest,as=G.asked||{};
   var h='<div class="ghero"><div class="tag">Wellbe Health Center</div><h1>Physio-led training, in a group of 3</h1><p>Every program is built and checked by a physiotherapist. You get stronger, move better, and stay away from injuries, with the energy of a small group.</p>'+
-    (G.trial?'':'<button class="btn block" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>';
-  h+=gTrialCard();h+='<div style="margin:14px 0">'+nutCard()+'</div>';
-  h+='<div class="sec"><h2>3 ways to start</h2></div><div class="list">'+
+    (G.trial?'':'<button class="btn block" data-help="trial" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>';
+  h+=gTrialCard();h+='<div style="margin:14px 0" data-help="nutrition">'+nutCard()+'</div>';
+  h+='<div class="sec"><h2>3 ways to start</h2></div><div class="list g3" data-help="ways">'+
     (G.trial?'':gWay('i-gift','Free trial session','Pick a real time slot. Train with us once, free.','gtrial'))+
     gWay('i-wa','Free 15 min coach call',as.call===D.today?'Requested. The coach will WhatsApp you.':'Tell a coach your goal, get a plan for it.','gcall')+
     gWay('i-card','Get a package',as.pkg?'Requested: '+esc(as.pkg.replace(/\s*\(\$[^)]*\)/,''))+'. '+DESK()+' will WhatsApp you.':'Pick it here, pay at the center.','gpkgs')+'</div>';
-  h+='<div class="sec"><h2>Why Wellbe</h2></div><div class="gwhy">'+CONTENT.why()
+  h+='<div class="sec"><h2>Why Wellbe</h2></div><div class="gwhy" data-help="why">'+CONTENT.why()
     .map(function(x){return '<div class="card"><span class="wi">'+ICON(x[0])+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></div>'}).join('')+'</div>';
-  h+='<div class="sec"><h2>What we do</h2></div><div class="list">'+CONTENT.services().map(function(x){return '<div class="card gserv"><span class="wi">'+ICON(x[0])+'</span><div class="grow"><b>'+x[1]+'</b><span>'+x[2]+'</span></div></div>'}).join('')+'</div>';
-  h+='<div class="sec"><h2>Packages</h2><button class="link" data-act="gpkgs">All prices</button></div>'+gPkgList(G.packages.filter(function(p){return p.kind==='1:3'}));
+  h+='<div class="sec"><h2>What we do</h2></div><div class="list" data-help="services">'+CONTENT.services().map(function(x){return '<div class="card gserv"><span class="wi">'+ICON(x[0])+'</span><div class="grow"><b>'+x[1]+'</b><span>'+x[2]+'</span></div></div>'}).join('')+'</div>';
+  h+='<div class="sec"><h2>Packages</h2><button class="link" data-help="all-prices" data-act="gpkgs">All prices</button></div><div data-help="packages">'+gPkgList(G.packages.filter(function(p){return p.kind==='1:3'}))+'</div>';
   h+='<div class="sec"><h2>My promise</h2></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
-  h+='<div class="gfoot"><b>Questions?</b><span>'+DESK()+' answers on WhatsApp.</span><a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. I have a question about Wellbe.')+'">'+ICON('i-wa')+'Message '+DESK()+'</a></div>';
+  h+='<div class="gfoot" data-help="questions"><b>Questions?</b><span>'+DESK()+' answers on WhatsApp.</span><a class="btn wa block" target="_blank" rel="noopener" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. I have a question about Wellbe.')+'">'+ICON('i-wa')+'Message '+DESK()+'</a></div>';
   return h};
 function gWay(ic,t,sub,act){return '<button class="book" data-act="'+act+'"><span class="ic">'+ICON(ic)+'</span><div class="grow"><b>'+t+'</b><span>'+sub+'</span></div><span class="go">›</span></button>'}
 function gLabel(p){return /x\/month/.test(p.label)?tabName(p.kind)+' · '+p.n+' a month':p.label}
 function gPkgList(list){return '<div class="list">'+list.map(function(p){return '<button class="card gpkg" data-act="gpkg|'+esc(p.name)+'"><div class="grow"><b>'+esc(gLabel(p))+'</b><span>'+p.n+' session'+(p.n>1?'s':'')+(p.n>1?' · '+money(Math.round(p.price/p.n*10)/10)+' per session':'')+'</span></div><span class="gp num">'+money(p.price)+'</span></button>'}).join('')+'</div>'}
-VIEWS.gwork=function(){return '<div class="hello"><h1>Your <em>workouts</em></h1></div><div class="empty" style="text-align:left"><b style="font-size:18px">Your coach builds your plan</b><p class="muted">After your first session, your coach writes a program made for your body. It shows here, one workout at a time, with your weights.</p>'+
+VIEWS.gwork=function(){return '<div class="hello"><h1>Your <em>workouts</em></h1></div><div class="empty" data-help="coach-builds" style="text-align:left"><b style="font-size:18px">Your coach builds your plan</b><p class="muted">After your first session, your coach writes a program made for your body. It shows here, one workout at a time, with your weights.</p>'+
   (D.guest.trial?gTrialCard():'<button class="btn block" style="margin-top:14px" data-act="gtrial">'+ICON('i-gift')+'Book my free trial</button>')+'</div>'}
 function gPhoneField(){return '<label class="flabel" for="gph" style="margin-top:16px">Your WhatsApp number</label><input class="inp" id="gph" type="tel" inputmode="tel" autocomplete="tel" placeholder="70 123 456" value="'+esc(D.guest.phone||'')+'">'}
 function gSend(op,data,btn,done){var ph=$('#gph')?$('#gph').value.trim():D.guest.phone;if(String(ph||'').replace(/\D/g,'').length<7){toast('Type your WhatsApp number');return}
@@ -1294,13 +1361,13 @@ function bindGuest(){}
 // clients without a package
 VIEWS.basic=function(){var a=ACC(),past=a.pkgs.slice().reverse();
   var h='<div class="hello"><h1>Hi <em>'+esc(a.first)+'</em></h1><p>Good to see you. Ready for your next step?</p></div>'+promiseCard(a)+'<div style="margin-top:14px">'+quoteCard()+'</div>';
-  h+='<div class="sec"><h2>Book with us</h2></div><div class="list">'+
+  h+='<div class="sec"><h2>Book with us</h2></div><div class="list" data-help="book-with-us">'+
    bookBtn('physio','i-steth','Feeling Sore?','Book A Physio Session','60 minutes with '+SVCNAME('Physio')+' for pain, injury or recovery','book|physio')+
    bookBtn('madero','i-madero','Fighting Cellulite?','Book A Madero Session','Wood therapy massage for smoother looking skin','book|madero')+
    bookBtn('train','i-dumbbell','Ready To Get Strong?','Book A Training Session','Private 1:1, duo 1:2 or small group 1:3','book|train')+'</div>';
-  if(past.length)h+='<div class="sec"><h2>My previous packages</h2></div><div class="stack">'+past.slice(0,8).map(function(p){return pkgCard(p)}).join('')+'</div>';
-  h+='<div style="margin-top:22px">'+friendCard()+'</div>';
-  h+='<div style="margin-top:22px">'+reviewCard(true)+'</div>';
+  if(past.length)h+='<div class="sec"><h2>My previous packages</h2></div><div class="stack" data-help="past-packages">'+past.slice(0,8).map(function(p){return pkgCard(p)}).join('')+'</div>';
+  h+='<div style="margin-top:22px" data-help="invite">'+friendCard()+'</div>';
+  h+='<div style="margin-top:22px" data-help="review">'+reviewCard(true)+'</div>';
   return h};
 function bookBtn(k,ic,q,t,s,act){return '<button class="book bk-'+k+'" data-act="'+act+'"><span class="ic">'+ICON(ic)+'</span><div class="grow"><small>'+q+'</small><b>'+t+'</b><span>'+s+'</span></div><span class="go">'+ICON('i-wa')+'</span></button>'}
 // a request's status in words, and its kind: logged | wait | no | done
@@ -1313,7 +1380,7 @@ function shopItems(){return (D.shop||[]).map(function(x){var m=CONTENT.catalog.f
 function featured(){return shopItems().filter(function(x){return x.rank}).sort(function(a,b){return a.rank-b.rank})}
 function imgTag(x,h){return x.img?'<img src="'+CONTENT.img[x.img]+'" alt="'+esc(x.n)+'" style="max-height:'+h+'px;max-width:100%" loading="lazy" referrerpolicy="no-referrer" data-fb="'+esc(x.n[0])+'" data-fbc="ph">':'<span class="ph">'+esc(x.n[0])+'</span>'}
 function cartTotal(){var it=shopItems(),t=0,n=0;Object.keys(CART).forEach(function(k){var x=it.filter(function(y){return y.n===k})[0];if(x){t+=x.price*CART[k];n+=CART[k]}});return {t:t,n:n}}
-function cartBar(){var c=cartTotal();if(!D||!ACC().full)return '';return '<div class="cart'+(c.n&&(SEC==='shop'||SEC==='center')?' on':'')+'" id="cart"><button class="btn" data-act="order"><span>Pick up from center · '+c.n+' item'+(c.n>1?'s':'')+'</span><span class="num">'+money(c.t)+'</span></button></div>'}
+function cartBar(){var c=cartTotal();if(!D||!ACC().full)return '';return '<div data-help="cart" class="cart'+(c.n&&(SEC==='shop'||SEC==='center')?' on':'')+'" id="cart"><button class="btn" data-act="order"><span>Pick up from center · '+c.n+' item'+(c.n>1?'s':'')+'</span><span class="num">'+money(c.t)+'</span></button></div>'}
 function setQty(n,d){CART[n]=Math.max(0,Math.min(10,(CART[n]||0)+d));if(!CART[n])delete CART[n];store('wbc_cart',JSON.stringify(CART));softRender()}
 
 /* ---------- bind ---------- */
@@ -1338,8 +1405,9 @@ function bind(){
 function findSess(id){return ACC().upcoming.filter(function(s){return s.id===id})[0]}
 
 /* ---------- sheets ---------- */
-function openSheet(title,body,foot){$('#shTitle').textContent=title;$('#shBody').innerHTML=body;$('#shFoot').innerHTML=foot||'';$('#shFoot').hidden=!foot;$('#scrim').classList.add('on');$('#sheet').classList.add('on');$('#shBody').scrollTop=0}
-function closeSheet(){$('#scrim').classList.remove('on');$('#sheet').classList.remove('on')}
+var SHCB=null;   // runs once when the open sheet closes (help: closed without a choice)
+function openSheet(title,body,foot){SHCB=null;$('#shTitle').textContent=title;$('#shBody').innerHTML=body;$('#shFoot').innerHTML=foot||'';$('#shFoot').hidden=!foot;$('#scrim').classList.add('on');$('#sheet').classList.add('on');$('#shBody').scrollTop=0}
+function closeSheet(){var f=SHCB,was=$('#sheet').classList.contains('on');SHCB=null;$('#scrim').classList.remove('on');$('#sheet').classList.remove('on');if(f&&was)f()}
 $('#scrim').onclick=closeSheet;$('#shClose').onclick=closeSheet;addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet()});
 var tt;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
 // msg is HTML: callers must esc() any user or server text inside it
@@ -1427,18 +1495,18 @@ VIEWS.work=function(){var a=ACC(),d=WOS[a.cid];
   if(!d){return '<div class="skel2">Loading your workout…</div>'}
   if(d.err)return '<div class="soon"><h1>Could not load</h1><p>'+esc(d.err)+'</p><button class="btn" data-act="woreload">Try again</button></div>';
   var h='';
-  if(!d.has)h+='<div class="soon"><div class="lockbig">'+ICON('i-dumbbell')+'</div><h1>No workout yet</h1><p>When your coach builds your program, your workout for each session shows here.</p></div>';
+  if(!d.has)h+='<div class="soon" data-help="no-workout"><div class="lockbig">'+ICON('i-dumbbell')+'</div><h1>No workout yet</h1><p>When your coach builds your program, your workout for each session shows here.</p></div>';
   else{
     var w=d.workout,ph=d.phase;
     if(w){var isToday=w.date===D.today||w.date===d.today;
-      h+='<div class="whero"><small>'+(isToday?'TODAY':'NEXT SESSION · '+esc(dayShort(w.date).toUpperCase()))+' · '+esc(hl(w.start))+'</small><h1>'+esc(w.name)+'</h1><span>Workout '+w.n+(ph?' of '+ph.workouts.length+' · '+esc(ph.name):'')+' · with '+esc(w.trainer)+'</span>'+(w.catchUp?'<em>Catch up: you missed this one, your coach moved it here.</em>':'')+'</div>';
+      h+='<div class="whero" data-help="workout"><small>'+(isToday?'TODAY':'NEXT SESSION · '+esc(dayShort(w.date).toUpperCase()))+' · '+esc(hl(w.start))+'</small><h1>'+esc(w.name)+'</h1><span>Workout '+w.n+(ph?' of '+ph.workouts.length+' · '+esc(ph.name):'')+' · with '+esc(w.trainer)+'</span>'+(w.catchUp?'<em>Catch up: you missed this one, your coach moved it here.</em>':'')+'</div>';
       h+=woBody(w.w,d,w.sid,isToday);
-      if(isToday&&woExs(w.w).length)h+='<button class="btn block" style="margin-top:16px" data-act="wosave|'+esc(w.sid)+'">Save my weights</button>';
+      if(isToday&&woExs(w.w).length)h+='<button class="btn block" style="margin-top:16px" data-help="save-weights" data-act="wosave|'+esc(w.sid)+'">Save my weights</button>';
       else if(!isToday)h+='<p class="wnote">You log your weights on the day of the session.</p>';
     } else h+='<div class="soon" style="padding-top:20px"><h1>No session booked</h1><p>Your next workout shows here once your next session is booked.</p><a class="btn" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. I would like to book my next session.')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+'Book with '+DESK()+'</a></div>';
-    if(d.recent&&d.recent.length)h+='<div class="gh"><h2>Log a past workout</h2><small>Last 7 days</small></div><div class="list">'+d.recent.map(function(r){var any=Object.keys(d.logged||{}).some(function(k){return k.indexOf(r.sid+'|')===0});return '<button class="item" data-act="wopast|'+esc(r.sid)+'"><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s">'+esc(dayShort(r.date))+'</div></div><span class="pill2'+(any?' ok':'')+'">'+(any?'Logged':'Log')+'</span></button>'}).join('')+'</div>';
-    if(ph)h+='<div class="gh"><h2>Your phase</h2><small>'+ph.n+' of '+ph.of+'</small></div><div class="wcard wph"><b>'+esc(ph.name)+'</b><span>'+esc(dayShort(ph.start))+' to '+esc(dayShort(ph.end))+' · '+ph.done+' session'+(ph.done===1?'':'s')+' done</span>'+(ph.note?'<em>'+esc(ph.note)+'</em>':'')+'<div class="wlist">'+ph.workouts.map(function(n,i){return '<span'+(w&&w.n===i+1?' class="on"':'')+'>W'+(i+1)+' '+esc(n)+'</span>'}).join('')+'</div></div>';
-    else if(d.ended)h+='<div class="wcard wph"><b>Program finished</b><span>Your coach will set your next phase.</span></div>';
+    if(d.recent&&d.recent.length)h+='<div class="gh"><h2>Log a past workout</h2><small>Last 7 days</small></div><div class="list" data-help="past-workouts">'+d.recent.map(function(r){var any=Object.keys(d.logged||{}).some(function(k){return k.indexOf(r.sid+'|')===0});return '<button class="item" data-act="wopast|'+esc(r.sid)+'"><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s">'+esc(dayShort(r.date))+'</div></div><span class="pill2'+(any?' ok':'')+'">'+(any?'Logged':'Log')+'</span></button>'}).join('')+'</div>';
+    if(ph)h+='<div class="gh"><h2>Your phase</h2><small>'+ph.n+' of '+ph.of+'</small></div><div class="wcard wph" data-help="phase"><b>'+esc(ph.name)+'</b><span>'+esc(dayShort(ph.start))+' to '+esc(dayShort(ph.end))+' · '+ph.done+' session'+(ph.done===1?'':'s')+' done</span>'+(ph.note?'<em>'+esc(ph.note)+'</em>':'')+'<div class="wlist">'+ph.workouts.map(function(n,i){return '<span'+(w&&w.n===i+1?' class="on"':'')+'>W'+(i+1)+' '+esc(n)+'</span>'}).join('')+'</div></div>';
+    else if(d.ended)h+='<div class="wcard wph" data-help="phase"><b>Program finished</b><span>Your coach will set your next phase.</span></div>';
   }
   return h};
 function woEntries(root,exs){var out=[];$$('[data-wq]',root).forEach(function(box){var m=exs[+box.dataset.wq];if(!m)return;var sets=[];$$('.wset',box).forEach(function(r){var kg=parseFloat(String($('[data-wk]',r).value).replace(',','.')),reps=parseInt($('[data-wr]',r).value,10);if(kg>=0&&reps>0)sets.push({kg:kg,reps:reps})});if(sets.length)out.push({ex:m.ex,sets:sets})});return out}
@@ -1599,7 +1667,7 @@ function nDayIdx(){return (dOf(D.today).getDay()+6)%7}
 var NDN={en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],ar:['اثنين','ثلاثا','أربعا','خميس','جمعة','سبت','أحد']};
 var AR_MONTHS=['كانون التاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين التاني','كانون الأول'];
 function nDate(ymd){if(!ymd)return '';if(NLANG!=='ar')return WB.fmtDay(String(ymd).slice(0,10),{day:'numeric',month:'long'});var p=String(ymd).split('-');return Number(p[2])+' '+AR_MONTHS[Number(p[1])-1]}
-function nTop(back){if(back==='close'&&SEC==='plan')return '<div class="nt-top" style="justify-content:flex-end">'+nLangSw(1)+'</div>';return '<div class="nt-top"><button class="nt-back" data-nv="'+back+'">‹ '+(back==='close'?nL('Back','رجوع'):nL('My nutrition','تغذيتي'))+'</button>'+nLangSw(1)+'</div>'}
+function nTop(back){if(back==='close'&&SEC==='plan')return '<div class="nt-top" style="justify-content:flex-end">'+nLangSw(1)+'</div>';return '<div class="nt-top"><button class="nt-back" data-nv="'+back+'">‹ '+(back==='close'?nL('Back','رجوع'):back==='plan'?nL('Full week','الأسبوع كامل'):nL('My nutrition','تغذيتي'))+'</button>'+nLangSw(1)+'</div>'}
 function nSpark(dir){var down=dir!=='gain';return '<svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="'+(down?'M0 8 C 80 20, 160 34, 300 48 L300 52 C160 44 80 26 0 8Z':'M0 48 C 80 36, 160 22, 300 8 L300 4 C160 16 80 30 0 48Z')+'" fill="color-mix(in srgb,var(--mint) 22%,transparent)"/><path d="'+(down?'M0 8 C 80 18, 160 30, 300 42':'M0 48 C 80 38, 160 26, 300 12')+'" stroke="var(--mint)" stroke-width="2.5" fill="none"/><circle cx="296" cy="'+(down?42:12)+'" r="4" fill="var(--amber)"/></svg>'}
 function nCalcCard(c){
   if(!c)return '';
@@ -1608,7 +1676,7 @@ function nCalcCard(c){
   if(c.blocked)return '<div class="note warn">'+ICON('i-alert')+'<span>'+nL('This target is under a healthy weight for your height.'+(c.safeMin?' The closest healthy target is '+c.safeMin+' kg.':''),'هيدا الهدف أقل من الوزن الصحي لطولك.'+(c.safeMin?' أقرب هدف صحي هو '+c.safeMin+' كيلو.':''))+'</span></div><div class="nt-two" style="margin-top:10px">'+(c.safeMin?'<button class="btn" data-nsafe="'+c.safeMin+'">'+nL('Use '+c.safeMin+' kg','خلّيه '+c.safeMin+' كيلو')+'</button>':'')+'<button class="btn ghost" data-nv="body">'+nL('Change my target','غير هدفي')+'</button></div>';
   if(!c.ok)return '';
   var P=c.projection||{},big=P.dir==='keep'?nL('Keep '+c.weight+' kg, build shape','حافظ عـ '+c.weight+' كيلو'):P.low+' '+nL('to','لـ')+' '+P.high+' kg · '+nDate(P.at);
-  return '<div class="card nt-kc"><div class="nt-k">'+nL('Your daily target','هدفك اليومي')+'</div><div class="n num">'+Number(c.kcal).toLocaleString()+' <small>kcal</small></div>'+
+  return '<div class="card nt-kc" data-help="calc"><div class="nt-k">'+nL('Your daily target','هدفك اليومي')+'</div><div class="n num">'+Number(c.kcal).toLocaleString()+' <small>kcal</small></div>'+
     '<div class="nt-mac"><div class="p"><b class="num">'+c.p+' g</b><small>'+nL('Protein','بروتين')+'</small></div><div class="c"><b class="num">'+c.c+' g</b><small>'+nL('Carbs','نشويات')+'</small></div><div class="f"><b class="num">'+c.f+' g</b><small>'+nL('Fat','دهون')+'</small></div></div>'+
     (c.water_l?'<div class="muted" style="font-size:13.5px;margin-top:10px">💧 '+nL('Water: at least '+c.water_l+' L a day','المي: أقله '+c.water_l+' ليتر باليوم')+'</div>':'')+'</div>'+
     '<div class="nt-proj"><div class="nt-k">'+nL('Your projection','توقعاتك')+'</div><div class="nt-big">'+big+'</div>'+(P.dir==='keep'?'':nSpark(P.dir))+'<p>'+esc(nT(P.text))+'</p>'+(P.dir==='keep'?'':'<p style="margin-top:6px;font-size:12.5px;color:var(--ink-3)">'+nL('A range, not a promise: your weekly weigh-ins keep it honest.','تقدير مش وعد: الوزن الأسبوعي بيصحح التوقع.')+'</p>')+'</div>'}
@@ -1622,14 +1690,14 @@ function nPlanBlock(N){
   var pl=N.plan,c=N.calc||{},S=N.nut;
   if(!S)return nPlanBlockV1(N);                               // Apps Script answer (before the switch)
   var st=S.state,cy=S.cycle;
-  if(st==='coming_soon')return '<div class="nt-lock"><b>🔒 '+nL('Your 3-week nutrition plan · coming soon','خطة التغذية (3 أسابيع) · قريباً')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, weekly grocery lists and reminders. Your free numbers above stay yours.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، لوايح مشتريات أسبوعية وتذكيرات. أرقامك المجانية فوق بتضل إلك.')+'</p></div>';
+  if(st==='coming_soon')return '<div class="nt-lock" data-help="plan-lock"><b>🔒 '+nL('Your 3-week nutrition plan · coming soon','خطة التغذية (3 أسابيع) · قريباً')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, weekly grocery lists and reminders. Your free numbers above stay yours.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، لوايح مشتريات أسبوعية وتذكيرات. أرقامك المجانية فوق بتضل إلك.')+'</p></div>';
   if(pl&&pl.state==='ready')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-check')+'</span><div><b>'+nL('Your plan is ready','خطتك جاهزة')+'</b><span>'+esc(nCycleLine(cy))+(pl.note?' · '+esc(String(pl.note).slice(0,80)):'')+'</span></div></div><div class="nt-two" style="margin-top:12px"><button class="btn" data-nv="plan">'+nL('Open my plan','افتح خطتي')+'</button><button class="btn sec2" data-nv="grocery">'+nL('Grocery list','لائحة المشتريات')+'</button></div><button class="btn ghost block" style="margin-top:8px" data-nv="rem">'+ICON('i-clock')+nL('Reminders','التذكيرات')+'</button>'+nDisc(N)+'</div>';
-  if(pl&&pl.state==='draft')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-spark')+'</span><div><b>'+nL('Your week 1 draft is ready','مسودة الأسبوع الأول جاهزة')+'</b><span>'+nL('Check it, ask for changes, then approve. Your 3 weeks start when you approve.','شيكها، اطلب تغييرات، بعدين وافق. الـ 3 أسابيع بيبلشوا لما توافق.')+'</span></div></div><button class="btn block" style="margin-top:12px" data-nv="plan">'+nL('Review my week 1','راجع الأسبوع الأول')+'</button>'+nDisc(N)+'</div>';
-  if(pl&&pl.state==='preparing')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+esc(nT(pl.msg)||nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.'))+'</b><span>'+nL('We tell you when it is ready.','منخبرك أول ما تجهز.')+'</span></div></div></div>';
+  if(pl&&pl.state==='draft')return '<div class="card" data-help="plan-draft"><div class="nt-stat"><span class="ic">'+ICON('i-spark')+'</span><div><b>'+nL('Your week 1 draft is ready','مسودة الأسبوع الأول جاهزة')+'</b><span>'+nL('Check it, ask for changes, then approve. Your 3 weeks start when you approve.','شيكها، اطلب تغييرات، بعدين وافق. الـ 3 أسابيع بيبلشوا لما توافق.')+'</span></div></div><button class="btn block" style="margin-top:12px" data-nv="plan">'+nL('Review my week 1','راجع الأسبوع الأول')+'</button>'+nDisc(N)+'</div>';
+  if(pl&&pl.state==='preparing')return '<div class="card" data-help="plan-wait"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+esc(nT(pl.msg)||nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.'))+'</b><span>'+nL('We tell you when it is ready.','منخبرك أول ما تجهز.')+'</span></div></div></div>';
   if(pl&&pl.state==='declined')return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-heart')+'</span><div><b>'+esc(nT(pl.msg))+'</b><span>'+esc(pl.note||'')+'</span></div></div></div>';
   var ready=N.done&&!c.blocked&&!c.missing,can=st==='active'||st==='waiting'||S.can_start;
   if(st==='ended'||(pl&&pl.state==='locked'))return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+nL('Your 3 weeks are done','خلصوا الـ 3 أسابيع')+'</b><span>'+nL('Your free numbers and weigh-ins stay. A new plan comes with a new 3-week cycle.','أرقامك المجانية ووزنك بيضلوا. خطة جديدة بتجي مع 3 أسابيع جداد.')+'</span></div></div>'+(S.can_start&&ready?'<button class="btn block" style="margin-top:12px" data-ngen="1">'+ICON('i-spark')+nL('Start a new 3-week plan (test)','ابدأ 3 أسابيع جداد (تجربة)')+'</button>':'<div style="margin-top:12px">'+nDeskLink('Start a new 3-week plan','ابدأ 3 أسابيع جداد')+'</div>')+'</div>';
-  if(!can)return '<div class="nt-lock"><b>'+nL('Your 3-week nutrition plan','خطة التغذية (3 أسابيع)')+'</b><p>'+nL('Meals with exact portions, swaps, weekly grocery lists and reminders, built on your numbers.','وجبات بكميات دقيقة، بدائل، لوايح مشتريات أسبوعية وتذكيرات، على أساس أرقامك.')+'</p>'+nDeskLink('Start my 3-week plan','ابدأ خطتي (3 أسابيع)')+'</div>';
+  if(!can)return '<div class="nt-lock" data-help="plan-lock"><b>'+nL('Your 3-week nutrition plan','خطة التغذية (3 أسابيع)')+'</b><p>'+nL('Meals with exact portions, swaps, weekly grocery lists and reminders, built on your numbers.','وجبات بكميات دقيقة، بدائل، لوايح مشتريات أسبوعية وتذكيرات، على أساس أرقامك.')+'</p>'+nDeskLink('Start my 3-week plan','ابدأ خطتي (3 أسابيع)')+'</div>';
   if(!N.done)return '<div class="note good" style="margin-top:14px">'+ICON('i-edit')+'<span>'+nL('Finish the questionnaire to make your plan.','كمّل الاستبيان لنعمل خطتك.')+'</span></div>';
   if(!ready)return '';
   return '<button class="btn block" style="margin-top:14px" data-ngen="1">'+ICON('i-spark')+(st==='active'||st==='waiting'?nL('Make my full plan','اعملي خطتي الكاملة'):nL('Start my 3-week plan (test)','ابدأ خطتي (3 أسابيع، تجربة)'))+'</button>'+(S.can_start&&S.open===false?'<div class="muted" style="font-size:12.5px;margin-top:6px">'+nL('You have test access. Clients still see "coming soon".','عندك وصول تجريبي. الزبائن بعدهم بيشوفوا "قريباً".')+'</div>':'');
@@ -1637,9 +1705,9 @@ function nPlanBlock(N){
 // before the switch to Supabase (Apps Script answers, no "nut" block): as before
 function nPlanBlockV1(N){
   var pl=N.plan,c=N.calc||{};
-  if(!N.paid)return '<div class="nt-lock"><b>🔒 '+nL('Your full plan','خطتك الكاملة')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, and your weekly grocery list, checked by your coach.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، ولائحة مشتريات أسبوعية، بيشيكها مدربك.')+'</p><a class="btn block" target="_blank" rel="noopener" href="'+waLink(nL('Hi '+DESK()+', I want my Wellbe nutrition plan.','مرحبا '+DESK_AR()+'، بدي خطة التغذية من Wellbe.'))+'">'+nL('Get it with your Wellbe subscription','خدها مع اشتراكك بـ Wellbe')+'</a></div>';
+  if(!N.paid)return '<div class="nt-lock" data-help="plan-lock"><b>🔒 '+nL('Your full plan','خطتك الكاملة')+'</b><p>'+nL('Meals with exact portions, Lebanese food you love, swaps, and your weekly grocery list, checked by your coach.','وجبات بكميات دقيقة، أكل لبناني بتحبه، بدائل، ولائحة مشتريات أسبوعية، بيشيكها مدربك.')+'</p><a class="btn block" target="_blank" rel="noopener" href="'+waLink(nL('Hi '+DESK()+', I want my Wellbe nutrition plan.','مرحبا '+DESK_AR()+'، بدي خطة التغذية من Wellbe.'))+'">'+nL('Get it with your Wellbe subscription','خدها مع اشتراكك بـ Wellbe')+'</a></div>';
   if(pl&&pl.status==='Approved'&&pl.data)return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-check')+'</span><div><b>'+nL('Your plan is ready','خطتك جاهزة')+'</b><span>'+nL('Written with AI, checked by your coach','مكتوبة بالذكاء الاصطناعي ومشيكة من مدربك')+(pl.note?' · '+esc(String(pl.note).slice(0,80)):'')+'</span></div></div><div class="nt-two" style="margin-top:12px"><button class="btn" data-nv="plan">'+nL('Open my plan','افتح خطتي')+'</button><button class="btn sec2" data-nv="grocery">'+nL('Grocery list','لائحة المشتريات')+'</button></div></div>';
-  if(pl&&/Queued|Writing|Pending|Coach review|Failed/.test(pl.status))return '<div class="card"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.')+'</b><span>'+nL('We tell you when it is ready.','منخبرك أول ما تجهز.')+'</span></div></div></div>';
+  if(pl&&/Queued|Writing|Pending|Coach review|Failed/.test(pl.status))return '<div class="card" data-help="plan-wait"><div class="nt-stat"><span class="ic">'+ICON('i-clock')+'</span><div><b>'+nL('Your plan is being prepared by our team.','فريقنا عم يحضّر خطتك.')+'</b><span>'+nL('We tell you when it is ready.','منخبرك أول ما تجهز.')+'</span></div></div></div>';
   if(!N.done)return '';
   if(c.coach||c.blocked||!c.ok)return '';
   return '<button class="btn block" style="margin-top:14px" data-ngen="1">'+ICON('i-spark')+nL('Make my full plan','اعملي خطتي الكاملة')+'</button>';
@@ -1647,7 +1715,7 @@ function nPlanBlockV1(N){
 function nHome(N){
   var h=nTop('close')+'<div class="nt-h">'+nL('My <em>nutrition</em>','<em>تغذيتي</em>')+'</div><div class="nt-sub">'+nL('Your numbers, your food, your timeline.','أرقامك، أكلك، ووقتك.')+'</div>';
   var qs=N.questions||[],nq=qs.length||7;
-  if(!N.done)h+='<div class="card" style="margin-bottom:14px"><div class="nt-stat"><span class="ic">'+ICON('i-edit')+'</span><div><b>'+nL('Your 5 minute questionnaire','الاستبيان (5 دقايق)')+'</b><span>'+(N.step?nL('Step '+Math.min(N.step+1,nq)+' of '+nq+' · saved','خطوة '+Math.min(N.step+1,nq)+' من '+nq):nL('So your plan fits your life and the food you love.','لتكون خطتك على قياس حياتك وأكلك.'))+'</span></div></div><div class="nt-prog" style="margin-top:12px"><i style="width:'+Math.round((N.step||0)/nq*100)+'%"></i></div><button class="btn block" style="margin-top:10px" data-nq="'+Math.min(N.step||0,nq-1)+'">'+(N.step?nL('Continue','كمل'):nL('Start','ابدأ'))+'</button></div>';
+  if(!N.done)h+='<div class="card" data-help="questionnaire" style="margin-bottom:14px"><div class="nt-stat"><span class="ic">'+ICON('i-edit')+'</span><div><b>'+nL('Your 5 minute questionnaire','الاستبيان (5 دقايق)')+'</b><span>'+(N.step?nL('Step '+Math.min(N.step+1,nq)+' of '+nq+' · saved','خطوة '+Math.min(N.step+1,nq)+' من '+nq):nL('So your plan fits your life and the food you love.','لتكون خطتك على قياس حياتك وأكلك.'))+'</span></div></div><div class="nt-prog" style="margin-top:12px"><i style="width:'+Math.round((N.step||0)/nq*100)+'%"></i></div><button class="btn block" style="margin-top:10px" data-nq="'+Math.min(N.step||0,nq-1)+'">'+(N.step?nL('Continue','كمل'):nL('Start','ابدأ'))+'</button></div>';
   h+=nCalcCard(N.calc);
   h+=nPlanBlock(N);
   if(N.calc&&(N.calc.ok||N.calc.coach))h+=nWeighCard(N);
@@ -1737,10 +1805,10 @@ function nReview(N){var pl=N.plan,P=pl.data,left=pl.rounds_left|0;
 function nPlanV4(N){var P=N.plan.data,pl=N.plan,draft=pl.state==='draft',cy=(N.nut||{}).cycle||{},nw=P.weeks.length;
   var wk=Math.min(nw,NWK||(cy.day?nCurWeek(N):1)),sel=Math.min(6,NDAY),d=nDayV4(N,(wk-1)*7+sel),h=nTop('home');
   if(draft)h+=nReview(N);else h+='<div class="muted" style="font-size:13.5px;margin-bottom:8px">'+esc(nCycleLine(cy))+'</div>';
-  if(nw>1)h+='<div class="nt-days" role="tablist">'+P.weeks.map(function(W){return '<button data-nwk="'+W.week+'" aria-pressed="'+(W.week===wk)+'">'+nL('Week '+W.week,'أسبوع '+W.week)+'</button>'}).join('')+'</div>';
-  h+='<div class="nt-days" role="tablist">'+[0,1,2,3,4,5,6].map(function(j){var x=dOf(addDays(nStart(N),(wk-1)*7+j));return '<button data-nday="'+j+'" aria-pressed="'+(j===sel)+'">'+NDN[NLANG][(x.getDay()+6)%7]+'<br><small>'+x.getDate()+'</small></button>'}).join('')+'</div>';
+  if(nw>1)h+='<div class="nt-days" data-help="week-tabs" role="tablist">'+P.weeks.map(function(W){return '<button data-nwk="'+W.week+'" aria-pressed="'+(W.week===wk)+'">'+nL('Week '+W.week,'أسبوع '+W.week)+'</button>'}).join('')+'</div>';
+  h+='<div class="nt-days" data-help="week-days" role="tablist">'+[0,1,2,3,4,5,6].map(function(j){var x=dOf(addDays(nStart(N),(wk-1)*7+j));return '<button data-nday="'+j+'" aria-pressed="'+(j===sel)+'">'+NDN[NLANG][(x.getDay()+6)%7]+'<br><small>'+x.getDate()+'</small></button>'}).join('')+'</div>';
   var t=d.totals;
-  h+='<div class="nt-tot"><span>'+esc(nT(d.name))+' · <b class="num">'+Number(t.kcal||0).toLocaleString()+' kcal</b></span><span>P <b>'+t.p+'</b> · C <b>'+t.c+'</b> · F <b>'+t.f+'</b></span></div>';
+  h+='<div class="nt-tot" data-help="day-totals"><span>'+esc(nT(d.name))+' · <b class="num">'+Number(t.kcal||0).toLocaleString()+' kcal</b></span><span>P <b>'+t.p+'</b> · C <b>'+t.c+'</b> · F <b>'+t.f+'</b></span></div>';
   d.meals.forEach(function(m){h+=nMealCard(m)});
   h+=nPrepCard(P.weeks[wk-1]);
   var notes=(P.notes||{})[NLANG]||(P.notes||{}).en||[];
@@ -1757,7 +1825,7 @@ function nOpts(N){var P=(N.plan||{}).data,f=P&&P.fixed&&P.fixed[NOPT];if(!f)retu
 // grocery: lunch and dinner of the week (nights out left off) + the usual breakfast and snack, ticks saved on the server
 function nGroceryV4(N){var P=N.plan.data,pl=N.plan,nw=P.weeks.length,cy=(N.nut||{}).cycle||{},wk=Math.min(nw,NWK||(cy.day?nCurWeek(N):1)),W=P.weeks[wk-1],tk=((pl.ticks||{})[String(wk)])||[],can=pl.state==='ready',picks=pl.picks||{};
   var h=nTop('plan')+'<div class="nt-h">'+nL('Week '+wk+' <em>list</em>','لائحة <em>الأسبوع '+wk+'</em>')+'</div><div class="nt-sub">'+nL('Added up from your portions, in shop packs. Meals out are left off. '+(can?'Tick as you shop.':'Ticks open once your plan is approved.'),'مجموعة من كمياتك، بأحجام المحلات. أكل برّا مش محسوب. '+(can?'علّم وانت عم تتسوق.':'التعليم بيفتح بعد الموافقة على خطتك.'))+'</div>';
-  if(nw>1)h+='<div class="nt-days" role="tablist">'+P.weeks.map(function(x){return '<button data-nwk="'+x.week+'" aria-pressed="'+(x.week===wk)+'">'+nL('Week '+x.week,'أسبوع '+x.week)+'</button>'}).join('')+'</div>';
+  if(nw>1)h+='<div class="nt-days" data-help="week-tabs" role="tablist">'+P.weeks.map(function(x){return '<button data-nwk="'+x.week+'" aria-pressed="'+(x.week===wk)+'">'+nL('Week '+x.week,'أسبوع '+x.week)+'</button>'}).join('')+'</div>';
   var row=function(pre){return function(x){var k=pre+x.key,on=tk.indexOf(k)>-1;return '<button class="nt-gi" data-ngw="'+wk+'" data-ngk="'+esc(k)+'" aria-pressed="'+on+'"'+(can?'':' disabled')+'><span class="bx">'+(on?ICON('i-check','width:14px;height:14px'):'')+'</span><span>'+esc(nT(x))+'</span><i>'+esc(nT(x.qty))+'</i></button>'}};
   var list=function(pre,G,title){if(!G)return '';var s='<div class="sec"><h2>'+esc(title)+'</h2></div>';(G.aisles||[]).forEach(function(a){s+='<div class="nt-aisle">'+esc(nT(a.aisle))+'</div>'+a.items.map(row(pre)).join('')});
     if(G.pantry&&G.pantry.items.length)s+='<div class="nt-aisle">'+esc(nT(G.pantry.title))+'</div>'+G.pantry.items.map(row(pre)).join('');return s};
@@ -1776,13 +1844,13 @@ function nPlan(N){var P=(N.plan||{}).data;if(!P)return nTop('home')+'<div class=
   var h=nTop('home'),d,di;
   if(P.schedule){
     var cy=(N.nut||{}).cycle||{},wk=NWK||nCurWeek(N),start=cy.start||D.today;
-    h+='<div class="muted" style="font-size:13.5px;margin-bottom:8px">'+esc(nCycleLine(cy))+'</div><div class="nt-days" role="tablist">'+[1,2,3].map(function(w){return '<button data-nwk="'+w+'" aria-pressed="'+(w===wk)+'">'+nL('Week '+w,'أسبوع '+w)+'</button>'}).join('')+'</div>';
+    h+='<div class="muted" style="font-size:13.5px;margin-bottom:8px">'+esc(nCycleLine(cy))+'</div><div class="nt-days" data-help="week-tabs" role="tablist">'+[1,2,3].map(function(w){return '<button data-nwk="'+w+'" aria-pressed="'+(w===wk)+'">'+nL('Week '+w,'أسبوع '+w)+'</button>'}).join('')+'</div>';
     var base=(wk-1)*7,sel=Math.min(6,NDAY);
-    h+='<div class="nt-days" role="tablist">'+[0,1,2,3,4,5,6].map(function(i){var ymd=addDays(start,base+i),x=dOf(ymd);return '<button data-nday="'+i+'" aria-pressed="'+(i===sel)+'">'+NDN[NLANG][(x.getDay()+6)%7]+'<br><small>'+x.getDate()+'</small></button>'}).join('')+'</div>';
+    h+='<div class="nt-days" data-help="week-days" role="tablist">'+[0,1,2,3,4,5,6].map(function(i){var ymd=addDays(start,base+i),x=dOf(ymd);return '<button data-nday="'+i+'" aria-pressed="'+(i===sel)+'">'+NDN[NLANG][(x.getDay()+6)%7]+'<br><small>'+x.getDate()+'</small></button>'}).join('')+'</div>';
     di=P.schedule[base+sel]%P.days.length;d=P.days[di];
-  }else{di=NWEEK[NDAY]%P.days.length;d=P.days[di];h+='<div class="nt-days" role="tablist">'+NDN[NLANG].map(function(x,i){return '<button data-nday="'+i+'" aria-pressed="'+(i===NDAY)+'">'+x+'</button>'}).join('')+'</div>'}
+  }else{di=NWEEK[NDAY]%P.days.length;d=P.days[di];h+='<div class="nt-days" data-help="week-days" role="tablist">'+NDN[NLANG].map(function(x,i){return '<button data-nday="'+i+'" aria-pressed="'+(i===NDAY)+'">'+x+'</button>'}).join('')+'</div>'}
   d=d||P.days[0];var t=d.totals||{};
-  h+='<div class="nt-tot"><span>'+nL('Day','نهار')+' '+esc(d.key||'ABCDEFG'.charAt(di))+' · <b class="num">'+Number(t.kcal||0).toLocaleString()+' kcal</b></span><span>P <b>'+(t.p||0)+'</b> · C <b>'+(t.c||0)+'</b> · F <b>'+(t.f||0)+'</b></span></div>';
+  h+='<div class="nt-tot" data-help="day-totals"><span>'+nL('Day','نهار')+' '+esc(d.key||'ABCDEFG'.charAt(di))+' · <b class="num">'+Number(t.kcal||0).toLocaleString()+' kcal</b></span><span>P <b>'+(t.p||0)+'</b> · C <b>'+(t.c||0)+'</b> · F <b>'+(t.f||0)+'</b></span></div>';
   (d.meals||[]).forEach(function(m){h+=nMealCard(m)});
   var notes=(P.notes||{})[NLANG]||(P.notes||{}).en||[];
   if(N.plan.note||notes.length)h+='<div class="card" style="margin-top:4px"><b>'+nL('From our team','من فريقنا')+'</b>'+(N.plan.note?'<p style="margin-top:6px;font-size:14px;color:var(--ink-2)">'+esc(N.plan.note)+'</p>':'')+(notes.length?'<ul class="nt-notes">'+notes.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>':'')+'</div>';
@@ -1796,7 +1864,7 @@ function nGrocery(N){var P=(N.plan||{}).data;if(!P)return nTop('home');if(nV4(N)
   if(G.length&&G[0].aisles){
     var wk=NWK||nCurWeek(N),W=G[wk-1]||G[0],tk=((N.plan.ticks||{})[String(W.week)])||[];
     var h=nTop('plan')+'<div class="nt-h">'+nL('Week '+W.week+' <em>list</em>','لائحة <em>الأسبوع '+W.week+'</em>')+'</div><div class="nt-sub">'+nL('Added up from your portions, in shop packs. For you only. Tick as you shop.','مجموعة من كمياتك، بأحجام المحلات. إلك انت بس. علّم وانت عم تتسوق.')+'</div>';
-    h+='<div class="nt-days" role="tablist">'+G.map(function(g){return '<button data-nwk="'+g.week+'" aria-pressed="'+(g.week===W.week)+'">'+nL('Week '+g.week,'أسبوع '+g.week)+'</button>'}).join('')+'</div>';
+    h+='<div class="nt-days" data-help="week-tabs" role="tablist">'+G.map(function(g){return '<button data-nwk="'+g.week+'" aria-pressed="'+(g.week===W.week)+'">'+nL('Week '+g.week,'أسبوع '+g.week)+'</button>'}).join('')+'</div>';
     var row=function(x){var on=tk.indexOf(x.key)>-1;return '<button class="nt-gi" data-ngw="'+W.week+'" data-ngk="'+esc(x.key)+'" aria-pressed="'+on+'"><span class="bx">'+(on?ICON('i-check','width:14px;height:14px'):'')+'</span><span>'+esc(nT(x))+'</span><i>'+esc(nT(x.qty))+'</i></button>'};
     W.aisles.forEach(function(a){h+='<div class="nt-aisle">'+esc(nT(a.aisle))+'</div>'+a.items.map(row).join('')});
     if(W.pantry&&W.pantry.items.length)h+='<div class="nt-aisle">'+esc(nT(W.pantry.title))+'</div>'+W.pantry.items.map(row).join('');
@@ -1863,6 +1931,8 @@ function nutBind(){var N=nGet()||{};
   $$('[data-nsx]').forEach(function(b){b.onclick=function(){$$('[data-nsx]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
   var sv=$('#nbSave');if(sv)sv.onclick=function(){var g=function(id){var e=$('#'+id);return e?Number(String(e.value).replace(',','.'))||0:0},sx=$('[data-nsx][aria-pressed="true"]');
     var d={weight:g('nbW'),height:g('nbH'),birth:g('nbY'),sex:sx?sx.dataset.nsx:'',target:g('nbT')};
+    var ob=N.body||{},miss=[];if(ob.weight&&!d.weight)miss.push(nL('weight','الوزن'));if(ob.height&&!d.height)miss.push(nL('height','الطول'));if(N.target&&!d.target)miss.push(nL('goal weight','الوزن المطلوب'));
+    if(miss.length){toast(nL('Your '+miss.join(' and ')+' cannot be empty. Type it to save.','ما فيك تفضّي '+miss.join(' و')+'. اكتبه لتحفظ.'));return}
     nLoad('body',d,sv).then(function(){NUPL=null;NBD=null;NV='home';render();scrollTo(0,0)}).catch(function(){})};
   var gn=$('[data-ngen]');if(gn)gn.onclick=function(){nLoad('generate',{},gn).then(function(){toast(nL('We are preparing your plan. We tell you when it is ready.','عم نحضّر خطتك. منخبرك أول ما تجهز.'))}).catch(function(){})};
   $$('[data-nsafe]').forEach(function(b){b.onclick=function(){nLoad('body',{target:+b.dataset.nsafe},b).catch(function(){})}});
@@ -1915,10 +1985,10 @@ function goPlan(tab){PLANTAB=tab;store('wbc_ptab',tab);if(tab==='nut'){NV='home'
 var PLAYSVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
 function tabsView(){
   var g=D&&D.guest,n=Object.keys(CART||{}).reduce(function(a,k){return a+CART[k]},0);
-  var b=function(sec,ic,lb,dot){return '<button data-sec="'+sec+'"'+(SEC===sec?' aria-current="page"':'')+'>'+ICON(ic)+'<span>'+lb+'</span>'+(dot?'<span class="dot num">'+dot+'</span>':'')+'</button>'};
-  var shop=g?'<a class="tb" href="'+waLink('Hi '+DESK()+', I have a question about Wellbe.')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'<span>'+DESK()+'</span></a>':b('shop','i-bag','Shop',n);
-  return '<nav class="tabs v3" aria-label="Main"><div class="in">'+b('center','i-home',g?'Wellbe':'Center')+b('plan','i-dumbbell','My Plan')+'<span aria-hidden="true"></span>'+shop+b('me','i-me','Me')+
-   '<button class="dome" data-sec="play" aria-label="Play"'+(SEC==='play'?' aria-current="page"':'')+'><span class="pi">'+PLAYSVG+'</span><b>Play</b></button></div></nav>'}
+  var b=function(sec,ic,lb,dot){return '<button data-help="tab-'+sec+'" data-sec="'+sec+'"'+(SEC===sec?' aria-current="page"':'')+'>'+ICON(ic)+'<span>'+lb+'</span>'+(dot?'<span class="dot num">'+dot+'</span>':'')+'</button>'};
+  var shop=g?'<a class="tb" data-help="tab-whatsapp" href="'+waLink('Hi '+DESK()+', I have a question about Wellbe.')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'<span>'+DESK()+'</span></a>':b('shop','i-bag','Shop',n);
+  return '<nav class="tabs v3" data-help="tabs" aria-label="Main"><div class="in">'+b('center','i-home',g?'Wellbe':'Center')+b('plan','i-dumbbell','My Plan')+'<span aria-hidden="true"></span>'+shop+b('me','i-me','Me')+
+   '<button class="dome" data-help="tab-play" data-sec="play" aria-label="Play"'+(SEC==='play'?' aria-current="page"':'')+'><span class="pi">'+PLAYSVG+'</span><b>Play</b></button></div></nav>'}
 function rdH2(t,link,act){return '<div class="rd-h2"><h2>'+t+'</h2>'+(link?'<button data-act="'+act+'">'+link+'</button>':'')+'</div>'}
 var WDS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function rdSessRow(s,chip,past){var d=dOf(s.date),td=s.date===D.today;
@@ -1931,9 +2001,9 @@ function promiseSentence(p){var t=String(p||'').trim().replace(/[.!\s]+$/,'');if
   if(t.charAt(1)&&t.charAt(1)===t.charAt(1).toLowerCase())t=t.charAt(0).toLowerCase()+t.slice(1);
   return 'My promise to myself: I will '+t+'.'}
 function rdPromise(a){
-  if(!a.goal)return '<button class="rd-pr" data-act="goal" style="width:100%;text-align:left;display:block"><small>My promise</small><p>What do you promise yourself to achieve with Wellbe?</p><span class="btn sm" style="background:#fff;color:#a3263f;display:inline-flex">Write my promise</span></button>';
+  if(!a.goal)return '<button class="rd-pr" data-help="habits" data-act="goal" style="width:100%;text-align:left;display:block"><small>My promise</small><p>What do you promise yourself to achieve with Wellbe?</p><span class="btn sm" style="background:#fff;color:#a3263f;display:inline-flex">Write my promise</span></button>';
   var k=keyState(a),done=k.filter(Boolean).length,sk=streak(a),hb=todayHabits(a);
-  return '<div class="rd-pr"><button class="rd-pr-ed" data-act="goal" aria-label="Change my promise">'+ICON('i-edit','width:16px;height:16px')+'</button><small>My promise</small><p>'+esc(promiseSentence(a.goal.promise))+'</p>'+
+  return '<div class="rd-pr" data-help="habits"><button class="rd-pr-ed" data-act="goal" aria-label="Change my promise">'+ICON('i-edit','width:16px;height:16px')+'</button><small>My promise</small><p>'+esc(promiseSentence(a.goal.promise))+'</p>'+
    '<div class="rd-keys">'+hb.map(function(x,i){return '<button class="key" aria-pressed="'+!!k[i]+'" data-key="'+i+'"><span class="n">'+(k[i]?'✓':(i+1))+'</span><span class="t">'+esc(x)+'</span></button>'}).join('')+'</div>'+
    '<div class="ft"><span>'+done+' of 3 today</span><span>'+(sk?'🔥 '+sk+' day'+(sk>1?'s':'')+' in a row':'Tick them as you go')+'</span></div></div>'}
 /* ---------- women only card ---------- */
@@ -1974,20 +2044,20 @@ ACT.water=function(n){var k=waterKey(),v=Math.max(0,(+(store(k)||0))+(+n||1));st
 /* ---------- CENTER ---------- */
 VIEWS.home=function(){var a=ACC(),p=currentPkg(a),q=quoteOfDay(),up=a.upcoming.filter(function(s){return s.at>Date.now()-36e5&&!/cancel/i.test(s.att||'')});
   var h='<div class="hello"><p>'+dayLong(D.today)+'</p><h1>Hi <em>'+esc(a.first)+'</em></h1></div>';
-  h+='<div class="rd-q"><span class="qi">'+ICON('i-spark','width:18px;height:18px')+'</span><div><small>Quote of the day</small><blockquote>“'+esc(q[0])+'”</blockquote><cite>'+esc(q[1])+'</cite></div></div>';
+  h+='<div class="rd-q" data-help="quote"><span class="qi">'+ICON('i-spark','width:18px;height:18px')+'</span><div><small>Quote of the day</small><blockquote>“'+esc(q[0])+'”</blockquote><cite>'+esc(q[1])+'</cite></div></div>';
   h+=rdH2('Upcoming sessions',up.length?'See all':'','sessall');
-  h+=up.length?'<div class="rd-up">'+up.slice(0,UI.UPCOMING_MAX).map(function(s,i){return rdSessRow(s,i===0?'<span class="rd-chip">Next</span>':'')}).join('')+'</div><button class="rd-book" data-act="session">'+ICON('i-plus','width:16px;height:16px')+'Book a session</button>':
-   '<div class="rd-up"><div class="r"><div class="t"><b>No session booked</b><span>Pick a day and time. '+DESK()+' confirms it with you.</span></div><button class="btn sm" data-act="session">Book</button></div></div>';
-  h+='<div style="margin-top:14px">'+rdNutCard()+'</div>';
+  h+=up.length?'<div class="rd-up" data-help="sessions">'+up.slice(0,UI.UPCOMING_MAX).map(function(s,i){return rdSessRow(s,i===0?'<span class="rd-chip">Next</span>':'')}).join('')+'</div><button class="rd-book" data-help="book" data-act="session">'+ICON('i-plus','width:16px;height:16px')+'Book a session</button>':
+   '<div class="rd-up" data-help="sessions"><div class="r"><div class="t"><b>No session booked</b><span>Pick a day and time. '+DESK()+' confirms it with you.</span></div><button class="btn sm" data-help="book" data-act="session">Book</button></div></div>';
+  h+='<div style="margin-top:14px" data-help="nutrition">'+rdNutCard()+'</div>';
   h+='<div style="margin-top:14px">'+rdPromise(a)+'</div>';
-  if(p)h+=rdH2('My package','Details','pkg|'+p.id)+pkgCard(p,true);
-  var off=offerCards(a);if(off)h+='<div style="margin-top:14px">'+off+'</div>';
-  if(a.physio&&a.physio.show)h+='<div style="margin-top:14px">'+physioCard(a)+'</div>';
-  if(isWoman(a))h+='<div style="margin-top:14px"><div class="madero"><span class="deco"></span><div class="tag">Maderotherapy with '+SVCNAME('Madero')+'</div><h3>Cellulite Bothering You?</h3><button class="btn block" data-act="book|madero">BOOK MADEROTHERAPY</button></div></div>';
+  if(p)h+=rdH2('My package','Details','pkg|'+p.id)+'<div class="hm-pkg" data-help="package">'+pkgCard(p,true)+'</div>';
+  var off=offerCards(a);if(off)h+='<div style="margin-top:14px" data-help="offers">'+off+'</div>';
+  if(a.physio&&a.physio.show)h+='<div style="margin-top:14px" data-help="physio">'+physioCard(a)+'</div>';
+  if(isWoman(a))h+='<div style="margin-top:14px" data-help="madero"><div class="madero"><span class="deco"></span><div class="tag">Maderotherapy with '+SVCNAME('Madero')+'</div><h3>Cellulite Bothering You?</h3><button class="btn block" data-act="book|madero">BOOK MADEROTHERAPY</button></div></div>';
   h+=rdRate();
-  h+='<div style="margin-top:22px">'+friendCard()+'</div>';
+  h+='<div style="margin-top:22px" data-help="invite">'+friendCard()+'</div>';
   return h};
-function rdRate(){return rdH2('Rate us')+'<div class="rd-rate"><div class="card"><div class="stars">★★★★★</div><b>On Google</b><span>Helps others find us</span><button class="btn sm" style="margin-top:10px;width:100%;background:#e8a400;color:#fff" data-review="1">Review</button></div><div class="card"><div class="stars">★★★★★</div><b>In the app</b><span>Tell us how we are doing</span><button class="btn sm sec2" style="margin-top:10px;width:100%" data-act="rate">Rate</button></div></div>'}
+function rdRate(){return rdH2('Rate us')+'<div class="rd-rate" data-help="rate"><div class="card"><div class="stars">★★★★★</div><b>On Google</b><span>Helps others find us</span><button class="btn sm" style="margin-top:10px;width:100%;background:#e8a400;color:#fff" data-review="1">Review</button></div><div class="card"><div class="stars">★★★★★</div><b>In the app</b><span>Tell us how we are doing</span><button class="btn sm sec2" style="margin-top:10px;width:100%" data-act="rate">Rate</button></div></div>'}
 function friendCard(){var a=ACC()||{},amt=refAmt();return '<div class="invite rd-inv"><h3>Who would you like to invite to Wellbe?</h3><p>We’ll reach out with a warm welcome and a free trial session from you.</p>'+
   (amt?'<div class="ref-earn">'+ICON('i-gift','width:22px;height:22px;flex:none')+'<span>If your friend joins Wellbe, you get <b>'+money(amt)+' Wellbe Credit</b> for your next package.</span></div>':'')+
   '<button class="pick" data-act="friend"><span class="ic">'+ICON('i-users')+'</span><span class="grow"><b>Choose from my contacts</b><span>'+(navigator.contacts&&navigator.contacts.select?'Pick them, or type their name and phone number':'Type their name and phone number')+'</span></span>'+ICON('i-plus','width:20px;height:20px')+'</button>'+refList(a)+'</div>'}
@@ -2050,42 +2120,37 @@ function photoCrop(file){return new Promise(function(res,rej){var r=new FileRead
 function photoResize(file){return new Promise(function(res,rej){var r=new FileReader();r.onerror=rej;r.onload=function(){var im=new Image();im.onload=function(){var s=UI.PHOTO_PX,c=document.createElement('canvas'),m=Math.min(im.width,im.height);c.width=c.height=s;c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,s,s);res(c.toDataURL('image/jpeg',.82))};im.onerror=rej;im.src=r.result};r.readAsDataURL(file)})}
 function photoBind(){var f=$('#rdPhoto');if(!f)return;f.onchange=function(){var x=f.files[0];if(!x)return;var a=ACC();photoCrop(x).then(function(u){f.value='';a.photo=u;photoStore(a);cacheSave(D);render();return api('app_cl_profile',{cid:a.cid,op:'photo',photo:u})}).then(function(){toast('Photo saved')}).catch(function(e){toast(/unknown/i.test(String(e&&e.message))?'Photo shows on this phone. Saving online comes with the next update.':'Photo not saved, try again')})}}
 function avatar(a,big){return a.photo?'<img src="'+esc(a.photo)+'" alt="">':esc(initials(a.name))}
-/* ---------- profile % ---------- */
+/* ---------- profile steps: see HELP + PROFILE STEPS below ---------- */
 function runsKey(){return 'wbc_runs_'+(ACC()?ACC().cid:'')+'_'+(D?D.today:'')}
 function runsToday(){return +(store(runsKey())||0)}
-function profileChecks(){var N=nGet()||{},RS=RUNST||{},C=RS.cash||{},used=(C.pending||0)>0||((C.total||0)-(C.bal||0))>0,r=runsToday();
-  return [['Your info for nutrition (weight, height, goal)',!!(N.body&&N.body.weight&&N.body.height&&N.target),'Add','nutbody'],
-   ['5 minute questionnaire',!!N.done,'Start','nutq'],
-   ['Today: '+Math.min(r,UI.RUNS_PER_DAY)+' of '+UI.RUNS_PER_DAY+' runs',r>=UI.RUNS_PER_DAY,'Play','play'],
-   ['Use your Wellbe Credit on a service',used,C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play']]}
 ACT.nutbody=function(){PLANTAB='nut';store('wbc_ptab','nut');NV='body';SEC='plan';render();scrollTo(0,0);nWarm(true)};
 ACT.nutq=function(){var N=nGet()||{};PLANTAB='nut';store('wbc_ptab','nut');NQS=Math.min(N.step||0,((N.questions||[]).length||7)-1);NV='q';NDRAFT={};SEC='plan';render();nWarm(true)};
 ACT.play=function(){goSec('play')};
 ACT.plan=function(t){goPlan(t==='nut'?'nut':'wo')};
 /* ---------- ME ---------- */
-VIEWS.me=function(){var a=ACC(),ck=profileChecks(),pc=Math.round(ck.filter(function(c){return c[1]}).length/ck.length*100);
-  var h='<div class="rd-me"><button class="ph" data-act="photo" aria-label="Change my photo">'+avatar(a)+'<span class="ed">'+ICON('i-edit')+'</span></button><input type="file" id="rdPhoto" accept="image/*" hidden><div><h1>'+esc(a.name)+'</h1><p>'+esc(D.email)+'</p></div></div>';
-  h+='<div class="rd-pc"><div class="pt"><div class="rd-ring" style="--p:'+pc+'"><span>'+pc+'%</span></div><div><b>Your profile is '+pc+'% complete</b><span>'+(pc<100?'Finish it to get your full plan and more rewards':'All done. Keep it up!')+'</span></div></div><div class="rd-ck">'+
-   ck.map(function(c){return '<button class="c'+(c[1]?' on':'')+'"'+(c[1]?'':' data-act="'+c[3]+'"')+'><i>✓</i><span>'+esc(c[0])+'</span>'+(c[1]?'':'<em>'+esc(c[2])+'</em>')+'</button>'}).join('')+'</div><div class="muted" style="font-size:12px;margin-top:8px">Runs reset every day at midnight.</div></div>';
-  h+='<button class="rd-promise" data-act="goal"><small>My promise</small><p>'+(a.goal?esc(promiseSentence(a.goal.promise)):'Write the promise you make to yourself')+'</p></button>';
+VIEWS.me=function(){var a=ACC();
+  var h='<div class="rd-me"><button class="ph" data-help="photo" data-act="photo" aria-label="Change my photo">'+avatar(a)+'<span class="ed">'+ICON('i-edit')+'</span></button><input type="file" id="rdPhoto" accept="image/*" hidden><div><h1>'+esc(a.name)+'</h1><p>'+esc(D.email)+'</p></div></div>';
+  h+=stepsCard();
+  h+='<button class="rd-promise" data-help="promise" data-act="goal"><small>My promise</small><p>'+(a.goal?esc(promiseSentence(a.goal.promise)):'Write the promise you make to yourself')+'</p></button>';
   if(!D.guest){var up=allSess(a);
-    h+=rdH2('My sessions','See all','sessall')+'<div class="rd-up">'+(up.length||a.past.length?up.slice(0,2).map(function(s){return rdSessRow(s,'<span class="rd-chip">Booked</span>')}).join('')+a.past.slice(0,2).map(function(s){return rdSessRow(s,attChip(s),true)}).join(''):'<div class="r"><div class="t"><b>No sessions yet</b></div><button class="btn sm" data-act="session">Book</button></div>')+'</div>';
-    h+=rdH2('My requests',a.requests.length>2?'See all':'','reqall')+'<div class="rd-pk">'+(a.requests.length?a.requests.slice(0,2).map(function(q){var r=reqState(q),st='<span class="st '+{logged:'past',wait:'nx',no:'past',done:'cur'}[r[1]]+'">'+r[0]+'</span>';
+    h+=rdH2('My sessions','See all','sessall')+'<div class="rd-up" data-help="my-sessions">'+(up.length||a.past.length?up.slice(0,2).map(function(s){return rdSessRow(s,'<span class="rd-chip">Booked</span>')}).join('')+a.past.slice(0,2).map(function(s){return rdSessRow(s,attChip(s),true)}).join(''):'<div class="r"><div class="t"><b>No sessions yet</b></div><button class="btn sm" data-act="session">Book</button></div>')+'</div>';
+    h+=rdH2('My requests',a.requests.length>2?'See all':'','reqall')+'<div class="rd-pk" data-help="my-requests">'+(a.requests.length?a.requests.slice(0,2).map(function(q){var r=reqState(q),st='<span class="st '+{logged:'past',wait:'nx',no:'past',done:'cur'}[r[1]]+'">'+r[0]+'</span>';
       return '<div class="r'+(q.status==='New'?'':' past')+'"><div class="t"><b>'+esc(q.type)+(q.slot?' · '+esc(String(q.slot).split(' · ')[0]):'')+'</b><span>'+esc(q.created)+'</span></div>'+st+'</div>'}).join(''):'<div class="r"><div class="t"><span>No requests yet.</span></div></div>')+'</div>';
     var o={current:0,future:1,past:2},pk=a.pkgs.slice().sort(function(x,y){return (o[x.phase]-o[y.phase])||((y.start||'')<(x.start||'')?-1:1)});
-    if(pk.length)h+=rdH2('My packages')+'<div class="rd-pk">'+pk.slice(0,8).map(function(p){var lab=p.phase==='current'?'<span class="st cur">Current</span>':p.phase==='future'?'<span class="st nx">Starts '+dmy(p.start)+'</span>':'<span class="st past">'+(/cancel/i.test(p.status)?'Cancelled':'Ended')+'</span>';
+    if(pk.length)h+=rdH2('My packages')+'<div class="rd-pk" data-help="my-packages">'+pk.slice(0,8).map(function(p){var lab=p.phase==='current'?'<span class="st cur">Current</span>':p.phase==='future'?'<span class="st nx">Starts '+dmy(p.start)+'</span>':'<span class="st past">'+(/cancel/i.test(p.status)?'Cancelled':'Ended')+'</span>';
       return '<button class="r'+(p.phase==='past'?' past':'')+'" data-act="pkg|'+esc(p.id)+'"><div class="t"><b>'+esc(p.label)+'</b><span>'+p.used+' of '+p.total+' done · '+dmy(p.start)+' → '+dmy(p.end)+'</span></div>'+lab+'</button>'}).join('')+'</div>'}
   var multi=!D.guest&&(D.packages||[]).length&&a.pkgs.some(function(p){return p.total>1});
-  h+='<div class="rd-rows" style="margin-top:14px">'+(multi?'<button class="rd-row" data-act="allpkgs">'+ICON('i-card')+'All Wellbe packages<span class="go">›</span></button>':'')+'<button class="rd-row" data-act="nut">'+ICON('i-spark')+'My nutrition<span class="go">›</span></button><button class="rd-row" data-act="color">'+ICON('i-heart')+'App color<span class="go">›</span></button><button class="rd-row" data-act="lbhide">'+ICON('i-users')+'Show me on leaderboards<span class="go">'+(store('wbc_lbhide')==='1'?'Off':'On')+'</span></button><a class="rd-row" href="privacy.html" target="_blank" rel="noopener">'+ICON('i-lock')+'Privacy policy<span class="go">›</span></a><button class="rd-row" data-act="out">'+ICON('i-out')+'Sign out<span class="go">›</span></button><button class="rd-row" data-act="delacc" style="color:var(--crimson)">'+ICON('i-x')+'Delete my account<span class="go">›</span></button></div>';
+  h+=helpRows();
+  h+='<div class="rd-rows" data-help="settings" style="margin-top:14px">'+(multi?'<button class="rd-row" data-act="allpkgs">'+ICON('i-card')+'All Wellbe packages<span class="go">›</span></button>':'')+'<button class="rd-row" data-act="nut">'+ICON('i-spark')+'My nutrition<span class="go">›</span></button><button class="rd-row" data-act="color">'+ICON('i-heart')+'App color<span class="go">›</span></button><button class="rd-row" data-act="lbhide">'+ICON('i-users')+'Show me on leaderboards<span class="go">'+(store('wbc_lbhide')==='1'?'Off':'On')+'</span></button><a class="rd-row" href="privacy.html" target="_blank" rel="noopener">'+ICON('i-lock')+'Privacy policy<span class="go">›</span></a><button class="rd-row" data-act="out">'+ICON('i-out')+'Sign out<span class="go">›</span></button><button class="rd-row" data-act="delacc" style="color:var(--crimson)">'+ICON('i-x')+'Delete my account<span class="go">›</span></button></div>';
   return h};
 /* ---------- MY PLAN: Workouts | Nutrition ---------- */
 function aboutCard(){var N=nGet()||{},b=N.body||((WOS[ACC().cid]||{}).body)||{},cp=N.comp||{};
   var f=function(v,u){return '<div><b>'+(v?esc(v):'–')+'</b><span>'+u+'</span></div>'};
-  return '<div class="rd-about"><div class="nums">'+f(b.weight,'kg')+f(b.height,'cm')+f(N.target,'goal kg')+(cp.bf?f(cp.bf+'%','body fat'):'')+'</div><button class="ed" data-act="nutbody">Edit</button></div><div class="rd-about-note">'+ICON('i-users')+'Your coach sees this to build your workouts.</div>'}
+  return '<div class="rd-about" data-help="body-numbers"><div class="nums">'+f(b.weight,'kg')+f(b.height,'cm')+f(N.target,'goal kg')+(cp.bf?f(cp.bf+'%','body fat'):'')+'</div><button class="ed" data-act="nutbody">Edit</button></div><div class="rd-about-note">'+ICON('i-users')+'Your coach sees this to build your workouts.</div>'}
 // weekly weigh-in card (home and today)
-function nWeighCard(N){var w=N.weighins||[],last=w[w.length-1];return '<div class="sec"><h2>'+nL('Weekly weigh-in','الوزن الأسبوعي')+'</h2></div><div class="card"><div class="muted" style="font-size:14px">'+(last?nL('Last: ','آخر وزن: ')+last.kg+' kg · '+nDate(last.date):nL('Weigh yourself once a week, same day, morning.','وزن حالك مرة بالأسبوع، نفس النهار، الصبح.'))+'</div><div class="nt-wrow"><input class="inp" id="ntW" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button class="btn sm" data-nweigh="1">'+nL('Save','احفظ')+'</button></div></div>'}
+function nWeighCard(N){var w=N.weighins||[],last=w[w.length-1];return '<div class="sec"><h2>'+nL('Weekly weigh-in','الوزن الأسبوعي')+'</h2></div><div class="card" data-help="weigh-in"><div class="muted" style="font-size:14px">'+(last?nL('Last: ','آخر وزن: ')+last.kg+' kg · '+nDate(last.date):nL('Weigh yourself once a week, same day, morning.','وزن حالك مرة بالأسبوع، نفس النهار، الصبح.'))+'</div><div class="nt-wrow"><input class="inp" id="ntW" inputmode="decimal" placeholder="kg" aria-label="Weight in kg"><button class="btn sm" data-nweigh="1">'+nL('Save','احفظ')+'</button></div></div>'}
 function nToday(N){var P=N.plan.data,c=Object.assign({},N.calc||{},N.plan.macros||{}),d=nDayTpl(N,0)||{},nx=nNextMeal(N),nxn=nx&&!nx.tomorrow?nx.m:null;
-  var h='<div class="rd-macro"><div><b class="num">'+Number(c.kcal||0).toLocaleString()+'</b><span>kcal</span></div><div><b class="num">'+(c.p||0)+'</b><span>'+nL('Protein','بروتين')+'</span></div><div><b class="num">'+(c.c||0)+'</b><span>'+nL('Carbs','نشويات')+'</span></div><div><b class="num">'+(c.f||0)+'</b><span>'+nL('Fat','دهون')+'</span></div></div>';
+  var h='<div class="rd-macro" data-help="macros"><div><b class="num">'+Number(c.kcal||0).toLocaleString()+'</b><span>kcal</span></div><div><b class="num">'+(c.p||0)+'</b><span>'+nL('Protein','بروتين')+'</span></div><div><b class="num">'+(c.c||0)+'</b><span>'+nL('Carbs','نشويات')+'</span></div><div><b class="num">'+(c.f||0)+'</b><span>'+nL('Fat','دهون')+'</span></div></div>';
   h+=(d.meals||[]).map(function(m){if(m.social)return nSocialCard(m.social,m.time);var k=(m.items||[]).reduce(function(s,x){return s+(Number(x.kcal)||0)},0),isN=nxn&&m.slot===nxn.slot&&m.time===nxn.time;
     return '<div class="rd-meal'+(isN?' nx':'')+'"><div class="h"><small>'+esc({breakfast:nL('Breakfast','ترويقة'),lunch:nL('Lunch','غدا'),dinner:nL('Dinner','عشا'),snack:nL('Snack','سناك')}[m.slot]||m.slot||'')+(m.time?' · '+esc(m.time):'')+'</small><span>'+Math.round(k)+' kcal</span></div><b>'+esc(nT(m.name))+(isN?' <span class="rd-chip" style="vertical-align:2px">'+nL('Next','التالي')+' · '+cdText(nx.mins)+'</span>':'')+'</b>'+
      (m.items||[]).map(function(x){return '<div class="it"><span>'+esc(nT(x.food))+'</span><em>'+(x.g?Math.round(x.g)+' '+esc(x.unit||'g')+' · ':'')+esc(nT(x.measure))+'</em></div>'}).join('')+(m.swap&&m.swap.items?'<details class="nt-sw"><summary>↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap.name))+'</summary>'+nItems(m.swap.items)+'</details>':(m.swap&&nT(m.swap)?'<div class="nt-sw">↺ '+nL('Swap: ','بديل: ')+esc(nT(m.swap))+'</div>':''))+(m.fixed!=null?'<div class="nt-opt"><span>'+nL('Option '+(m.opt+1)+' of '+m.nopts+' · swap any day','خيار '+(m.opt+1)+' من '+m.nopts+' · بدّل أي يوم')+'</span><button class="btn sm ghost" data-nopts="'+m.fixed+'">'+nL('All options','كل الخيارات')+'</button></div>':'')+'</div>'}).join('');
@@ -2096,13 +2161,13 @@ function nToday(N){var P=N.plan.data,c=Object.assign({},N.calc||{},N.plan.macros
   return h}
 VIEWS.myplan=function(){var a=ACC(),sub=PLANTAB==='nut'&&NV!=='home'&&NV!=='q';
   if(sub)return VIEWS.nut();
-  var h='<div class="hello" style="margin-bottom:10px"><h1>My <em>plan</em></h1></div><div class="rd-seg" role="tablist"><button data-ptab="wo" aria-pressed="'+(PLANTAB==='wo')+'">Workouts</button><button data-ptab="nut" aria-pressed="'+(PLANTAB==='nut')+'">Nutrition</button></div>';
+  var h='<div class="hello" style="margin-bottom:10px"><h1>My <em>plan</em></h1></div><div class="rd-seg" data-help="plan-tabs" role="tablist"><button data-ptab="wo" aria-pressed="'+(PLANTAB==='wo')+'">Workouts</button><button data-ptab="nut" aria-pressed="'+(PLANTAB==='nut')+'">Nutrition</button></div>';
   h+=aboutCard();
   if(PLANTAB==='wo')h+=D.guest?VIEWS.gwork().replace(/^<div class="hello">[\s\S]*?<\/div>/,''):VIEWS.work();
   else{var N=nGet();h+=N&&N.plan&&N.plan.status==='Approved'&&N.plan.data&&NV==='home'?(NLANG==='ar'?'<div class="nt-ar" dir="rtl">'+nLangSw()+nToday(N)+'</div>':nLangSw()+nToday(N)):VIEWS.nut()}
   return h};
 // EN / عربي switch; inline: no own spacing (inside the top bar)
-function nLangSw(inline){return '<div class="nt-lang" role="group" aria-label="Language"'+(inline?'':' style="margin:0 0 12px auto;width:max-content"')+'><button data-nlang="en" aria-pressed="'+(NLANG==='en')+'">EN</button><button data-nlang="ar" aria-pressed="'+(NLANG==='ar')+'">عربي</button></div>'}
+function nLangSw(inline){return '<div class="nt-lang" data-help="lang" role="group" aria-label="Language"'+(inline?'':' style="margin:0 0 12px auto;width:max-content"')+'><button data-nlang="en" aria-pressed="'+(NLANG==='en')+'">EN</button><button data-nlang="ar" aria-pressed="'+(NLANG==='ar')+'">عربي</button></div>'}
 /* questionnaire as a pop-up window: white window on the dark app, black window on the light app */
 function nQModal(N){return '<div class="rd-dim" data-rdclose="nq"><div class="rd-win '+(isDark()?'rd-white':'rd-black')+'" role="dialog" aria-modal="true" aria-label="5 minute questionnaire"'+(NLANG==='ar'?' dir="rtl"':'')+'>'+nQ(N)+'</div></div>'}
 /* ---------- SHOP ---------- */
@@ -2115,13 +2180,13 @@ function brandList(){if(D&&D.brand&&D.brand.length)return D.brand;if(BRANDC)retu
 VIEWS.shop=function(){var B=brandList(),all=shopItems(),feat=featured();
   var h='<div class="hello"><h1>Shop</h1><p>Our products and supplements</p></div>';
   h+='<div class="rd-h2"><h2>Wellbe The Brand</h2><a href="'+esc(UI.BRAND_STORE)+'" target="_blank" rel="noopener">See all</a></div>';
-  h+=B?'<div class="rd-brand">'+B.map(function(p){return '<a class="p" href="'+esc(p.url)+'" target="_blank" rel="noopener"><div class="im">'+(p.img?'<img src="'+esc(p.img)+'" alt="'+esc(p.t)+'" loading="lazy" referrerpolicy="no-referrer">':'<span class="ph">'+esc(String(p.t||'W')[0])+'</span>')+'</div><div class="tx"><b>'+esc(p.t)+'</b>'+(p.d?'<span>'+esc(p.d)+'</span>':'')+'<div class="pr"><b>'+money(p.p)+(p.was>p.p?' <s>'+money(p.was)+'</s>':'')+'</b><em>View ›</em></div></div></a>'}).join('')+'</div><div class="rd-ext" style="margin-top:8px">Opens our online store to check out.</div>':
-   '<a class="rd-row" href="'+esc(UI.BRAND_STORE)+'" target="_blank" rel="noopener">'+ICON('i-bag')+'Visit Wellbe The Brand<span class="go">›</span></a>';
-  if(all.length)h+=rdH2('Supplements')+'<div class="muted" style="font-size:13px;margin:-4px 0 10px">Order now, pay and pick up at your next session.</div><div class="rd-sup">'+all.map(function(x){var q=CART[x.n]||0;
+  h+=B?'<div class="rd-brand" data-help="brand">'+B.map(function(p){return '<a class="p" href="'+esc(p.url)+'" target="_blank" rel="noopener"><div class="im">'+(p.img?'<img src="'+esc(p.img)+'" alt="'+esc(p.t)+'" loading="lazy" referrerpolicy="no-referrer">':'<span class="ph">'+esc(String(p.t||'W')[0])+'</span>')+'</div><div class="tx"><b>'+esc(p.t)+'</b>'+(p.d?'<span>'+esc(p.d)+'</span>':'')+'<div class="pr"><b>'+money(p.p)+(p.was>p.p?' <s>'+money(p.was)+'</s>':'')+'</b><em>View ›</em></div></div></a>'}).join('')+'</div><div class="rd-ext" style="margin-top:8px">Opens our online store to check out.</div>':
+   '<a class="rd-row" data-help="brand" href="'+esc(UI.BRAND_STORE)+'" target="_blank" rel="noopener">'+ICON('i-bag')+'Visit Wellbe The Brand<span class="go">›</span></a>';
+  if(all.length)h+=rdH2('Supplements')+'<div class="muted" style="font-size:13px;margin:-4px 0 10px">Order now, pay and pick up at your next session.</div><div class="rd-sup" data-help="supplements">'+all.map(function(x){var q=CART[x.n]||0;
     return '<div class="p"><button class="im" data-prod="'+esc(x.n)+'">'+(x.img?'<img src="'+CONTENT.img[x.img]+'" alt="" loading="lazy" referrerpolicy="no-referrer" data-fb="'+esc(x.n[0])+'" data-fbc="">':'<span>'+esc(x.n[0])+'</span>')+'</button><b>'+esc(x.n)+'</b><span class="num">'+money(x.price)+'</span>'+
      (q?'<div class="qty sm"><button data-dec="'+esc(x.n)+'" aria-label="Less">−</button><b class="num">'+q+'</b><button data-inc="'+esc(x.n)+'" aria-label="More">+</button></div>':'<button class="add" data-inc="'+esc(x.n)+'">Add</button>')+'</div>'}).join('')+'</div>';
-  if(feat.length)h+=rdH2('Fuel your training')+'<div class="hscroll">'+feat.slice(0,6).map(function(x){return '<button class="fuel" data-prod="'+esc(x.n)+'"><div class="fi">'+imgTag(x,80)+'</div><b>'+esc(x.n)+'</b><span class="fp num">'+money(x.price)+'</span><span class="fadd">'+ICON('i-plus','width:16px;height:16px')+'Add</span></button>'}).join('')+'</div>';
-  h+='<div class="card" style="margin-top:16px"><b style="font-size:17px">Looking for something else?</b><div class="muted" style="font-size:14px;margin-bottom:10px">Tell us which supplement and we will get it for you.</div><button class="btn sec2 block" data-act="supp">Ask for another supplement</button></div>';
+  if(feat.length)h+=rdH2('Fuel your training')+'<div class="hscroll" data-help="fuel">'+feat.slice(0,6).map(function(x){return '<button class="fuel" data-prod="'+esc(x.n)+'"><div class="fi">'+imgTag(x,80)+'</div><b>'+esc(x.n)+'</b><span class="fp num">'+money(x.price)+'</span><span class="fadd">'+ICON('i-plus','width:16px;height:16px')+'Add</span></button>'}).join('')+'</div>';
+  h+='<div class="card" data-help="ask-supplement" style="margin-top:16px"><b style="font-size:17px">Looking for something else?</b><div class="muted" style="font-size:14px;margin-bottom:10px">Tell us which supplement and we will get it for you.</div><button class="btn sec2 block" data-act="supp">Ask for another supplement</button></div>';
   return h};
 /* ---------- GAME: Super Powers + Badges windows ---------- */
 var POWERS=[['magnet','Coin magnet','🧲','#e0457a',function(l){return 'Pulls every coin to you · lasts '+(8+2*l)+' s'}],['jet','Jetpack','🚀','#2b7de0',function(l){return 'Fly above the Corniche · '+(6+l)+' s'}],['shoes','Super jump shoes','👟','#1f6e5b',function(l){return 'Jump over everything · '+(10+2*l)+' s'}]];
@@ -2154,13 +2219,165 @@ ACT.modal=function(k){MODAL=k||null;var y=scrollY;render();scrollTo(0,y)};
 function modalView(){var body=MODAL==='powers'?powersWin():MODAL==='badges'?badgesWin():'';if(!body){MODAL=null;return ''}
   return '<div class="rd-dim" data-rdclose="modal"><div class="rd-win rd-white" role="dialog" aria-modal="true">'+body+'</div></div>'}
 function hubRows(RS){var mineB=RS.badgeCount?RS.badgeCount.have:(RS.badges||[]).length,allB=RS.badgeCount?RS.badgeCount.all:BADGES_ALL.length,up=RS.up||{},uc=RS.upCost||[];var n=POWERS.filter(function(p){return uc[up[p[0]]||0]==null}).length;
-  return '<div class="gh"><h2>Power up</h2><small>🪙 '+(RS.coins||0).toLocaleString()+' coins</small></div><div class="rd-rows"><button class="rd-row rd-hub" data-act="modal|powers"><span class="em">⚡</span>Super Powers<span class="go">'+(n?n+' maxed · ':'')+(POWERS.length+1)+' powers ›</span></button><button class="rd-row rd-hub" data-act="modal|badges"><span class="em">🏅</span>Badges<span class="go">'+mineB+' of '+allB+' ›</span></button></div>'}
+  return '<div class="gh"><h2>Power up</h2><small>🪙 '+(RS.coins||0).toLocaleString()+' coins</small></div><div class="rd-rows" data-help="power-up"><button class="rd-row rd-hub" data-act="modal|powers"><span class="em">⚡</span>Super Powers<span class="go">'+(n?n+' maxed · ':'')+(POWERS.length+1)+' powers ›</span></button><button class="rd-row rd-hub" data-act="modal|badges"><span class="em">🏅</span>Badges<span class="go">'+mineB+' of '+allB+' ›</span></button></div>'}
 /* ---------- binding for the new parts ---------- */
 function rdBind(){
   $$('[data-ptab]').forEach(function(b){b.onclick=function(){goPlan(b.dataset.ptab)}});
   $$('.rd-dim[data-rdclose]').forEach(function(d){d.onclick=function(e){if(e.target!==d)return;if(d.dataset.rdclose==='nq'){NV='home';render()}else ACT.modal()}});
   photoBind();
   var lock=!!document.querySelector('.rd-dim'),gf=$('#gameFrame');if(!(gf&&gf.classList.contains('on')))document.documentElement.style.overflow=lock?'hidden':''}
+
+/* ---------- HELP + PROFILE STEPS (approved design, 27 Oct) ----------
+   Welcome tour (asked once on the home page), page tips behind the ? in the top bar, Help settings on Me,
+   and the durable "Complete your profile" steps. Saved per person on the server (app_cl_profile ops
+   state | help | help_reset | steps, Help.gs) with a copy on the phone. An older server answers "unknown":
+   then everything keeps working from the phone only. */
+var HS={},HSES={auto:0,asked:0,tourAt:0},COACH=null,STEPOPEN=false;
+function hsOf(cid){if(!cid)return null;var h=HS[cid];if(h)return h;
+  var j=function(k,d){try{var v=JSON.parse(store(k+cid)||'null');return v==null?d:v}catch(e){return d}};
+  h=HS[cid]={help:hClean(j('wbc_help_',{})),steps:j('wbc_steps_',{}),pend:j('wbc_hpend_',{}),spend:j('wbc_spend_',[]),srv:0,ld:0,busy:0};return h}
+function hSave(cid){var h=HS[cid];if(!h)return;try{store('wbc_help_'+cid,JSON.stringify(h.help));store('wbc_steps_'+cid,JSON.stringify(h.steps));store('wbc_hpend_'+cid,JSON.stringify(h.pend));store('wbc_spend_'+cid,JSON.stringify(h.spend))}catch(e){}}
+function hClean(x){x=x||{};var o={tips:x.tips===true||x.tips===false?x.tips:null,asked:Math.max(0,+x.asked||0),tour:x.tour==='done'||x.tour==='skipped'?x.tour:'',toast:x.toast?1:0,pages:{}},p=x.pages||{};
+  Object.keys(p).forEach(function(k){var s=p[k]&&p[k].s;if(s==='done'||s==='dismissed')o.pages[k]={s:s};else if(s==='prog')o.pages[k]={s:'prog',n:Math.max(0,+p[k].n||0)}});return o}
+// same rules as the server (helpMerge_): done and dismissed are final, asked only grows, the tour stays done
+function hMerge(cur,patch){var c=hClean(cur),p=hClean(patch);if(patch&&(patch.tips===true||patch.tips===false))c.tips=patch.tips;c.asked=Math.max(c.asked,p.asked);if(p.tour&&c.tour!=='done')c.tour=p.tour;c.toast=c.toast||p.toast;
+  Object.keys(p.pages).forEach(function(k){var w=c.pages[k];if(w&&(w.s==='done'||w.s==='dismissed')&&p.pages[k].s==='prog')return;c.pages[k]=p.pages[k]});return c}
+function hRaw(a,b){var o=JSON.parse(JSON.stringify(a||{}));Object.keys(b||{}).forEach(function(k){if(k==='pages'){o.pages=o.pages||{};Object.keys(b.pages).forEach(function(q){o.pages[q]=b.pages[q]})}else if(k==='asked')o.asked=Math.max(+o.asked||0,+b.asked||0);else o[k]=b[k]});return o}
+function hCid(){return D&&D.accounts&&D.accounts[0]?D.accounts[0].cid:''}   // help is about the person: the first account of this email
+function HELP(){var h=hsOf(hCid());return h?h.help:hClean({})}
+function hApi(cid,op,extra){var d={cid:cid,op:op};for(var k in extra||{})d[k]=extra[k];return api('app_cl_profile',d)}
+// server answer -> state (pending phone changes stay on top until they are sent)
+function hTake(cid,j){var h=hsOf(cid);h.srv=1;if(j.help)h.help=hMerge(j.help,h.pend);if(j.steps){var s={};Object.keys(j.steps).forEach(function(k){s[k]=j.steps[k]});Object.keys(h.steps).forEach(function(k){if(!s[k])s[k]=h.steps[k]});h.steps=s}hSave(cid)}
+function hFail(cid,e){var h=hsOf(cid);if(e&&e.code==='unknown')h.srv=-1;h.ld=2}
+function hLoad(cid){var h=hsOf(cid);if(!h||h.ld||!TOKEN)return;h.ld=1;
+  hApi(cid,'state').then(function(j){hTake(cid,j);h.ld=2;hFlush(cid);stepsFlush(cid);if(SEC==='me'||HSES.wait)softRender();helpTick()}).catch(function(e){hFail(cid,e);helpTick()});
+  setTimeout(function(){if(h.ld===1){h.ld=2;helpTick()}},8000)}   // slow server: carry on from the phone copy
+function hSet(patch){var cid=hCid(),h=hsOf(cid);if(!h)return;h.help=hMerge(h.help,patch);h.pend=hRaw(h.pend,patch);hSave(cid);clearTimeout(h.ft);h.ft=setTimeout(function(){hFlush(cid)},500)}
+function hFlush(cid){var h=hsOf(cid);if(!h||h.srv===-1||h.busy||!Object.keys(h.pend).length||h.ld!==2)return;var sent=h.pend;h.pend={};h.busy=1;
+  hApi(cid,'help',{help:sent}).then(function(j){h.busy=0;hTake(cid,j);if(Object.keys(h.pend).length)hFlush(cid)}).catch(function(e){h.busy=0;h.pend=hRaw(sent,h.pend);hSave(cid);hFail(cid,e)})}
+// the page id of what is on screen now (client/help/<pageId>.js holds its tips)
+function pageKey(){if(SEC==='center')return D.guest?'wellbe':ACC().full?'center':'basic';if(SEC==='plan'){if(PLANTAB!=='nut')return 'plan_wo';return NV==='body'||NV==='plan'||NV==='grocery'||NV==='q'||NV==='opts'||NV==='rem'?'nut_'+NV:'plan_nut'}return SEC}
+function homeKey(){return D.guest?'wellbe':ACC().full?'center':'basic'}
+function hPage(k){return HELP().pages[k||pageKey()]||null}
+function hUnseen(k){k=k||pageKey();var p=hPage(k);return pageTips(k).length>0&&(!p||p.s==='prog')}
+
+/* the tips live in client/help/<pageId>.js (WBHelp.page) and client/help/tour.js (WBHelp.tour), not here.
+   An item: {sel, title, text, step, when}. sel: CSS selectors, comma separated, the first one found on screen wins.
+   text: the line in the "On this page" sheet. step: the coach mark text (text when missing). when: optional function. */
+function hVal(x){try{return typeof x==='function'?x():x}catch(e){return ''}}
+function hNorm(list){return (list||[]).filter(function(t){return t&&t.sel&&(!t.when||hVal(t.when))}).map(function(t){var tx=String(hVal(t.text)||''),st=String(hVal(t.step)||tx);return {sel:String(hVal(t.sel)),title:String(hVal(t.title)||''),text:tx,step:st}}).filter(function(t){return t.text||t.step})}
+function pageDef(k){var P=(window.WBHelp&&WBHelp.pages)||{};return P[k]||null}
+function pageTips(k){var d=pageDef(k);return d?hNorm(d.items):[]}
+function tourTips(){var T=(window.WBHelp&&WBHelp.tours)||{},t=T[D.guest?'new':'client'];return t?hNorm(t.steps||t.items):[]}
+function hFind(sel){var ss=String(sel).split(',');for(var j=0;j<ss.length;j++){var l=$$(ss[j]);for(var i=0;i<l.length;i++){var r=l[i].getBoundingClientRect();if(r.width>0&&r.height>0)return l[i]}}return null}   // the first selector that matches wins
+function hItems(list){var out=[];list.forEach(function(t){if(out.length<5&&hFind(t.sel))out.push(t)});return out}
+
+/* ---------- coach marks: tooltip anchored to the real element ---------- */
+function reduceMotion(){try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}}
+function kbOpen(){var v=window.visualViewport;return !!v&&v.height<innerHeight*0.75}
+function coachStart(kind,key,items,at,opener){if(!items.length)return;coachEnd(true);
+  var o=$('#coach');if(!o){o=document.createElement('div');o.id='coach';o.className='coach';
+    o.innerHTML='<div class="coach-ring" id="coachRing"></div><div class="coach-tip" id="coachTip" role="dialog" aria-modal="true" aria-labelledby="coachT" aria-describedby="coachB" tabindex="-1"><i class="coach-ar" id="coachAr"></i><div class="coach-hd"><span class="coach-n num" id="coachN"></span><button class="coach-x" id="coachX" aria-label="Close tips">'+ICON('i-x','width:18px;height:18px')+'</button></div><b id="coachT"></b><p id="coachB"></p><div class="coach-ft"><button class="btn ghost sm" id="coachBk">Back</button><button class="btn sm" id="coachNx">Next</button></div></div><div class="sr" id="coachLive" aria-live="polite"></div>';
+    document.body.appendChild(o);
+    o.addEventListener('click',function(e){if(e.target===o||e.target.id==='coachRing'){e.preventDefault();var t=$('#coachTip');if(t)t.focus()}});   // tap outside: nothing moves on
+    $('#coachX').onclick=function(){coachEnd()};$('#coachBk').onclick=function(){coachGo(-1)};$('#coachNx').onclick=function(){coachGo(1)};
+    $('#coachTip').addEventListener('keydown',function(e){if(e.key!=='Tab')return;var f=[$('#coachX'),$('#coachBk'),$('#coachNx')].filter(function(b){return b&&b.style.visibility!=='hidden'}),i=f.indexOf(document.activeElement);
+      if(e.shiftKey&&(i<=0)){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}})}
+  COACH={kind:kind,key:key,items:items,i:Math.min(at||0,items.length-1),opener:opener||document.activeElement};
+  o.classList.add('on');document.documentElement.classList.add('coaching');coachShow()}
+function coachShow(){var C=COACH;if(!C)return;var it=C.items[C.i],el=hFind(it.sel);if(!el){if(C.i<C.items.length-1){C.items.splice(C.i,1);return coachShow()}return coachEnd()}
+  var n=C.items.length;$('#coachN').textContent=(C.i+1)+' of '+n;$('#coachT').textContent=it.title;$('#coachT').hidden=!it.title;$('#coachB').textContent=it.step;
+  $('#coachBk').style.visibility=C.i===0?'hidden':'';$('#coachNx').textContent=C.i===n-1?'Done':'Next';
+  $('#coachLive').textContent='Tip '+(C.i+1)+' of '+n+'. '+(it.title?it.title+'. ':'')+it.step;
+  if(C.kind!=='tour')hSet({pages:hpg(C.key,{s:'prog',n:C.i})});
+  var fixed=!!el.closest('.top,nav.tabs');
+  if(!fixed){var r=el.getBoundingClientRect(),top=hTopH(),avail=innerHeight-top-hBotH(),want=r.height+200>avail?top+12:top+Math.max(12,(avail-r.height-190)/2);
+    if(Math.abs(r.top-want)>8)scrollTo({top:Math.max(0,scrollY+r.top-want),behavior:reduceMotion()?'auto':'smooth'})}
+  $('#coachTip').classList.remove('in');coachPlace();setTimeout(coachPlace,reduceMotion()?0:380);
+  setTimeout(function(){var t=$('#coachTip');if(t&&COACH){t.classList.add('in');t.focus({preventScroll:true})}},reduceMotion()?0:60)}
+function hpg(k,v){var o={};o[k]=v;return o}
+function hTopH(){var t=$('.top');return t?t.getBoundingClientRect().bottom:0}
+function hBotH(){var t=$('nav.tabs');return t?Math.max(0,innerHeight-t.getBoundingClientRect().top):0}
+function coachPlace(){var C=COACH;if(!C)return;var el=hFind(C.items[C.i].sel),ring=$('#coachRing'),tip=$('#coachTip'),ar=$('#coachAr');if(!el||!tip)return;
+  var r=el.getBoundingClientRect(),p=el.tagName==='NAV'?0:6,vw=innerWidth,vh=innerHeight,tw=Math.min(vw-32,340);
+  $$('.coach-lift').forEach(function(x){if(x!==el)x.classList.remove('coach-lift')});if(el.tagName==='NAV')el.classList.add('coach-lift');   // the tab bar (with the Play dome above it) shows over the dim
+  ring.style.left=(r.left-p)+'px';ring.style.top=(r.top-p)+'px';ring.style.width=(r.width+2*p)+'px';ring.style.height=(r.height+2*p)+'px';
+  ring.style.borderRadius=el.closest('nav.tabs')&&el.tagName==='NAV'?'26px 26px 0 0':el.classList.contains('hq')?'50%':'16px';
+  tip.style.width=tw+'px';var th=tip.offsetHeight,gap=14,sb=8,st=8;
+  try{var cs=getComputedStyle(document.documentElement);st=8+(parseFloat(cs.getPropertyValue('--sat'))||0);sb=8+(parseFloat(cs.getPropertyValue('--sab'))||0)}catch(e){}
+  var below=r.bottom+p+gap,above=r.top-p-gap-th,y,up;
+  if(below+th<=vh-sb)y=below,up=true;else if(above>=st)y=above,up=false;else{up=(vh-r.bottom)>r.top;y=up?Math.min(below,vh-sb-th):Math.max(st,above)}
+  var x=Math.max(16,Math.min(vw-16-tw,r.left+r.width/2-tw/2));tip.style.left=x+'px';tip.style.top=y+'px';
+  ar.className='coach-ar '+(up?'up':'dn');ar.style.left=Math.max(18,Math.min(tw-18,r.left+r.width/2-x))+'px'}
+function coachGo(d){var C=COACH;if(!C)return;var n=C.items.length;if(d>0&&C.i===n-1)return coachEnd(false,true);C.i=Math.max(0,Math.min(n-1,C.i+d));coachShow()}
+function coachEnd(silent,finished){var C=COACH;COACH=null;$$('.coach-lift').forEach(function(x){x.classList.remove('coach-lift')});var o=$('#coach');if(o)o.classList.remove('on');document.documentElement.classList.remove('coaching');if(!C||silent)return;
+  if(C.kind==='tour')hSet({tour:'done',tips:true,pages:hpg(C.key,{s:'done'})});
+  else hSet({pages:hpg(C.key,finished?{s:'done'}:C.i===0&&C.kind==='auto'?{s:'dismissed'}:{s:'prog',n:C.i})});
+  softRender();var f=C.opener;if(f&&f.focus&&document.contains(f))f.focus();else{var q=$('.top .hq');if(q)q.focus()}}
+addEventListener('keydown',function(e){if(e.key==='Escape'&&COACH){e.stopImmediatePropagation();coachEnd()}},true);
+addEventListener('resize',function(){if(COACH)coachPlace()});addEventListener('scroll',function(){if(COACH)coachPlace()},{passive:true});
+
+/* ---------- ? sheet: On this page ---------- */
+function helpSheet(){var k=pageKey(),items=hItems(pageTips(k)),p=hPage(k),op=$('.top .hq');
+  var res=p&&p.s==='prog'&&p.n>0&&p.n<items.length?'<button class="btn ghost block" id="hqRes" style="margin-bottom:10px">Resume (step '+(p.n+1)+' of '+items.length+')</button>':'';
+  openSheet('On this page','<ul class="hq-l">'+items.map(function(t){return '<li><span class="hq-b" aria-hidden="true"></span><span>'+(t.title?'<b>'+esc(t.title)+'.</b> ':'')+esc(t.text)+'</span></li>'}).join('')+'</ul>',items.length?res+'<button class="btn block" id="hqGo">Show me step by step</button>':'');
+  if(!items.length){$('#shBody').innerHTML='<p class="muted" style="margin-top:0">Tips for this page are coming soon. Questions? Message '+esc(DESK())+' on WhatsApp.</p>'}
+  if(!p){hSet({pages:hpg(k,{s:'done'})});softRender()}   // the list was read: the dot goes
+  SHCB=function(){var f=op&&document.contains(op)?op:$('.top .hq');if(f)f.focus()};
+  if($('#hqGo'))$('#hqGo').onclick=function(){SHCB=null;closeSheet();coachStart('page',k,items,0,op)};
+  if($('#hqRes'))$('#hqRes').onclick=function(){SHCB=null;closeSheet();coachStart('page',k,items,p.n,op)};
+  setTimeout(function(){var b=$('#hqGo')||$('#shClose');if(b)b.focus({preventScroll:true})},60)}
+ACT.hq=function(){helpSheet()};
+/* ---------- the tour question, once on the home page ---------- */
+function tourAsk(){var H=HELP(),cnt=H.asked+1;HSES.asked=1;hSet({asked:cnt});var chose=false;
+  openSheet('Want a quick tour?','<p class="muted" style="margin-top:0;font-size:16px">4 quick tips, under a minute. You can open help anytime with ?.</p>','<button class="btn block" id="tourGo">Show me around</button><button class="btn ghost block" id="tourNo" style="margin-top:10px">Skip, I’ll explore</button>');
+  var skip=function(){var H2=HELP(),first=!H2.toast;hSet({tips:false,toast:1,tour:cnt>=2?'skipped':''});if(first)setTimeout(function(){toast('Need help? Tap ? on any page.')},350)};
+  SHCB=function(){if(!chose)skip()};   // closed without a choice: same as Skip, asked once more on the next visit
+  $('#tourGo').onclick=function(){chose=true;SHCB=null;closeSheet();setTimeout(function(){tourStart()},reduceMotion()?0:320)};
+  $('#tourNo').onclick=function(){chose=true;SHCB=null;closeSheet();hSet({tour:'skipped'});skip()};
+  setTimeout(function(){var b=$('#tourGo');if(b)b.focus({preventScroll:true})},60)}
+function tourStart(){scrollTo(0,0);var items=hItems(tourTips());coachStart('tour',homeKey(),items,0,$('.top .hq'))}
+ACT.htour=function(){goSec('center');setTimeout(tourStart,reduceMotion()?60:350)};
+ACT.htips=function(){var on=HELP().tips!==true;hSet({tips:on});toast(on?'Tips on. Each page shows its tips once.':'Tips off. Tap ? on any page for help.');softRender()};
+ACT.hreset=function(){var cid=hCid(),h=hsOf(cid);h.help=hClean(h.help);h.help.pages={};h.help.tips=true;h.pend=hRaw(h.pend,{tips:true});hSave(cid);HSES.auto=0;softRender();toast('Tips reset. Each page shows its tips again.');
+  if(h.srv!==-1)hApi(cid,'help_reset').then(function(j){h.help=hClean(j.help);h.help.pages={};hTake(cid,{help:h.help});softRender()}).catch(function(e){hFail(cid,e)})};
+// after every page draw: load the saved state, ask the tour question, start a page's tips once
+var HTICK=0;
+function helpTick(){clearTimeout(HTICK);HTICK=setTimeout(helpCheck,700)}
+function helpCheck(){if(!TOKEN||!D||ONB||!ACC()||$('#app .onb'))return;var cid=hCid(),h=hsOf(cid);hLoad(cid);if(ACC().cid!==cid)hLoad(ACC().cid);stepsSync();
+  if(COACH){coachPlace();return}
+  var busyUI=$('#sheet.on')||$('.rd-dim')||($('#gameFrame')&&$('#gameFrame').classList.contains('on'))||typing()||kbOpen()||document.hidden;
+  if(h.ld!==2){HSES.wait=1;return}HSES.wait=0;if(busyUI)return;
+  var H=h.help,k=pageKey();
+  if(SEC==='center'&&!H.tour&&H.asked<2&&!HSES.asked){tourAsk();return}
+  if(H.tips===true&&!HSES.auto&&!H.pages[k]&&!/^nut_(body|q|rem)$/.test(k)){var items=hItems(pageTips(k));if(items.length){HSES.auto=1;coachStart('auto',k,items,0,$('.top .hq'))}}}
+function hqBtn(){return '<button class="hq" data-help="help" data-act="hq" aria-label="Help for this page'+(hUnseen()?', new tips':'')+'"><span class="hq-c" aria-hidden="true">?</span>'+(hUnseen()?'<span class="hq-dot" aria-hidden="true"></span>':'')+'</button>'}
+function helpRows(){var on=HELP().tips===true;
+  return rdH2('Help')+'<div class="rd-rows" data-help="help-settings"><button class="rd-row" role="switch" aria-checked="'+on+'" data-act="htips">'+ICON('i-spark')+'Show tips<span class="go"><span class="sw'+(on?' on':'')+'" aria-hidden="true"><i></i></span></span></button><button class="rd-row" data-act="htour">'+ICON('i-home')+'Replay the welcome tour<span class="go">›</span></button><button class="rd-row" data-act="hreset">'+ICON('i-edit')+'Reset all tips<span class="go">›</span></button></div>'}
+
+/* ---------- Complete your profile: a step stays done once done ----------
+   [key, label, button, action, condition now (true | false | null = not loaded yet)] */
+function stepDefs(){var a=ACC(),N=nGet(),RS=RUNST&&RUNC===a.cid?RUNST:null,C=RS&&RS.cash||{};
+  return [['photo','Add your profile photo','Add','photo',!!a.photo],
+   ['promise','Write your promise','Write','goal',!!a.goal],
+   ['body','Add weight, height and goal','Add','nutbody',N?!!(N.body&&N.body.weight&&N.body.height&&N.target):null],
+   ['intake','Answer the 5 minute questionnaire','Start','nutq',N?!!N.done:null],
+   ['run','Finish your first Corniche Run','Play','play',RS?((RS.bestM||0)>0||(RS.best||0)>0):null],
+   ['credit','Use your Wellbe Credit',C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play',RS?((C.pending||0)>0||((C.total||0)-(C.bal||0))>0):null]]}
+// a step met now and not saved yet: saved on the phone at once and sent to the server (first time only)
+function stepsSync(){var a=ACC();if(!a)return;var cid=a.cid,h=hsOf(cid),nw=[];
+  stepDefs().forEach(function(s){if(s[4]===true&&!h.steps[s[0]]){h.steps[s[0]]={doneAt:new Date().toISOString()};if(h.spend.indexOf(s[0])<0)h.spend.push(s[0]);nw.push(s[0])}});
+  if(nw.length){hSave(cid);if(SEC==='me')setTimeout(softRender,0)}stepsFlush(cid)}
+function stepsFlush(cid){var h=hsOf(cid);if(!h||h.srv===-1||h.sbusy||!h.spend.length||h.ld!==2)return;var sent=h.spend.slice();h.sbusy=1;
+  hApi(cid,'steps',{met:sent}).then(function(j){h.sbusy=0;h.spend=h.spend.filter(function(k){return sent.indexOf(k)<0});hTake(cid,{steps:j.steps});stepsFlush(cid)}).catch(function(e){h.sbusy=0;hFail(cid,e)})}
+function stepsCard(){var a=ACC(),h=hsOf(a.cid),S=stepDefs(),n=S.filter(function(s){return h.steps[s[0]]}).length,m=S.length,pc=Math.round(n/m*100);
+  var stale=function(s){return !!h.steps[s[0]]&&s[4]===false&&/^(photo|promise|body|intake)$/.test(s[0])},rv=S.filter(stale).length;   // game steps never go stale
+  if(n===m&&!STEPOPEN)return '<div class="pf pf-done" data-help="profile-steps"><b>Profile complete</b><span class="pf-ok" aria-hidden="true">✓</span><span class="pf-sep" aria-hidden="true">·</span><button class="pf-ln" data-act="pfopen" aria-label="Edit my profile steps">Edit</button>'+(rv?'<button class="pf-rv pf-rvb" data-act="pfopen" aria-label="'+rv+' step'+(rv>1?'s':'')+' to review">Review</button>':'')+'</div>';
+  return '<div class="pf" data-help="profile-steps"><div class="pf-h"><b>Complete your profile</b><span class="num">'+n+' of '+m+' done</span></div><div class="pf-bar" role="progressbar" aria-valuemin="0" aria-valuemax="'+m+'" aria-valuenow="'+n+'" aria-label="Profile steps done"><i style="width:'+pc+'%"></i></div><div class="pf-l">'+
+   S.map(function(s){var done=!!h.steps[s[0]],rv=stale(s);
+     return '<button class="pf-r'+(done?' on':'')+(rv?' rv':'')+'" data-act="'+s[3]+'"><i aria-hidden="true">'+(done?'✓':'')+'</i><span>'+esc(s[1])+(done?'<span class="sr"> (done)</span>':'')+'</span>'+(rv?'<em class="pf-rv">Review</em>':done?'':'<em>'+esc(s[2])+'</em>')+'</button>'}).join('')+
+   '</div>'+(n===m?'<button class="pf-ed" data-act="pfopen" style="margin-top:10px">Done</button>':'')+'</div>'}
+ACT.pfopen=function(){STEPOPEN=!STEPOPEN;softRender()};
 
 /* ---------- start ---------- */
 render();boot();

@@ -91,6 +91,7 @@ function clReadOnly_(a, b) {
   if (a === 'app_cl_wo') return !op || op === 'get';
   if (a === 'app_cl_nut') return !op || op === 'intake_get' || op === 'get';
   if (a === 'app_cl_streak') return !b.keys;
+  if (a === 'app_cl_profile') return op === 'state';   // help + profile steps, read (Help.gs)
   return false;
 }
 // =====================================================================
