@@ -49,7 +49,7 @@
   WB.isRead = function (action, data) { return READS.test(action) || (action === 'app_cl_run' && data && data.op === 'get'); };
 
   // compare two answers; fields that change every call are ignored
-  var SKIP = { ts: 1, at: 1, now: 1, cached: 1, took: 1, ms: 1, v: 1, server: 1, token: 1 };
+  var SKIP = { ts: 1, at: 1, now: 1, cached: 1, took: 1, ms: 1, v: 1, server: 1, token: 1, row: 1 };   // row: sheet row number, Supabase sends the ID instead
   function norm(x) {
     if (Array.isArray(x)) return x.map(norm);
     if (x && typeof x === 'object') { var o = {}; Object.keys(x).sort().forEach(function (k) { if (!SKIP[k]) o[k] = norm(x[k]); }); return o; }
@@ -62,7 +62,7 @@
   var MON = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
   function normStr(s) {
     var m;
-    if (/^\+?\d{7,15}$/.test(s)) return s.replace(/^\+/, '').replace(/^961(?=\d{7,8}$)/, '');   // Lebanese numbers with or without +961
+    if (/^(\+|00)?[\d\s\-().]{7,22}$/.test(s) && s.replace(/\D/g, '').length >= 7) return s.replace(/\D/g, '').replace(/^00/, '').replace(/^961(?=\d{7,8}$)/, '').replace(/^0(?=\d{7}$)/, '');   // phones: spaces, +, 00, 961 and a leading 0 do not matter
     if (/^[^\s@]+@[^\s@]+$/.test(s)) return s.toLowerCase();                              // emails: case does not matter
     if ((m = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})(?: (\d{2}):(\d{2})(?::\d{2})?)? GMT/.exec(s)) && MON[m[1]]) return m[3] + '-' + MON[m[1]] + '-' + m[2] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
     if ((m = /^(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}))?$/.exec(s))) return m[3] + '-' + m[2] + '-' + m[1] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
