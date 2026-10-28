@@ -281,3 +281,21 @@ nothing is sent to phones until push is set up (FCM, mobile app).
 1. Database: run `migrations/0013_help_steps.sql` in the SQL Editor, after `0012_nutrition.sql`. It adds the table
    `public.client_app_state` and the help ops (`state`, `help`, `help_reset`, `steps`) in `api_app_cl_profile`. No new actions.
 2. Test: `node phase5/supabase/tests/run_help.js` (same calls and answers as Help.gs). Details: `1-apps-script/phase3/INSTALL-onboarding.txt`.
+
+
+## Step 10. Game and referral sync (0014, 28 Oct 2026)
+
+Brings the Supabase game and the "Invite a friend" credit to what the Apps Script does since 26 Oct (badge ladders and the Stats column,
+outfits, runner studio, runner names, 5:30 AM Club, prestige outfits, `game.staffClients`, the $5 referral credit).
+
+1. Database, in this order (0012 is already applied):
+   1. `migrations/0013_help_steps.sql`
+   2. `migrations/0014_game_referral_sync.sql` (it ends with `app.api_sync()` when the door exists; running `select app.api_sync();` again does no harm)
+2. Check: same query as Step 1. Good result: actions 66 (no new actions), tables_without_rls 0, backend `{"use": "apps"}`.
+   0014 adds the table `public.referrals` (Row Level Security on: the desk sees all, a client their own invites), the columns
+   `game_players.stats` and `game_players.last_cause`, the settings row `referral` (only when missing) and new keys in `game_rules`.
+3. Data: the players copied before 0014 have empty Stats (runner names, ladder totals, early runs) and no run cause. Redo the copy
+   (Step 6, empty and paste) with the new `import.js` after 0014: it now also copies CORNICHE RUN Stats (V) and the cause in Last run (O),
+   the REFERRALS tab when it exists, CLIENT APP STATE (Help.gs) and the Client ID of converted guests (APP GUESTS column I).
+   The parts made by the new import need 0013 and 0014 applied first.
+4. Test locally: `node phase5/supabase/tests/run_game2.js` (the same calls on RunGame.gs / Referral.gs and on Postgres, same answers).

@@ -88,7 +88,7 @@ function run(dir, gsDir) {
   const warn = m => P.warn.push(m), count = (k, n) => { P.counts[k] = (P.counts[k] || 0) + (n || 1); };
   const ins = (table, cols, vals) => sql.push(`insert into public.${table} (${cols.join(', ')}) values (${vals.map(v => v && v.__raw ? v.__raw : q(v)).join(', ')});`);
   const raw = s => ({ __raw: s });
-  const byLegacy = { client: {}, pkg: {}, sess: {}, lead: {}, req: {} }, guestLead = [];
+  const byLegacy = { client: {}, pkg: {}, sess: {}, lead: {}, req: {} }, guestLead = [], guestConv = [];
   const seen = (map, id, what) => { if (map[id]) { warn(`Duplicate ${what} ${id}: second copy renamed ${id}-dup`); return id + '-dup'; } return id; };
 
   // ---- CLIENTS (Client Portal) ----
@@ -121,12 +121,14 @@ function run(dir, gsDir) {
     const u = uuid(); byLegacy.client[id] = u;
     ins('clients', ['id', 'legacy_id', 'kind', 'name', 'email', 'phone', 'created_at', 'verified_at', 'sheet_tab', 'sheet_row'],
       [u, id, 'guest', S(r[2]) || id, clEmail_(r[1]) || null, phone(r[3], cc), stamp(r[4]) || raw('now()'), yes(r[5]) ? stamp(r[4]) || raw('now()') : null, tab.tabName(GUEST.TAB), i + 2]);
-    if (S(r[8])) count('guests already converted to a client (kept as history)');
+    if (S(r[8])) { count('guests already converted to a client (kept as history)'); guestConv.push([u, S(r[8]).toUpperCase(), id]); }
     const asked = json(r[7], null); if (S(r[7]) && asked === null) warn(`APP GUESTS ${id}: "Asked" is not valid JSON, saved empty`);
     if (asked) sql.push(`update public.clients set guest_asked = ${qj(asked)} where id = ${q(u)};`);
     if (S(r[6])) guestLead.push([u, S(r[6])]);
     count('guests');
   });
+  // a guest whose Client ID (column I) is filled was already moved to that client (Guest.gs guestConvert_): never again
+  guestConv.forEach(([u, c, g]) => { if (byLegacy.client[c] && /^C\d+$/.test(c)) sql.push(`update public.clients set converted_to = ${q(byLegacy.client[c])} where id = ${q(u)};`); else warn(`APP GUESTS ${g}: client ${c} not found, left as not converted`); });
   const cid = (legacy, where) => { const id = S(legacy).toUpperCase(); if (!id) return null; const u = byLegacy.client[id]; if (!u) warn(`${where}: unknown client ${id}, row skipped`); return u || null; };
 
   // ---- CLIENT NOTES (medical notes, Melanie flag) ----
@@ -238,13 +240,41 @@ function run(dir, gsDir) {
   if (gr) gr.slice(1).forEach((r, i) => {
     const u = cid(r[0], 'CORNICHE RUN row ' + (i + 2)); if (!u) return;
     if (grSeen[u]) { warn(`CORNICHE RUN row ${i + 2}: second row for ${S(r[0]).toUpperCase()}, skipped (owner approved; the app reads the first row)`); return; } grSeen[u] = 1;
-    const dk = S(r[7]).replace(/^D/, ''), wk = S(r[9]).replace(/^W/, ''), last = Number((/^T(\d+)/.exec(S(r[14])) || [])[1]) || 0;   // 'T' + time, then maybe the cause JSON
-    ins('game_players', ['client_id', 'name', 'best_score', 'best_m', 'coins', 'runs', 'total_m', 'day_key', 'day_best', 'week_key', 'week_best', 'upgrades', 'missions', 'badges', 'last_run_at', 'earned_total', 'credit_cents', 'credit_earned_cents', 'xp', 'owned', 'created_at', 'sheet_row'],
+    const dk = S(r[7]).replace(/^D/, ''), wk = S(r[9]).replace(/^W/, ''), lm = /^T(\d+)(?:\s+(\{.*\}))?\s*$/.exec(S(r[14])), last = lm ? Number(lm[1]) || 0 : 0;   // 'T' + time, then maybe the cause JSON
+    const cause = lm && lm[2] ? json(lm[2], null) : null; if (lm && lm[2] && cause === null) warn(`CORNICHE RUN ${S(r[0]).toUpperCase()}: Last run cause is not valid JSON, left out`);
+    const stats = json(r[21], {}); if (S(r[21]) && (!stats || typeof stats !== 'object' || Array.isArray(stats))) warn(`CORNICHE RUN ${S(r[0]).toUpperCase()}: Stats is not a JSON object, saved empty`);
+    ins('game_players', ['client_id', 'name', 'best_score', 'best_m', 'coins', 'runs', 'total_m', 'day_key', 'day_best', 'week_key', 'week_best', 'upgrades', 'missions', 'badges', 'last_run_at', 'earned_total', 'credit_cents', 'credit_earned_cents', 'xp', 'owned', 'stats', 'last_cause', 'created_at', 'sheet_row'],
       [u, S(r[1]), num(r[2]) || 0, num(r[3]) || 0, Math.max(0, num(r[4]) || 0), num(r[5]) || 0, num(r[6]) || 0, /^\d{4}-\d{2}-\d{2}$/.test(dk) ? dk : null, num(r[8]) || 0,
        /^\d{4}-\d{2}-\d{2}$/.test(wk) ? wk : null, num(r[10]) || 0, raw(qj(json(r[11], {}))), raw(qj(json(r[12], {}))), raw(qj(json(r[13], []))),
        last ? new Date(last).toISOString() : null, num(r[15]) || 0, Math.max(0, num(r[17]) || 0), num(r[18]) || 0, num(r[19]) || 0, raw(qj(json(r[20], {}))),
+       raw(qj(stats && typeof stats === 'object' && !Array.isArray(stats) ? stats : {})), cause ? raw(qj(cause)) : null,
        raw(`clock_timestamp() + interval '${i} microseconds'`), i + 2]);
     count('game players');
+  });
+
+  // ---- REFERRALS (Referral.gs; the tab is made by the first invite, so it may not exist yet) ----
+  const rf = tab('REFERRALS'), rfSeen = {};
+  if (rf) rf.slice(1).forEach((r, i) => {
+    const id = S(r[0]); if (!id) return;
+    if (rfSeen[id]) { warn(`REFERRALS ${id}: ID used twice, second row skipped`); return; } rfSeen[id] = 1;
+    const u = cid(r[2], 'REFERRALS ' + id); if (!u) return;
+    let st = S(r[6]) || 'Invited'; if (['Invited', 'Rewarded', 'Already a client', 'Already invited', 'Not eligible'].indexOf(st) < 0) { warn(`REFERRALS ${id}: status "${st}" read as Invited`); st = 'Invited'; }
+    const key = S(r[5]).replace(/\D/g, '').replace(/^00/, '').replace(/^961/, '').replace(/^0/, '');   // phoneKey_ (the tab keeps it already like this)
+    ins('referrals', ['legacy_id', 'created_at', 'referrer_id', 'referrer_name', 'friend', 'friend_key', 'status', 'friend_cid', 'friend_pkg', 'credit', 'rewarded_at', 'request_id', 'mark', 'note', 'sheet_row'],
+      [id, stamp(r[1]) || raw('now()'), u, S(r[3]), S(r[4]), key, st, S(r[7]).toUpperCase(), S(r[8]), num(r[9]), stamp(r[10]), byLegacy.req[S(r[11])] || null, num(r[12]) || 0, S(r[13]), i + 2]);
+    if (S(r[11]) && !byLegacy.req[S(r[11])]) warn(`REFERRALS ${id}: request ${S(r[11])} not found`);
+    count('referrals');
+  });
+  if (!rf) P.info.push('REFERRALS: no tab in the export (no invite sent yet with Referral.gs installed). Nothing to copy.');
+
+  // ---- CLIENT APP STATE (Help.gs: welcome tour, page tips, profile steps) ----
+  const as = tab('CLIENT APP STATE'), asSeen = {};
+  if (as) as.slice(1).forEach((r, i) => {
+    const u = cid(r[0], 'CLIENT APP STATE row ' + (i + 2)); if (!u) return;
+    if (asSeen[u]) { warn(`CLIENT APP STATE row ${i + 2}: second row for ${S(r[0]).toUpperCase()}, skipped (the app reads the last one)`); }
+    const h = json(r[2], {}), st = json(r[3], {});
+    sql.push(`insert into public.client_app_state (client_id, help, steps, updated_at) values (${q(u)}, app.help_clean(${qj(h && typeof h === 'object' ? h : {})}), app.steps_merge(${qj(st && typeof st === 'object' ? st : {})}, '[]'::jsonb, ''), ${stamp(r[4]) ? q(stamp(r[4])) : 'now()'}) on conflict (client_id) do update set help = excluded.help, steps = excluded.steps, updated_at = excluded.updated_at;`);
+    if (!asSeen[u]) count('client app states'); asSeen[u] = 1;
   });
 
   // ---- CLIENT STREAKS ----

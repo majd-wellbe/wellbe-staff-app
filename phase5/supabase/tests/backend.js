@@ -7,7 +7,7 @@ function boot(store, answers, search) {
     localStorage: { getItem: k => (k in ls ? ls[k] : null), setItem: (k, v) => { ls[k] = String(v); }, removeItem: k => { delete ls[k]; }, get length() { return Object.keys(ls).length; }, key: i => Object.keys(ls)[i] },
     fetch: async (url, init) => { const b = JSON.parse(init.body); calls.push({ url, b, h: init.headers }); const which = /supabase/.test(url) ? 'supa' : 'apps'; const a = answers(which, b); return { ok: true, status: 200, json: async () => a }; } };
   ctx.window = ctx; vm.createContext(ctx);
-  for (const f of ['core/wb-core.js', 'core/wb-backend.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../..', f), 'utf8'), ctx);
+  for (const f of ['core/wb-core.js', 'core/wb-backend.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../../..', f), 'utf8'), ctx);
   return { WB: ctx.WB, calls, ls };
 }
 const tick = () => new Promise(r => setTimeout(r, 20));
