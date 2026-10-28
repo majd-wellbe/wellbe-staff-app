@@ -964,7 +964,7 @@ begin
     out := out || jsonb_build_object(
       'leads', (select coalesce(jsonb_agg(jsonb_build_object('id', l.legacy_id, 'row', l.legacy_id, 'name', coalesce(l.name, ''), 'phone', coalesce(l.phone, ''), 'date', app.ymd(l.trial_date),
                   'time', coalesce(l.trial_time, ''), 'type', coalesce(l.booking_type, ''), 'status', l.status, 'injuries', coalesce(nullif(l.injuries, ''), 'No'), 'why', coalesce(l.why_now, ''),
-                  'submitted', to_char(l.submitted_at at time zone 'Asia/Beirut', 'DD/MM/YYYY HH24:MI:SS')) order by l.legacy_id), '[]')
+                  'submitted', to_char(l.submitted_at at time zone 'Asia/Beirut', 'DD/MM/YYYY HH24:MI:SS')) order by l.sheet_row nulls last, l.submitted_at, l.legacy_id), '[]')
                   from public.leads l where l.status not in ('Cancelled', 'No Answer')),
       'leadFollowups', (select coalesce(jsonb_agg(jsonb_build_object('id', f.legacy_id, 'row', f.legacy_id, 'name', coalesce(f.name, ''), 'phone', coalesce(f.phone, ''), 'stage', f.stage, 'status', f.status,
                   'submitted', to_char(f.submitted_at at time zone 'Asia/Beirut', 'YYYY-MM-DD HH24:MI'), 'date', app.ymd(f.trial_date), 'time', coalesce(f.trial_time, '')) order by f.submitted_at, f.legacy_id), '[]')
