@@ -54,13 +54,25 @@
     if (Array.isArray(x)) return x.map(norm);
     if (x && typeof x === 'object') { var o = {}; Object.keys(x).sort().forEach(function (k) { if (!SKIP[k]) o[k] = norm(x[k]); }); return o; }
     if (typeof x === 'number') return Math.round(x * 100) / 100;
+    if (typeof x === 'string') return normStr(x);
     return x;
+  }
+  // same value, different spelling: "+961..." vs "961...", and dates written by Apps Script ("Mon Oct 19 2026 15:45:00 GMT+0300 (...)")
+  // vs Supabase ("19/10/2026 15:45"). Both become "2026-10-19 15:45" so only real differences are reported.
+  var MON = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+  function normStr(s) {
+    var m;
+    if (/^\+?\d{7,15}$/.test(s)) return s.replace(/^\+/, '');
+    if ((m = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})(?: (\d{2}):(\d{2})(?::\d{2})?)? GMT/.exec(s)) && MON[m[1]]) return m[3] + '-' + MON[m[1]] + '-' + m[2] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
+    if ((m = /^(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}))?$/.exec(s))) return m[3] + '-' + m[2] + '-' + m[1] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
+    return s;
   }
   WB.shadowDiff = function (a, b) {
     var out = [];
     (function walk(p, x, y) {
       if (out.length >= 40) return;
       if (JSON.stringify(x) === JSON.stringify(y)) return;
+      if (x === undefined && p) return;                   // a field only Supabase has (newer feature): not a difference
       if (x && y && typeof x === 'object' && typeof y === 'object' && Array.isArray(x) === Array.isArray(y)) {
         if (Array.isArray(x) && x.length !== y.length) { out.push({ p: p, apps: 'len ' + x.length, supa: 'len ' + y.length }); return; }
         var ks = {}; Object.keys(x).concat(Object.keys(y)).forEach(function (k) { ks[k] = 1; });
