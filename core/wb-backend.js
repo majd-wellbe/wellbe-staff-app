@@ -62,7 +62,8 @@
   var MON = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
   function normStr(s) {
     var m;
-    if (/^\+?\d{7,15}$/.test(s)) return s.replace(/^\+/, '');
+    if (/^\+?\d{7,15}$/.test(s)) return s.replace(/^\+/, '').replace(/^961(?=\d{7,8}$)/, '');   // Lebanese numbers with or without +961
+    if (/^[^\s@]+@[^\s@]+$/.test(s)) return s.toLowerCase();                              // emails: case does not matter
     if ((m = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})(?: (\d{2}):(\d{2})(?::\d{2})?)? GMT/.exec(s)) && MON[m[1]]) return m[3] + '-' + MON[m[1]] + '-' + m[2] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
     if ((m = /^(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}))?$/.exec(s))) return m[3] + '-' + m[2] + '-' + m[1] + (m[4] ? ' ' + m[4] + ':' + m[5] : '');
     return s;
