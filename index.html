@@ -346,7 +346,7 @@ var CFG_FALLBACK={v:1,
  staff:[
   {id:'majd',name:'Majd Bou Habib',role:'owner',trainer:'Majd',train:true,pay:{rule:'fixed',fixed:{training:20,Physio:38,PhysioIns:28,Prehab:38}}},
   {id:'romy',name:'Romy',role:'assistant',trainer:''},
-  {id:'joe',name:'Joe Al Hosny',role:'trainer',trainer:'Joe',train:true,cap:3,pay:{rule:'tier',base:0}},
+  {id:'joe',name:'Joe Al Hosny',role:'trainer',trainer:'Joe',train:true,cap:3,pay:{rule:'tier',base:0,fixed:{tiers:[[40,8.5],[80,9],[null,10.5]]}}},
   {id:'mikel',name:'Mikel',role:'trainer',trainer:'Mikel',train:true,pay:{rule:'tier',base:50}},
   {id:'melanie',name:'Melanie',role:'trainer',trainer:'Melanie',train:true,pay:{rule:'cut',cut:4}},
   {id:'jad',name:'Jad Barakat',role:'trainer',trainer:'Jad',pay:{rule:'fixed',fixed:{Osteo:140}}}],
@@ -461,6 +461,7 @@ function api(action,data){return WB.api(action,data,{key:KEY},{timeout:action===
 function save(action,data,okMsg,reload){BUSY++;paintBusy();
   return api(action,data).then(function(j){dirty();BUSY--;paintBusy();if(okMsg)toast(okMsg);if(reload)boot(true);return j})
    .catch(function(e){dirty();BUSY--;paintBusy();toast('Not saved: '+e.message);boot(true);throw e})}
+window.addEventListener('error',function(ev){try{toast('Something went wrong: '+(ev&&ev.message||'error')+'. Refresh and try again.')}catch(x){}});
 function paintBusy(){var b=$('#busy');if(b)b.hidden=!BUSY}
 // the last answer is kept on this phone: the app opens instantly from it, then refreshes in the background
 var NOTICES=[],LEADFU=[],LEADFU_IDS={},FUDONE={};try{FUDONE=JSON.parse(localStorage.getItem('wb_fudone')||'{}')||{}}catch(e){}
@@ -524,8 +525,10 @@ function fixedText(f){var k=Object.keys(f||{});if(k.length===1&&k[0]!=='training
 // the cut trainer's own clients pay her; the center only gets her cut per pass (paid upfront by her). Her fixed service (Madero) is 100% hers.
 function isMel(cid){var c=clientById(cid);return !!(c&&c.mel)}
 function centerValue(s,c){if(melSvc(s.tab))return 0;if(isMel(c.cid))return melCut();var p=pkgById(c.pkg);return p&&p.total?p.price/p.total:0}
-function delivered(s){return s.clients.some(function(c){return deducts(c.att||(s.date<=T?'Present':''))})}
-function tier(n){var t=(C('pay.tiers')||[]).filter(function(x){return x[0]==null||n<x[0]})[0];return t?t[1]:0}
+// PROJ (Numbers > "This month, full"): sessions still to come count as given, every booked client present
+var PROJ=false;function upTo(){return PROJ?'9999-12-31':T}
+function delivered(s){if(PROJ&&s.date>T&&s.status==='Cancelled')return false;return s.clients.some(function(c){return deducts(c.att||(s.date<=T||PROJ?'Present':''))})}
+function tier(n,own){var t=(own||C('pay.tiers')||[]).filter(function(x){return x[0]==null||n<x[0]})[0];return t?t[1]:0}   // own: a trainer's own steps (STAFF tab, Fixed pay JSON {"tiers":...})
 function deducts(att){return att==='Present'||att==='Late Cancel'||att==='No Show'}
 function cancelKind(s){ // Early = cancelled before the day of the session
   return s.date>T?'Early Cancel':'Late Cancel'}
@@ -541,7 +544,7 @@ var NAV={
  owner:[['mine','My day','i-user'],['schedule','Schedule','i-cal'],['clients','Clients','i-users'],['wo','Workouts','i-dumb'],['numbers','Numbers','i-chart'],['more','More','i-more']]};
 function badgeFor(v){ if(v==='home'&&ME.role!=='trainer'){var n=overdue().length;return n?n:''} return '' }
 
-function render(){dirty();
+function render(){dirty();PROJ=VIEW==='numbers'&&UI.reveal&&UI.range==='full';
   var app=$('#app');
   if(!KEY){app.innerHTML=loginView();return}
   if(!LOADED){app.innerHTML='<div class="login"><div class="logo" style="width:54px;height:54px;font-size:26px">W</div>'+(LOAD_ERR?'<h1>Could not load</h1><p>'+esc(LOAD_ERR)+'</p><button class="btn" id="retry">Try again</button>':'<h1>Loading</h1><p>Reading the schedule from the sheets.</p>')+'</div>';if($('#retry'))$('#retry').onclick=function(){boot()};return}
@@ -642,7 +645,10 @@ VIEWS.schedule=function(){
   var days=[];for(var i=-1;i<7;i++){var d=addDays(TODAY,i);if(d.getDay()!==0)days.push(ymd(d))}
   return '<div class="h"><h2>Schedule</h2><button class="btn sec sm" data-act="week">'+ICON('i-cal','icon')+'Next week</button></div>'+
    '<div class="chips" role="tablist">'+days.map(function(d){return '<button class="chip" aria-pressed="'+(d===DAY)+'" data-day="'+d+'">'+(d===T?'Today':dayLabel(d))+'</button>'}).join('')+'</div>'+
-   '<div class="list">'+(sessOn(DAY).length?sessOn(DAY).map(function(s){return sessCard(s,{change:true})}).join(''):'<div class="empty">Nothing booked on '+dayLabel(DAY)+'.</div>')+'</div>';
+   (function(){var all=sessOn(DAY),trs=[];all.forEach(function(s){if(s.trainer&&trs.indexOf(s.trainer)<0)trs.push(s.trainer)});trs.sort();if(UI.tr&&trs.indexOf(UI.tr)<0&&!all.length)UI.tr='';
+    var list=UI.tr?all.filter(function(s){return s.trainer===UI.tr}):all;
+    return (trs.length>1||UI.tr?'<div class="chips" role="tablist" aria-label="Trainer">'+[''].concat(trs).map(function(t){return '<button class="chip" aria-pressed="'+((UI.tr||'')===t)+'" data-tr="'+esc(t)+'">'+(t?esc(t)+' ('+all.filter(function(s){return s.trainer===t}).length+')':'All')+'</button>'}).join('')+'</div>':'')+
+     '<div class="list">'+(list.length?list.map(function(s){return sessCard(s,{change:true})}).join(''):'<div class="empty">'+(UI.tr?esc(UI.tr)+' has nothing on ':'Nothing booked on ')+dayLabel(DAY)+'.</div>')+'</div>'})();
 };
 function isActive(cid){var X=ix();if(!(cid in X.act))X.act[cid]=pkgsOfClient(cid).some(isOpenPkg);return X.act[cid]}
 function clientRow(c){var p=pkgOf(c.id),r=p&&lateRule(p);return '<button class="row" data-client="'+c.id+'"><span class="avatar">'+esc(c.name[0]||'?')+'</span><div class="main"><b>'+esc(c.name)+'</b><span>'+(p?esc(p.type)+' · '+avail(p)+' left':'No package')+'</span></div>'+(c.disc?'<span class="pill p-good">'+c.disc+'% off</span>':'')+(c.mel?'<span class="pill p-mute">'+esc(melName())+'</span>':'')+(r&&r.late?'<span class="pill p-bad">Owes '+money(r.due)+'</span>':'')+'</button>'}
@@ -695,39 +701,108 @@ VIEWS.me=function(){
 
 /* owner dashboard */
 VIEWS.dash=function(){
-  var R=curRange(),monthStart=R.from,to=R.to;
-  var done=SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=T&&delivered(s)});
-  var byType={}, byTrainer=payByTrainer(monthStart,to), rev=0;
-  done.forEach(function(s){ s.clients.forEach(function(c){ if(!deducts(c.att||'Present'))return; var v=centerValue(s,c); rev+=v; byType[s.tab]=(byType[s.tab]||0)+v }) });
-  var pay=0; Object.keys(byTrainer).forEach(function(k){pay+=byTrainer[k].pay});
-  var monthExp=EXPENSES.filter(function(e){return e.d>=monthStart&&e.d<=to});
-  var exp=monthExp.reduce(function(a,b){return a+b.amt},0), cash=PKGS.filter(function(p){return p.start>=monthStart&&p.start<=to&&!melSvc(p.kind)&&!isMel(p.client)}).reduce(function(a,p){return a+(p.paid||0)},0), net=rev-pay-exp;
-  var owed=overdue().reduce(function(a,b){return a+b.due},0);
-  // fill rate by hour for 1:3 (capacity services['1:3'].cap)
-  var cap13=svc('1:3').cap,hours={}; SESS.filter(function(s){return s.tab==='1:3'&&s.date>=monthStart&&s.date<=to&&s.date<=T&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=cap13});
-  var maxType=Math.max.apply(null,Object.keys(byType).map(function(k){return byType[k]}).concat([1]));
+  var R=curRange(),N=dashNums(R),C2=cmpRange(R),M=C2?dashNums(C2):null,cap13=svc('1:3').cap;
+  var maxType=Math.max.apply(null,Object.keys(N.byType).map(function(k){return N.byType[k]}).concat([1]));
+  var dl=function(k,fmt,lowGood){if(!M)return '';var a=N[k],b=M[k],d=a-b,good=lowGood?d<=0:d>=0;return '<em class="num" style="font-style:normal;font-weight:700;color:'+(d===0?'var(--ink-3)':good?'var(--good)':'var(--bad)')+'">'+(d>=0?'+':'')+(fmt?fmt(d):d)+' vs '+esc(C2.short)+'</em>'};
+  var tile=function(l,v,sub,key,k,fmt,lowGood){return '<button class="kpi" data-drill="'+key+'" style="text-align:left"><span>'+l+'</span><b class="num">'+v+'</b><small>'+sub+(k?'<br>'+dl(k,fmt,lowGood):'')+'</small></button>'};
   return '<div class="h"><h2>'+esc(R.label)+'</h2><small>'+rangeText(R)+'</small></div>'+
-   '<div class="kpis"><div class="kpi hero"><span>Net profit</span><b class="num" style="color:'+(net>=0?'var(--good)':'var(--bad)')+'">'+money(net)+'</b><small>Delivered revenue minus trainer pay and expenses</small></div>'+
-   kpi('Delivered revenue',money(rev),'Sessions actually given')+kpi('Cash collected',money(cash),'Paid on center packages started in this period')+kpi('Trainer pay',money(pay),'Per your pay rules')+
-   kpi('Expenses',money(exp),monthExp.length+' entries')+kpi('Late payments',money(owed),overdue().length+' clients')+kpi('Sessions',done.length,'Given in this period')+'</div>'+
-   '<div class="h"><h2>Revenue by service</h2></div><div class="card bars">'+Object.keys(byType).sort(function(a,b){return byType[b]-byType[a]}).map(function(k){return bar(k,byType[k],maxType,money(byType[k]))}).join('')+'</div>'+
-   '<div class="h"><h2>1:3 fill rate by hour</h2><small>Seats used of '+cap13+'</small></div><div class="card bars">'+Object.keys(hours).sort().map(function(h){var x=hours[h],pct=Math.round(x.seats/x.cap*100);return bar(hl(h),pct,100,pct+'%')}).join('')+'</div>'+
-   '<div class="h"><h2>Trainers</h2></div><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th class="r">Revenue</th><th class="r">Pay</th><th class="r">Margin</th></tr></thead><tbody>'+
-   Object.keys(byTrainer).map(function(k){var t=byTrainer[k],m=t.rev-t.pay;return '<tr><td><b>'+esc(k)+'</b></td><td class="r num">'+t.sessions+'</td><td class="r num">'+money(t.rev)+'</td><td class="r num">'+money(t.pay)+'</td><td class="r num" style="color:'+(m>=0?'var(--good)':'var(--bad)')+'">'+money(m)+(m<0?' ⚠':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+   (PROJ?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-alert')+'<span>Forecast: sessions after today count as given and every booked client as present. Real numbers once they are marked.</span></div>':'')+
+   cmpPicker()+
+   '<div class="kpis"><button class="kpi hero" data-drill="net" style="text-align:left"><span>Net profit</span><b class="num" style="color:'+(N.net>=0?'var(--good)':'var(--bad)')+'">'+money(N.net)+'</b><small>Delivered revenue minus trainer pay and expenses'+(M?'<br>'+dl('net',money):'')+'</small></button>'+
+   tile('Delivered revenue',money(N.rev),'Sessions actually given','rev','rev',money)+tile('Cash collected',money(N.cash),'Paid on center packages started in this period','cash','cash',money)+tile('Trainer pay',money(N.pay),'Per your pay rules','pay','pay',money,true)+
+   tile('Expenses',money(N.exp),N.expN+' entries','exp','exp',money,true)+'<button class="kpi" data-go="pay" style="text-align:left"><span>Late payments</span><b class="num">'+money(N.owed)+'</b><small>'+overdue().length+' clients</small></button>'+tile('Sessions',N.sessions,'Given in this period','sess','sessions')+'</div>'+
+   '<div class="h"><h2>Revenue by service</h2><small>Tap one</small></div><div class="card bars">'+Object.keys(N.byType).sort(function(a,b){return N.byType[b]-N.byType[a]}).map(function(k){return '<button data-drill="svc|'+esc(k)+'" style="display:block;width:100%;text-align:left">'+bar(k,N.byType[k],maxType,money(N.byType[k])+(M?' '+dTxt(N.byType[k]-(M.byType[k]||0)):''))+'</button>'}).join('')+'</div>'+
+   '<div class="h"><h2>1:3 fill rate by hour</h2><small>Seats used of '+cap13+'</small></div><div class="card bars">'+Object.keys(N.hours).sort().map(function(h){var x=N.hours[h],pct=Math.round(x.seats/x.cap*100);return '<button data-drill="hour|'+h+'" style="display:block;width:100%;text-align:left">'+bar(hl(h),pct,100,pct+'%')+'</button>'}).join('')+'</div>'+
+   '<div class="h"><h2>Trainers</h2><small>Tap a row</small></div><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th class="r">Revenue</th><th class="r">Pay</th><th class="r">Margin</th></tr></thead><tbody>'+
+   Object.keys(N.byTrainer).map(function(k){var t=N.byTrainer[k],m=t.rev-t.pay;return '<tr data-drill="'+(m<0?'loss':'tr')+'|'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class="r num">'+t.sessions+'</td><td class="r num">'+money(t.rev)+'</td><td class="r num">'+money(t.pay)+'</td><td class="r num" style="color:'+(m>=0?'var(--good)':'var(--bad)')+';text-decoration:'+(m<0?'underline':'none')+'">'+money(m)+(m<0?' ⚠':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+   '<div class="h"><h2>What the numbers say</h2></div><div class="card" style="padding:14px 16px">'+briefOf(N,M,C2).map(function(x){return '<p style="margin:0 0 10px;font-size:15px">'+x+'</p>'}).join('')+'</div>'+
    '<div class="h"><h2>Trial leads</h2><small>Landing page</small></div><div class="card bars">'+
    bar('Leads',LEADS.length,LEADS.length,LEADS.length)+bar('Booked a time',LEADS.filter(function(l){return l.date}).length,LEADS.length,LEADS.filter(function(l){return l.date}).length)+bar('Confirmed',LEADS.filter(function(l){return l.status==='Confirmed'}).length,LEADS.length,LEADS.filter(function(l){return l.status==='Confirmed'}).length)+'</div>';
 };
+// Physio and Prehab are the same work (Majd, physio room): one line in the numbers
+function svcGroup(tab){return tab==='Physio'||tab==='Prehab'?'Physio (Majd)':tab}
+function dTxt(d){return '('+(d>=0?'+':'')+money(d)+')'}
+// every number on the overview for one period, so two periods can be compared
+function dashNums(R){
+  var from=R.from,to=R.to,done=SESS.filter(function(s){return s.date>=from&&s.date<=to&&s.date<=upTo()&&delivered(s)});
+  var byType={},rev=0;done.forEach(function(s){s.clients.forEach(function(c){if(!deducts(c.att||'Present'))return;var v=centerValue(s,c),g=svcGroup(s.tab);rev+=v;byType[g]=(byType[g]||0)+v})});
+  var byTrainer=payByTrainer(from,to),pay=0;Object.keys(byTrainer).forEach(function(k){pay+=byTrainer[k].pay});
+  var ex=EXPENSES.filter(function(e){return e.d>=from&&e.d<=to}),exp=ex.reduce(function(a,b){return a+b.amt},0);
+  var cash=PKGS.filter(function(p){return p.start>=from&&p.start<=to&&!melSvc(p.kind)&&!isMel(p.client)}).reduce(function(a,p){return a+(p.paid||0)},0);
+  var hours={},cap13=svc('1:3').cap;SESS.filter(function(s){return s.tab==='1:3'&&s.date>=from&&s.date<=to&&s.date<=upTo()&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=cap13});
+  return {R:R,done:done,byType:byType,rev:rev,byTrainer:byTrainer,pay:pay,exp:exp,expN:ex.length,ex:ex,cash:cash,net:rev-pay-exp,sessions:done.length,hours:hours,owed:overdue().reduce(function(a,b){return a+b.due},0)}}
+// what one session earned the center and what it cost in trainer pay
+function sessCharged(s){var v=0;s.clients.forEach(function(c){if(deducts(c.att||'Present'))v+=centerValue(s,c)});return v}
+function sessPay(s,count){var r=payOf(s.trainer);
+  if(r.rule==='tier')return tier(count,r.tiers||(r.fixed&&r.fixed.tiers));
+  if(r.rule==='fixed')return fixedPay(s);
+  if(r.rule==='cut'){var cv=0,n=0;s.clients.forEach(function(c){if(deducts(c.att||'Present')&&!melSvc(s.tab)&&!isMel(c.cid)){cv+=centerValue(s,c);n++}});return n?Math.max(0,cv-melCut()):0}
+  return 0}
+function sessRows(list,R){
+  var cnt={};SESS.forEach(function(s){if(s.date>=R.from.slice(0,8)+'01'&&s.date<=R.to&&s.date<=upTo()&&delivered(s)){var k=s.trainer+'|'+s.date.slice(0,7);cnt[k]=(cnt[k]||0)+1}});
+  return list.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.start<b.start?-1:1}).map(function(s){var ch=sessCharged(s),py=sessPay(s,cnt[s.trainer+'|'+s.date.slice(0,7)]||0);
+    return {s:s,ch:ch,py:py,gap:ch-py,who:s.clients.filter(function(c){return deducts(c.att||'Present')}).map(function(c){var p=pkgById(c.pkg);return esc(c.name)+(p?' <span class="muted">('+esc(p.type.split(' (')[0])+(p.price>0?', '+money(p.total?p.price/p.total:0)+'/session':', free')+')</span>':'')}).join('<br>')}})}
+function sessTable(rows){if(!rows.length)return '<div class="empty">Nothing here.</div>';
+  var tc=rows.reduce(function(a,r){return a+r.ch},0),tp=rows.reduce(function(a,r){return a+r.py},0);
+  return '<div class="card tblwrap"><table class="tbl"><thead><tr><th>Session</th><th class="r">Charged</th><th class="r">Pay</th></tr></thead><tbody>'+rows.map(function(r){return '<tr data-sx="'+r.s.id+'" style="cursor:pointer"><td><b>'+dayLabel(r.s.date)+' · '+hl(r.s.start)+'</b><div class="muted" style="font-size:13px">'+esc(r.s.tab)+' · '+esc(r.s.trainer)+'</div><div style="font-size:13px">'+(r.who||'<span class="muted">nobody counted</span>')+'</div></td><td class="r num">'+money(r.ch)+'</td><td class="r num" style="color:'+(r.py>r.ch?'var(--bad)':'inherit')+'">'+money(r.py)+'</td></tr>'}).join('')+
+   '<tr><td><b>Total ('+rows.length+')</b></td><td class="r num"><b>'+money(tc)+'</b></td><td class="r num"><b>'+money(tp)+'</b></td></tr></tbody></table></div>'}
+// tap anything on the overview: the detail behind it opens in a sheet
+function drill(key){var R=curRange(),N=dashNums(R),x=key.split('|'),k=x[0],v=x.slice(1).join('|'),body='',title='';
+  var bySess=function(f){return sessRows(N.done.filter(f),R)};
+  if(k==='loss'||k==='tr'){var rows=bySess(function(s){return s.trainer===v}),bad=rows.filter(function(r){return r.py>r.ch}),t=N.byTrainer[v]||{sessions:0,rev:0,pay:0},r=payOf(v);
+    title=v+' · '+R.label;
+    body='<div class="kpis" style="margin-bottom:12px">'+kpi('Revenue',money(t.rev),t.sessions+' sessions')+kpi('Pay',money(t.pay),r.base?'incl. '+money(r.base)+' base':'Per your pay rules')+'</div>'+
+     (bad.length?'<div class="note bad" style="margin-bottom:10px">'+ICON('i-alert')+'<span><b>'+bad.length+' session'+(bad.length>1?'s':'')+' paid more than charged</b>, '+money(bad.reduce(function(a,r){return a+r.py-r.ch},0))+' short. Usually a free assessment or trial, a big discount, or a package with no price.</span></div>'+sessTable(bad)+'<div class="h" style="margin-top:16px"><h2 style="font-size:17px">All '+esc(v)+' sessions</h2></div>':'<div class="note good" style="margin-bottom:10px">'+ICON('i-check')+'<span>Every session was charged at least what it paid.</span></div>')+sessTable(rows)}
+  else if(k==='svc'){title=v+' · '+R.label;body=sessTable(bySess(function(s){return svcGroup(s.tab)===v}))}
+  else if(k==='hour'){title='1:3 at '+hl(v)+' · '+R.label;body=sessTable(sessRows(SESS.filter(function(s){return s.tab==='1:3'&&s.start===v&&s.date>=R.from&&s.date<=R.to&&s.date<=upTo()&&s.status!=='Cancelled'}),R))}
+  else if(k==='rev'||k==='sess'||k==='pay'){title=(k==='pay'?'Trainer pay':k==='rev'?'Delivered revenue':'Sessions')+' · '+R.label;
+    body=k==='pay'?'<div class="card tblwrap" style="margin-bottom:12px"><table class="tbl"><tbody>'+Object.keys(N.byTrainer).map(function(t){var b=N.byTrainer[t];return '<tr data-drill2="'+(b.rev<b.pay?'loss':'tr')+'|'+esc(t)+'" style="cursor:pointer"><td><b>'+esc(t)+'</b> <span class="muted">'+b.sessions+' sessions</span></td><td class="r num">'+money(b.pay)+'</td></tr>'}).join('')+'</tbody></table></div>':
+     '<div class="card bars" style="margin-bottom:12px">'+Object.keys(N.byType).map(function(t){return '<button data-drill2="svc|'+esc(t)+'" style="display:block;width:100%;text-align:left">'+bar(t,N.byType[t],Math.max.apply(null,Object.keys(N.byType).map(function(q){return N.byType[q]})),money(N.byType[t]))+'</button>'}).join('')+'</div>'+sessTable(sessRows(N.done,R))}
+  else if(k==='exp'){title='Expenses · '+R.label;var cat={};N.ex.forEach(function(e){cat[e.cat]=(cat[e.cat]||0)+e.amt});
+    body='<div class="card bars" style="margin-bottom:12px">'+Object.keys(cat).sort(function(a,b){return cat[b]-cat[a]}).map(function(c){return bar(c||'Other',cat[c],N.exp||1,money(cat[c]))}).join('')+'</div><div class="card tblwrap"><table class="tbl"><tbody>'+N.ex.slice().sort(function(a,b){return a.d<b.d?-1:1}).map(function(e){return '<tr><td><b>'+esc(e.what||e.cat||'')+'</b><div class="muted" style="font-size:13px">'+dayLabel(e.d)+' · '+esc(e.cat||'')+'</div></td><td class="r num">'+money(e.amt)+'</td></tr>'}).join('')+'</tbody></table></div>'}
+  else if(k==='cash'){title='Cash collected · '+R.label;var ps=PKGS.filter(function(p){return p.start>=R.from&&p.start<=R.to&&!melSvc(p.kind)&&!isMel(p.client)});
+    body='<div class="card tblwrap"><table class="tbl"><thead><tr><th>Package</th><th class="r">Paid</th><th class="r">Price</th></tr></thead><tbody>'+ps.map(function(p){return '<tr data-cl="'+p.client+'" style="cursor:pointer"><td><b>'+esc(p.name)+'</b><div class="muted" style="font-size:13px">'+esc(p.type)+' · '+dayLabel(p.start)+'</div></td><td class="r num">'+money(p.paid||0)+'</td><td class="r num">'+money(p.price)+'</td></tr>'}).join('')+'</tbody></table></div>'}
+  else if(k==='net'){title='Net profit · '+R.label;body='<div class="card tblwrap"><table class="tbl"><tbody><tr data-drill2="rev"><td>Delivered revenue</td><td class="r num">'+money(N.rev)+'</td></tr><tr data-drill2="pay"><td>Trainer pay</td><td class="r num">−'+money(N.pay)+'</td></tr><tr data-drill2="exp"><td>Expenses</td><td class="r num">−'+money(N.exp)+'</td></tr><tr><td><b>Net profit</b></td><td class="r num"><b>'+money(N.net)+'</b></td></tr></tbody></table></div><p class="muted" style="margin-top:10px">Margin: '+(N.rev?Math.round(N.net/N.rev*100):0)+'% of delivered revenue.</p>'}
+  openSheet(title,body);
+  $$('#shBody [data-sx]').forEach(function(b){b.onclick=function(){sessSheet(b.dataset.sx)}});
+  $$('#shBody [data-drill2]').forEach(function(b){b.onclick=function(){drill(b.dataset.drill2)}});
+  $$('#shBody [data-cl]').forEach(function(b){b.onclick=function(){clientSheet(b.dataset.cl)}});
+}
+// compare with: the period before, the same period last year, or any month
+UI.cmp='';UI.cmpM='';
+function cmpRange(R){if(!UI.cmp)return null;var n=daysIn(R),f=dOf(R.from);
+  if(UI.cmp==='prev'){var a=R.from.slice(8)==='01'&&(R.to===ymdOf(f.getFullYear(),f.getMonth()+1,0)||PROJ)?{from:ymdOf(f.getFullYear(),f.getMonth()-1,1),to:ymdOf(f.getFullYear(),f.getMonth(),0)}:prevRange(R);a.short=monthName(a.from.slice(0,7))+(a.from.slice(8)==='01'?'':' period');return a}
+  if(UI.cmp==='year'){var y1={from:(+R.from.slice(0,4)-1)+R.from.slice(4),to:(+R.to.slice(0,4)-1)+R.to.slice(4)};y1.short=monthName(y1.from.slice(0,7));return y1}
+  if(UI.cmp==='pick'&&UI.cmpM){var p=UI.cmpM.split('-');var m={from:ymdOf(+p[0],+p[1]-1,1),to:ymdOf(+p[0],+p[1],0)};m.short=monthName(UI.cmpM);return m}
+  return null}
+function cmpPicker(){return '<div class="two" style="margin-bottom:12px"><div class="field"><label for="csel">Compare with</label><select id="csel">'+[['','Nothing'],['prev','Month before'],['year','Same time last year'],['pick','Pick a month']].map(function(o){return '<option value="'+o[0]+'"'+(UI.cmp===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+  (UI.cmp==='pick'?'<div class="field"><label for="cmon">Month</label><input id="cmon" type="month" value="'+(UI.cmpM||T.slice(0,7))+'" max="'+T.slice(0,7)+'"></div>':'<div></div>')+'</div>'}
+// a short read of the period, in plain words (no AI: rules on the same numbers you see)
+function briefOf(N,M,C2){var out=[],ks=Object.keys(N.byType).sort(function(a,b){return N.byType[b]-N.byType[a]}),tot=N.rev||1;
+  if(!N.sessions)return ['No sessions given in this period yet.'];
+  out.push('<b>'+money(N.net)+' net</b> on '+money(N.rev)+' delivered revenue ('+Math.round(N.net/tot*100)+'% margin). Trainer pay takes '+Math.round(N.pay/tot*100)+'%, expenses '+Math.round(N.exp/tot*100)+'%.');
+  if(ks.length)out.push('<b>'+esc(ks[0])+'</b> carried the period: '+money(N.byType[ks[0]])+', '+Math.round(N.byType[ks[0]]/tot*100)+'% of revenue.'+(ks.length>1?' Then '+ks.slice(1,3).map(function(k){return esc(k)+' '+money(N.byType[k])}).join(', ')+'.':''));
+  if(M){var up=[],down=[];Object.keys(Object.assign({},N.byType,M.byType)).forEach(function(k){var d=(N.byType[k]||0)-(M.byType[k]||0);if(Math.abs(d)>=20)(d>0?up:down).push([k,d])});
+    up.sort(function(a,b){return b[1]-a[1]});down.sort(function(a,b){return a[1]-b[1]});
+    out.push('Against '+esc(C2.short)+': net '+(N.net>=M.net?'up ':'down ')+money(Math.abs(N.net-M.net))+', revenue '+(N.rev>=M.rev?'up ':'down ')+money(Math.abs(N.rev-M.rev))+', '+(N.sessions-M.sessions>=0?'+':'')+(N.sessions-M.sessions)+' sessions.');
+    if(up.length)out.push('<b>Pushed more:</b> '+up.map(function(x){return esc(x[0])+' +'+money(x[1])}).join(', ')+'.');
+    if(down.length)out.push('<b>Sold less:</b> '+down.map(function(x){return esc(x[0])+' −'+money(-x[1])}).join(', ')+'.')}
+  var low=ks.filter(function(k){return N.byType[k]/tot<0.05});if(low.length)out.push('<b>Barely selling:</b> '+low.map(esc).join(', ')+' (under 5% of revenue each).');
+  var neg=Object.keys(N.byTrainer).filter(function(k){var t=N.byTrainer[k];return t.rev<t.pay});if(neg.length)out.push('<b>Paid more than they brought in:</b> '+neg.map(function(k){var t=N.byTrainer[k];return esc(k)+' ('+money(t.pay-t.rev)+')'}).join(', ')+'. Tap the row in Trainers to see which sessions.');
+  var hs=Object.keys(N.hours).map(function(h){var x=N.hours[h];return [h,x.seats/x.cap]}).sort(function(a,b){return a[1]-b[1]});
+  if(hs.length>1)out.push('1:3 fill: best at '+hl(hs[hs.length-1][0])+' ('+Math.round(hs[hs.length-1][1]*100)+'%), weakest at '+hl(hs[0][0])+' ('+Math.round(hs[0][1]*100)+'%).');
+  return out}
 function kpi(l,v,s){return '<div class="kpi"><span>'+l+'</span><b class="num">'+v+'</b><small>'+s+'</small></div>'}
 function bar(l,v,max,txt){return '<div class="bar" title="'+esc(l)+': '+esc(txt)+'"><span class="lab">'+esc(l)+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(1,v/max*100)+'%"></span></span><span class="val num">'+txt+'</span></div>'}
 // month to date per trainer: delivered sessions, revenue, the cut trainer's own clients vs her service, fixed per-session pay
 function monthByTrainer(monthStart,to){var by={};to=to||T;
-  SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=T&&delivered(s)}).forEach(function(s){
+  SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=upTo()&&delivered(s)}).forEach(function(s){
     var t=by[s.trainer]=by[s.trainer]||{sessions:0,rev:0,melPay:0,own:0,fixed:0};t.sessions++;t.fixed+=fixedPay(s);
     var v=0,centerV=0,centerN=0;s.clients.forEach(function(c){if(!deducts(c.att||'Present'))return;var x=centerValue(s,c);v+=x;
       if(!melSvc(s.tab)&&!isMel(c.cid)){centerV+=x;centerN++}else t.own++});
     t.rev+=v;if(centerN)t.melPay+=Math.max(0,centerV-melCut())});
   return by}
-function trainerPay(name,t){var r=payOf(name);if(r.rule==='tier')return t.sessions*tier(t.sessions)+(r.base||0);if(r.rule==='cut')return t.melPay;if(r.rule==='fixed')return t.fixed;return 0}
+function trainerPay(name,t){var r=payOf(name);if(r.rule==='tier')return t.sessions*tier(t.sessions,r.tiers||(r.fixed&&r.fixed.tiers))+(r.base||0);if(r.rule==='cut')return t.melPay;if(r.rule==='fixed')return t.fixed;return 0}
 
 /* ---------------- interactions ---------------- */
 function bindView(){
@@ -736,6 +811,7 @@ function bindView(){
   // tap a session (not its buttons) to see and edit everything about it
   $$('[data-sess]').forEach(function(el){el.onclick=function(e){if(e.target.closest('button,a,input,select,textarea'))return;sessSheet(el.dataset.sess)}});
   $$('[data-day]').forEach(function(b){b.onclick=function(){DAY=b.dataset.day;render()}});
+  $$('[data-tr]').forEach(function(b){b.onclick=function(){UI.tr=b.dataset.tr;render()}});
   $$('[data-client]').forEach(function(b){b.onclick=function(){clientSheet(b.dataset.client)}});
   $$('[data-paycl]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.paycl)}});
   $$('[data-att]').forEach(function(b){b.onclick=function(){var x=b.dataset.att.split('|'),s=SESS.filter(function(y){return y.id===x[0]})[0],c=s.clients[+x[1]],prev=c.att;if(c.att===x[2])return;c.att=x[2];s.status='Done';render();
@@ -829,14 +905,14 @@ function sessSheet(id){
       '<div id="sxw'+i+'"></div></div>'}).join('')+
    (staff&&cap>s.clients.length&&s.status!=='Cancelled'?'<button class="btn sec full" id="sxAdd" style="margin-bottom:12px">'+ICON('i-plus')+'Add a client to the free seat</button>':'')+
    (isPP?'<div class="field"><span class="flabel">Payment for this session</span><div class="seg" id="sxPay">'+sessPays().map(function(m){return '<button class="chip" aria-pressed="'+(m===(s.pay||''))+'"'+dis+'>'+esc(m)+'</button>'}).join('')+'</div></div>':'');
-  openSheet(s.tab+' session',body,'<button class="btn full" id="sxSave" disabled>Save changes</button>');
+  openSheet(s.tab+' session',body,'<button class="btn full" id="sxSave">Save changes</button>');
   var btn=$('#sxSave');
   var changed=function(){return JSON.stringify(cur)!==JSON.stringify(orig)};
-  var paintBtn=function(){btn.disabled=!changed();btn.textContent='Save changes'};
+  var paintBtn=function(){btn.disabled=false;btn.textContent='Save changes'};   // never greyed out: iPhones report a new date only when the picker closes
   var paintWhy=function(i){var box=$('#sxw'+i);if(!box)return;var ex=staff&&cur.att[i]==='Early Cancel'&&orig.att[i]!=='Early Cancel'&&kind==='Late Cancel',pair=s.tab==='1:2'&&cur.att[i]==='Early Cancel'&&orig.att[i]!=='Early Cancel';
     box.innerHTML=(ex?'<div class="field" style="margin:10px 0 0"><label for="sxy'+i+'">Reason for the exception (required)</label><input id="sxy'+i+'" type="text" placeholder="e.g. sick, urgent at work" value="'+esc(why[i]||'')+'"></div>':'')+(pair?'<div class="note warn" style="margin-top:10px">'+ICON('i-alert')+'<span>A 1:2 early cancel cancels the whole session for both clients.</span></div>':'');
     var y=$('#sxy'+i);if(y)y.oninput=function(){why[i]=y.value}};
-  $('#sxD').onchange=function(){cur.date=this.value;paintBtn()};$('#sxT').onchange=function(){cur.start=this.value;paintBtn()};
+  $('#sxD').onchange=$('#sxD').oninput=function(){cur.date=this.value;paintBtn()};$('#sxT').onchange=$('#sxT').oninput=function(){cur.start=this.value;paintBtn()};
   $('#sxTr').onchange=function(){cur.trainer=this.value;paintBtn()};$('#sxR').onchange=function(){cur.room=this.value;paintBtn()};
   $$('[data-sxa]').forEach(function(b){b.onclick=function(){var x=b.dataset.sxa.split('|'),i=+x[0];cur.att[i]=x[1];$$('[data-sxa^="'+i+'|"]').forEach(function(y){y.setAttribute('aria-pressed',String(y===b))});paintWhy(i);paintBtn()}});
   $$('#sxPay button').forEach(function(b){b.onclick=function(){cur.pay=b.textContent;$$('#sxPay button').forEach(function(y){y.setAttribute('aria-pressed',String(y===b))});paintBtn()}});
@@ -852,6 +928,7 @@ function sessSheet(id){
      .catch(function(e){BUSY--;paintBusy();b.disabled=false;$('#sxErr').innerHTML='<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Not removed: '+esc(e.message)+'</span></div>'})}});
   var add=$('#sxAdd');if(add)add.onclick=function(){ACTIONS.book();ssSet($('#bty'),s.tab);ssSet($('#btr'),s.trainer);$('#bd').value=s.date;$('#bt').value=s.start;['#bty','#btr','#bd'].forEach(function(q){var el=$(q);if(el)el.dispatchEvent(new Event('change'))})};
   btn.onclick=function(){
+    if(staff){var dI=$('#sxD'),tI=$('#sxT'),trI=$('#sxTr'),rI=$('#sxR');if(dI&&dI.value)cur.date=dI.value;if(tI&&tI.value)cur.start=tI.value.slice(0,5);if(trI&&!trI.disabled)cur.trainer=trI.value;if(rI)cur.room=rI.value}   // read what is on screen now
     var calls=[],moved=cur.date!==orig.date||cur.start!==orig.start,trd=cur.trainer!==orig.trainer;
     if(moved){if(!cur.date||!cur.start){toast('Pick the day and time');return}calls.push(['app_change',{ref:s.ref,id:s.id,who:'all',what:'move',date:cur.date,time:cur.start}])}
     if(trd)calls.push(['app_change',{ref:s.ref,id:s.id,who:'all',what:'trainer',trainer:cur.trainer}]);
@@ -863,7 +940,7 @@ function sessSheet(id){
       else calls.push(['app_att',{ref:s.ref,id:s.id,i:c.slot,att:a}])}
     var ed={};if(staff&&cur.room!==orig.room)ed.room=cur.room;if(staff&&isPP&&cur.pay!==orig.pay)ed.pay=cur.pay;
     if(Object.keys(ed).length)calls.push(['app_sess_edit',Object.assign({ref:s.ref,id:s.id},ed)]);
-    if(!calls.length){closeSheet();return}
+    if(!calls.length){toast('Nothing changed');closeSheet();return}
     btn.disabled=true;btn.textContent='Saving…';$('#sxErr').innerHTML='';BUSY++;paintBusy();
     var done=0,run=calls.reduce(function(pr,x){return pr.then(function(){return api(x[0],x[1]).then(function(){done++})})},Promise.resolve());
     run.then(function(){BUSY--;paintBusy();dirty();boot(true);sessNotify(sessMsgs(s,orig,cur,whole12),'Session update')})
@@ -917,7 +994,7 @@ function changeSession(id){
     var check=function(){var nd=$('#nd'),nt=$('#nt');if(!nd)return;var cp=capOf(s.trainer),n=loadAt(nd.value,nt.value,s.trainer)+1;$('#cap').innerHTML=(cp&&n>cp)?'<div class="note bad" style="margin-bottom:10px">'+ICON('i-alert')+'<span>'+esc(s.trainer)+' would have '+n+' clients at that hour. Max is '+cp+'.</span></div>':''};
     if($('#nd')){$('#nd').onchange=check;$('#nt').onchange=check;check()}
   }
-  var wPaint=function(){$$('#what button').forEach(function(x){var on=x.getAttribute('aria-pressed')==='true';x.style.background=on?'var(--ink)':'';x.style.color=on?'var(--on-accent)':''})};
+  var wPaint=function(){$$('#what button').forEach(function(x){var on=x.getAttribute('aria-pressed')==='true';x.style.background=on?'var(--ink)':'';x.style.color=on?'var(--bg)':''})};
   $$('#what button').forEach(function(b){b.onclick=function(){$$('#what button').forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');var w=b.dataset.w;if(/Cancel|Show/.test(w)){what='cancel';pick=w}else what=w;wPaint();paint()}});wPaint();
   paint();
   $('#doChange').onclick=function(){
@@ -927,7 +1004,7 @@ function changeSession(id){
       req.kind=k;targets.forEach(function(c){c.att=k}); if(who==='all') s.status=k==='No Show'?'Done':'Cancelled';dirty();
       msg=k==='No Show'?'Hi '+first(targets[0].name)+', we missed you at your session today ('+hl(s.start)+'). As it was not cancelled, it counts as a session. Let us know next time and we will move it for you. Wellbe'
         :'Hi '+first(targets[0].name)+', your session on '+dayLabel(s.date)+' at '+hl(s.start)+' is cancelled. '+(k==='Early Cancel'?'No pass was used.':'As it was cancelled on the day, it counts as a session.')+' See you next time! Wellbe';}
-    if(what==='move'){var nd=$('#nd').value,nt=$('#nt').value;if(!nd||!nt){toast('Pick the new day and time');return}if(overCap(nd,nt,s.trainer,targets.length)&&!(nd===s.date&&nt===s.start)){toast(s.trainer+' is full at that hour');return}
+    if(what==='move'){var nd=$('#nd').value,nt=String($('#nt').value||'').slice(0,5);if(!nd||!nt){toast('Pick the new day and time');return}if(overCap(nd,nt,s.trainer,targets.length)&&!(nd===s.date&&nt===s.start)){toast(s.trainer+' is full at that hour');return}
       req.date=nd;req.time=nt;if(who==='all'){s.date=nd;s.start=nt;s.end=endT(nt)}else{s.clients.splice(who,1)}
       msg='Hi '+first(targets[0].name)+', your session is moved to '+dayLabel(nd)+' at '+hl(nt)+' with '+s.trainer+'. See you then! Wellbe';}
     if(what==='trainer'){if(!$('#ntr')){toast(s.tab+' always runs with '+s.trainer);return}s.trainer=$('#ntr').value;req.trainer=s.trainer;msg='Hi '+first(targets[0].name)+', small update: your session on '+dayLabel(s.date)+' at '+hl(s.start)+' will be with '+s.trainer+'. Wellbe'}
@@ -938,7 +1015,7 @@ function changeSession(id){
     $('#doneBtn').onclick=function(){closeSheet();render()}};
     // cancels and no shows cannot be refused for capacity: show it at once and save in the background (the busy dot shows while it saves)
     if(what==='cancel'){render();done(true);save('app_change',req,null,true).catch(function(){});return}
-    save('app_change',req,null,true).then(function(){done(false)}).catch(function(){btn.disabled=false;btn.textContent='Save change'});
+    save('app_change',req,null,true).then(function(){done(false)}).catch(function(e){btn.disabled=false;btn.textContent='Try again';var m=String(e&&e.message||e);var box=$('#chErr');if(!box){box=document.createElement('div');box.id='chErr';box.className='note bad';box.style.margin='10px 0';btn.parentNode.insertBefore(box,btn)}box.innerHTML=ICON('i-alert')+'<span><b>Not saved.</b> '+esc(m==='timeout'?'The server took too long (busy). Wait 30 seconds and tap Try again.':m==='offline'?'No internet. Check the connection and tap Try again.':m)+'</span>'});
   };
 }
 ACTIONS.pay=function(){
@@ -1331,6 +1408,9 @@ function bindNumbers(){
   if($('#hideNum'))$('#hideNum').onclick=function(){UI.reveal=false;render();scrollTo(0,0)};
   if($('#askClaude'))$('#askClaude').onclick=askClaude;
   $$('[data-go]').forEach(function(b){b.onclick=function(){var a=b.dataset.go;ACTIONS[a]&&ACTIONS[a]()}});
+  $$('#main [data-drill]').forEach(function(b){b.onclick=function(){drill(b.dataset.drill)}});
+  if($('#csel'))$('#csel').onchange=function(){UI.cmp=this.value;if(UI.cmp==='pick'&&!UI.cmpM)UI.cmpM=T.slice(0,7);render()};
+  if($('#cmon'))$('#cmon').onchange=function(){UI.cmpM=this.value;render()};
 }
 /* ---------- period picker: one choice drives Overview and Analytics ---------- */
 UI.range='month';UI.rMonth='';UI.rFrom='';UI.rTo='';
@@ -1339,6 +1419,7 @@ function rangeOf(key){var y=TODAY.getFullYear(),m=TODAY.getMonth();
   if(key==='today')return {from:T,to:T,label:'Today'};
   if(key==='yesterday'){var x=ymd(addDays(TODAY,-1));return {from:x,to:x,label:'Yesterday'}}
   if(key==='week')return {from:ymd(monday),to:T,label:'This week'};
+  if(key==='full')return {from:ymdOf(y,m,1),to:ymdOf(y,m+1,0),label:'This month, full (as booked)'};
   if(key==='lastmonth')return {from:ymdOf(y,m-1,1),to:ymdOf(y,m,0),label:'Last month'};
   if(key==='pick'&&UI.rMonth){var p=UI.rMonth.split('-');return {from:ymdOf(+p[0],+p[1]-1,1),to:ymdOf(+p[0],+p[1],0),label:new Date(+p[0],+p[1]-1,15).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}}
   if(key==='year')return {from:ymdOf(y,0,1),to:T,label:'This year'};
@@ -1350,7 +1431,7 @@ function daysIn(R){return Math.round((dOf(R.to)-dOf(R.from))/864e5)+1}
 function prevRange(R){var n=daysIn(R),to=ymd(addDays(dOf(R.from),-1));return {from:ymd(addDays(dOf(to),-(n-1))),to:to,label:'previous '+n+' days'}}
 function rangeText(R){return R.from===R.to?dayLabel(R.from):dayLabel(R.from)+' to '+dayLabel(R.to)}
 function rangePicker(){
-  var opts=[['today','Today'],['yesterday','Yesterday'],['week','This week'],['month','This month'],['lastmonth','Last month'],['pick','Pick a month'],['year','This year'],['lastyear','Last year'],['custom','Custom']];
+  var opts=[['today','Today'],['yesterday','Yesterday'],['week','This week'],['month','This month'],['full','This month, full (as booked)'],['lastmonth','Last month'],['pick','Pick a month'],['year','This year'],['lastyear','Last year'],['custom','Custom']];
   return '<div class="field" style="margin-bottom:12px"><label for="rsel">Period</label><select id="rsel">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(UI.range===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
    (UI.range==='pick'?'<div class="field"><label for="rmon">Month</label><input id="rmon" type="month" value="'+(UI.rMonth||T.slice(0,7))+'" max="'+T.slice(0,7)+'"></div>':'')+
    (UI.range==='custom'?'<div class="two"><div class="field"><label for="rfr">From</label><input id="rfr" type="date" value="'+(UI.rFrom||T.slice(0,8)+'01')+'" max="'+T+'"></div><div class="field"><label for="rto">To</label><input id="rto" type="date" value="'+(UI.rTo||T)+'" max="'+T+'"></div></div>':'');
@@ -1380,7 +1461,7 @@ function stats(R){
   for(var d=dOf(R.from);ymd(d)<=R.to;d=addDays(d,1)){var k=bucketKey(ymd(d),kind);if(!B[k]){B[k]={rev:0,clients:{},newC:{},sold:0,soldN:0};keys.push(k)}}
   var firstSeen=firstSeenAll();
   var tot={rev:0,clients:{},newC:{},sold:0,soldN:0},prevC={},att={Present:0,'Late Cancel':0,'No Show':0,'Early Cancel':0},attBy={},byClient={},slot={};
-  SESS.forEach(function(s){if(s.date>T)return;var inR=s.date>=R.from&&s.date<=R.to,inP=s.date>=P.from&&s.date<=P.to;if(!inR&&!inP)return;
+  SESS.forEach(function(s){if(s.date>upTo())return;var inR=s.date>=R.from&&s.date<=R.to,inP=s.date>=P.from&&s.date<=P.to;if(!inR&&!inP)return;
     s.clients.forEach(function(c){var a=c.att||(s.status==='Cancelled'?'Early Cancel':'Present');
       if(inP){if(deducts(a)&&c.cid)prevC[c.cid]=1;return}
       att[a]=(att[a]||0)+1;var t=attBy[s.trainer]=attBy[s.trainer]||{n:0,miss:0};t.n++;if(a==='No Show'||a==='Late Cancel')t.miss++;
