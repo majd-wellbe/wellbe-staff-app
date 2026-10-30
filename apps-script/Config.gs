@@ -28,9 +28,9 @@ var CFG_DEFAULTS = {
   // cap = max clients in one hour across 1:1, 1:2 and 1:3 (empty = no limit)
   staff: [
     { id: 'majd', train: true, name: 'Majd Bou Habib', role: 'owner', trainer: 'Majd', match: 'majd', email: 'majdbouhabib@gmail.com', phone: '',
-      pay: { rule: 'fixed', fixed: { training: 20, Physio: 38, PhysioIns: 28, Prehab: 38 } }, active: true },
+      pay: { rule: 'fixed', fixed: { training: 20, Physio: 38, PhysioIns: 27, Prehab: 38 } }, active: true },
     { id: 'romy', name: 'Romy', nameAr: 'رومي', role: 'assistant', trainer: '', match: '', email: 'wellbe002@gmail.com', phone: '', pay: { rule: '' }, active: true },
-    { id: 'joe', train: true, name: 'Joe Al Hosny', role: 'trainer', trainer: 'Joe', match: 'joe', email: 'alhosnyjoe@gmail.com', phone: '', cap: 3, pay: { rule: 'tier', base: 0 }, active: true },
+    { id: 'joe', train: true, name: 'Joe Al Hosny', role: 'trainer', trainer: 'Joe', match: 'joe', email: 'alhosnyjoe@gmail.com', phone: '', cap: 3, pay: { rule: 'fixed', fixed: { training: 9 } }, active: true },
     { id: 'mikel', train: true, name: 'Mikel', role: 'trainer', trainer: 'Mikel', match: 'mik', email: 'zaarourmike@gmail.com', phone: '', pay: { rule: 'tier', base: 50 }, active: true },
     { id: 'melanie', train: true, name: 'Melanie', role: 'trainer', trainer: 'Melanie', match: 'mel', email: 'melaniebaraket@gmail.com', phone: '', pay: { rule: 'cut', cut: 4 }, active: true },
     { id: 'jad', name: 'Jad Barakat', role: 'trainer', trainer: 'Jad', match: 'jad', email: '', phone: '', pay: { rule: 'fixed', fixed: { Osteo: 140 } }, active: true },

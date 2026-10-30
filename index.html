@@ -345,9 +345,9 @@ var ICON=function(id,cls){return '<svg class="'+(cls||'icon')+'"><use href="#'+i
 var CFG_FALLBACK={v:1,
  center:{name:'Wellbe Health Center',desk:'romy',wa:'96176511048',country:'961',location:'Bsalim',area:'Beirut area',maps:'https://maps.google.com/?q=Wellbe+Health+Center+Bsalim'},
  staff:[
-  {id:'majd',name:'Majd Bou Habib',role:'owner',trainer:'Majd',train:true,pay:{rule:'fixed',fixed:{training:20,Physio:38,PhysioIns:28,Prehab:38}}},
+  {id:'majd',name:'Majd Bou Habib',role:'owner',trainer:'Majd',train:true,pay:{rule:'fixed',fixed:{training:20,Physio:38,PhysioIns:27,Prehab:38}}},
   {id:'romy',name:'Romy',role:'assistant',trainer:''},
-  {id:'joe',name:'Joe Al Hosny',role:'trainer',trainer:'Joe',train:true,cap:3,pay:{rule:'tier',base:0,fixed:{tiers:[[40,8.5],[80,9],[null,10.5]]}}},
+  {id:'joe',name:'Joe Al Hosny',role:'trainer',trainer:'Joe',train:true,cap:3,pay:{rule:'fixed',fixed:{training:9}}},   // flat $9 per session, any type (since Sept 2026)
   {id:'mikel',name:'Mikel',role:'trainer',trainer:'Mikel',train:true,pay:{rule:'tier',base:50}},
   {id:'melanie',name:'Melanie',role:'trainer',trainer:'Melanie',train:true,pay:{rule:'cut',cut:4}},
   {id:'jad',name:'Jad Barakat',role:'trainer',trainer:'Jad',pay:{rule:'fixed',fixed:{Osteo:140}}}],
@@ -518,6 +518,7 @@ function buildPatterns(){
 function payOf(name){return staffT(name).pay||{}}
 // per session pay for fixed-rate people (by service, PhysioIns = physio paid by insurance, training = any other session)
 function fixedPay(s){var r=payOf(s.trainer),f=r.fixed;if(r.rule!=='fixed'||!f)return 0;
+  if(s.clients.length&&s.clients.every(function(c){var p=pkgById(c.pkg);return p&&!(p.price>0)&&/assessment/i.test(p.type||'')}))return 0;   // free assessments pay nothing (Majd, 30 Oct)
   if(s.tab==='Physio'&&/insur/i.test(s.pay||'')&&f.PhysioIns!=null)return f.PhysioIns;if(f[s.tab]!=null)return f[s.tab];if(f.training!=null)return f.training;var k=Object.keys(f);return k.length===1?f[k[0]]:0}
 function fixedText(f){var k=Object.keys(f||{});if(k.length===1&&k[0]!=='training')return '$'+f[k[0]]+'/session';
   var out=[],grp={};if(f.training!=null)out.push('$'+f.training+' training');
