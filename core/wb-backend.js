@@ -49,7 +49,7 @@
   WB.isRead = function (action, data) { return READS.test(action) || (action === 'app_cl_run' && data && data.op === 'get'); };
 
   // compare two answers; fields that change every call are ignored
-  var SKIP = { ts: 1, at: 1, now: 1, cached: 1, took: 1, ms: 1, v: 1, server: 1, token: 1, row: 1 };   // row: sheet row number, Supabase sends the ID instead
+  var SKIP = { ts: 1, at: 1, now: 1, cached: 1, took: 1, ms: 1, v: 1, server: 1, token: 1, row: 1, ref: 1 };   // row/ref: sheet row number, Supabase sends the ID instead
   function norm(x) {
     if (Array.isArray(x)) return x.map(norm);
     if (x && typeof x === 'object') { var o = {}; Object.keys(x).sort().forEach(function (k) { if (!SKIP[k]) o[k] = norm(x[k]); }); return o; }
