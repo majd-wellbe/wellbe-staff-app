@@ -914,6 +914,7 @@ nav.tabs.coach-lift{z-index:81;pointer-events:none}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="../core/wb-core.js?v=1"></script>
+<script src="../core/wb-exphoto.js?v=1"></script>
 <script src="../core/wb-backend.js?v=1"></script>
 <script>/* help content registry: client/help/<pageId>.js call WBHelp.page(id, def) and client/help/tour.js calls WBHelp.tour(kind, def). The app reads them when it draws (see HELP + PROFILE STEPS) */
 window.WBHelp={v:1,pages:{},tours:{},page:function(id,def){this.pages[id]=def||{}},tour:function(kind,def){this.tours[kind]=def||{}}};</script>
@@ -1480,7 +1481,7 @@ function woExs(w){var out=[];(w.main||[]).forEach(function(b){b.moves.forEach(fu
 // one exercise: what to do, last time, and set inputs when it can be logged
 function woExHtml(m,q,d,sid,canLog,tag){
   var last=((d.logs||{})[m.ex]||{}).last||'',done=WODR[sid+'|'+m.ex]||(d.logged||{})[sid+'|'+m.ex]||'',n=Math.max(1,parseInt(m.sets,10)||0);
-  var h='<div class="wex"><div class="wexh">'+(tag?'<span class="wtag">'+tag+'</span>':'')+'<div class="grow"><b>'+esc(m.ex)+'</b><span>'+esc([m.sets?m.sets+(String(m.sets)==='1'?' set':' sets'):'',m.reps].filter(String).join(' x '))+'</span>'+(m.det?'<em>'+esc(m.det)+'</em>':'')+'</div></div>';
+  var h='<div class="wex"><div class="wexh">'+(tag?'<span class="wtag">'+tag+'</span>':'')+WB.exThumb(m.ex)+'<div class="grow"><b>'+esc(m.ex)+'</b><span>'+esc([m.sets?m.sets+(String(m.sets)==='1'?' set':' sets'):'',m.reps].filter(String).join(' x '))+'</span>'+(m.det?'<em>'+esc(m.det)+'</em>':'')+'</div></div>';
   if(canLog&&m.sets!==undefined){
     var pre=(done||'').split(',').map(function(s){return s.trim().split('x')});
     h+='<div class="wsets" data-wq="'+q+'" data-wkey="'+esc(sid+'|'+m.ex)+'">';for(var i=0;i<Math.max(n,pre.length,1);i++)h+='<div class="wset"><span>'+(i+1)+'</span><input class="inp" inputmode="decimal" placeholder="kg" value="'+esc((pre[i]||[])[0]||'')+'" data-wk><input class="inp" inputmode="numeric" placeholder="reps" value="'+esc((pre[i]||[])[1]||'')+'" data-wr></div>';

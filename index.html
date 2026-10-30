@@ -318,6 +318,7 @@ input,select,textarea,.wop input,.wop select{font-size:16px}
 <div class="toast" id="toast" role="status"></div>
 
 <script src="core/wb-core.js?v=1"></script>
+<script src="core/wb-exphoto.js?v=1"></script>
 <script src="core/wb-backend.js?v=1"></script>
 <script>
 /* =====================================================================
@@ -1633,7 +1634,7 @@ function woClientView(){
 
 function woEditView(){
   var p=WOE,dd=woDates(p),inp=function(path,val,ph,cls,type){return '<input class="'+(cls||'')+'" data-f="'+path+'" value="'+esc(val==null?'':val)+'" placeholder="'+esc(ph||'')+'"'+(type?' type="'+type+'"':'')+'>'};
-  var mv=function(path,m,sec){return '<div class="worow"><button class="woex'+(m.ex?'':' empty')+'" data-wox="'+path+'">'+(m.ex?esc(m.ex):'Pick exercise')+'</button>'+
+  var mv=function(path,m,sec){return '<div class="worow"><div style="display:flex;gap:8px;align-items:center">'+(m.ex?WB.exThumb(m.ex,'exth sm'):'')+'<button class="woex'+(m.ex?'':' empty')+'" data-wox="'+path+'" style="flex:1;min-width:0">'+(m.ex?esc(m.ex):'Pick exercise')+'</button></div>'+
       '<div class="wof">'+(sec==='stretch'?'':(sec==='warm'?'':inp(path+'.sets',m.sets,'Sets','s'))+inp(path+'.reps',m.reps,sec==='warm'?'Reps / time':'Reps','r'))+inp(path+'.det',m.det,'Details','d')+'</div></div>'};
   var ctl=function(path,k,n){return '<span class="woctl">'+(k>0?'<button data-wob="up|'+path+'|'+k+'" aria-label="Move up">↑</button>':'')+(k<n-1?'<button data-wob="down|'+path+'|'+k+'" aria-label="Move down">↓</button>':'')+'<button data-wob="del|'+path+'|'+k+'" aria-label="Remove">✕</button></span>'};
   var sec=function(base,w,s){var arr=w[s]||[],path=base+'.'+s,h='<div class="wosec"><div class="wosech"><b>'+WO_SEC[s]+'</b></div>';
@@ -1693,7 +1694,7 @@ function woItemSheet(k){
 function woPick(path){
   var lib=WOLIB||{},groups=Object.keys(lib),g0=groups[0],q='';
   var paint=function(){var ql=q.toLowerCase(),hits=[];groups.forEach(function(g){lib[g].forEach(function(e){if(ql?e.toLowerCase().indexOf(ql)>-1:g===g0)hits.push([g,e])})});
-    $('#woPickList').innerHTML=hits.slice(0,80).map(function(h){return '<button class="row" style="min-height:48px" data-pk="'+esc(h[1])+'"><div class="main"><b>'+esc(h[1])+'</b>'+(ql?'<span>'+esc(h[0])+'</span>':'')+'</div></button>'}).join('')+
+    $('#woPickList').innerHTML=hits.slice(0,80).map(function(h){return '<div style="display:flex;gap:8px;align-items:center">'+WB.exThumb(h[1])+'<button class="row" style="min-height:48px;flex:1" data-pk="'+esc(h[1])+'"><div class="main"><b>'+esc(h[1])+'</b>'+(ql?'<span>'+esc(h[0])+'</span>':'')+'</div></button></div>'}).join('')+
       (q&&!hits.some(function(h){return h[1].toLowerCase()===ql})?'<div class="card" style="padding:12px;border-style:dashed"><b>Add “'+esc(q)+'” as a new exercise</b><p class="muted" style="margin:4px 0 8px;font-size:13px">Every trainer will see it. Pick its group:</p><div class="seg">'+groups.map(function(g){return '<button data-pknew="'+esc(g)+'">'+esc(g)+'</button>'}).join('')+'</div></div>':'')+(hits.length||q?'':'<div class="empty">Nothing here.</div>');
     $$('.wogrp button').forEach(function(b){b.setAttribute('aria-pressed',String(!q&&b.dataset.g===g0))});
     $$('[data-pk]').forEach(function(b){b.onclick=function(){pick(b.dataset.pk)}});
