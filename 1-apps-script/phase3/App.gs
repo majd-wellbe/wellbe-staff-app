@@ -1191,3 +1191,33 @@ function appHm_(s) {
 function appEnd_(hm) { var h = Number(hm.split(':')[0]) + 1; return ('0' + h).slice(-2) + ':' + hm.split(':')[1]; }
 function appShift_(ymd, n) { var d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 function appDays_(a, b) { return (new Date(a + 'T12:00:00Z') - new Date(b + 'T12:00:00Z')) / 864e5; }
+// ---- Recurring expenses log themselves (Majd, 31 Oct 2026). Daily 6am trigger; logs every item that is due
+// (rent on the 1st of each month), then moves "Last logged". Run setupRecurringTrigger() once.
+function recAutoLog() {
+  var ops = SpreadsheetApp.openById(CFG.OPS_ID), rs = ops.getSheetByName('RECURRING EXPENSES');
+  if (!rs || rs.getLastRow() < 2) return;
+  var today = Utilities.formatDate(new Date(), CFG.TZ, 'yyyy-MM-dd'), step = { 'Monthly': 1, 'Every 3 months': 3, 'Every 6 months': 6, 'Yearly': 12 };
+  var rng = rs.getRange(2, 1, rs.getLastRow() - 1, 9), v = rng.getValues(), d = rng.getDisplayValues();
+  for (var i = 0; i < v.length; i++) {
+    var n = step[String(v[i][4])]; if (!v[i][0] || String(v[i][7]) === 'N' || !n) continue;
+    var first = recYmd_(v[i][5], d[i][5]), end = recYmd_(v[i][6], d[i][6]), last = recYmd_(v[i][8], d[i][8]); if (!first) continue;
+    var due = last ? recAdd_(last, n) : first, guard = 0;
+    while (due <= today && (!end || due <= end) && guard++ < 24) {
+      appExpense_({ d: due, what: v[i][1], cat: v[i][2], amt: v[i][3], recId: String(v[i][0]) }, { name: 'Auto' });
+      due = recAdd_(due, n);
+    }
+  }
+}
+function recYmd_(v, disp) {
+  if (v instanceof Date) return Utilities.formatDate(v, CFG.TZ, 'yyyy-MM-dd');
+  var s = String(disp || v || '').trim(), m;
+  if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[1] + '-' + m[2] + '-' + m[3];
+  if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  return '';
+}
+function recAdd_(ymd, months) { var p = ymd.split('-'); return Utilities.formatDate(new Date(+p[0], +p[1] - 1 + months, +p[2], 12), CFG.TZ, 'yyyy-MM-dd'); }
+function setupRecurringTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'recAutoLog') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('recAutoLog').timeBased().everyDays(1).atHour(6).inTimezone(CFG.TZ).create();
+  recAutoLog();
+}
