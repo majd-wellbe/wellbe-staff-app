@@ -1328,7 +1328,8 @@ VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=sto
    ].map(function(m){return '<div class="mv"><div class="o">'+SVGI(m[0])+'</div><b>'+m[1]+'</b><span>'+m[2]+'</span></div>'}).join('')+'</div>';
   h+='<div class="chase" data-help="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Your points multiply up to x5 the longer you last.</p></div>';
   return h};
-addEventListener('message',function(e){if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play')render()}});
+var AVDIRTY=0;   // the runner's look changed in the game: redraw the Play button when the game closes
+addEventListener('message',function(e){if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;if(e.data==='wb-runner'){AVDIRTY=1;return}if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play'||AVDIRTY){AVDIRTY=0;render()}}});
 // Profile: everything about the person
 // ---------- not a client yet: why Wellbe, services, packages, and 3 ways in
 function gTrialCard(){var t=D.guest.trial;if(!t)return '';
@@ -1746,11 +1747,12 @@ function nQ(N){
   h+='<div class="nt-foot">'+(NQS?'<button class="btn ghost" data-nq="'+(NQS-1)+'">'+nL('Back','رجوع')+'</button>':'')+'<button class="btn" data-nqnext="1">'+(NQS===qs.length-1?nL('Finish','خلصت'):nL('Next','التالي'))+'</button></div>';
   return h}
 // body numbers (the body composition upload was removed)
+function nbSx(b){return NBD&&NBD.sx||b.sex}   // typed body numbers survive a background refresh (Majd, 31 Oct: first save was lost)
 function nBody(N){var b=N.body||{};
   var f=function(id,lab,val,ph){var v=NBD&&NBD[id]!=null?NBD[id]:val;return '<div class="field"><label for="'+id+'">'+lab+'</label><input class="inp" id="'+id+'" inputmode="decimal" value="'+esc(v==null?'':v)+'" placeholder="'+esc(ph||'')+'"></div>'};
   return nTop('home')+'<div class="nt-h">'+nL('Where you are <em>now</em>','وين انت <em>هلق</em>')+'</div><div class="nt-sub">'+nL('Your numbers stay private between you and our team.','أرقامك بتضل بينك وبين فريقنا.')+'</div>'+
    '<div class="card"><div class="nt-two">'+f('nbW',nL('Weight (kg)','الوزن (كيلو)'),b.weight)+f('nbH',nL('Height (cm)','الطول (سم)'),b.height)+f('nbY',nL('Birth year','سنة الميلاد'),b.age?(Number(D.today.slice(0,4))-b.age):'','1990')+
-   '<div class="field"><label>'+nL('Sex','الجنس')+'</label><div class="seg"><button data-nsx="F" aria-pressed="'+(b.sex==='F')+'">'+nL('Female','أنثى')+'</button><button data-nsx="M" aria-pressed="'+(b.sex==='M')+'">'+nL('Male','ذكر')+'</button></div></div></div></div>'+
+   '<div class="field"><label>'+nL('Sex','الجنس')+'</label><div class="seg"><button data-nsx="F" aria-pressed="'+(nbSx(b)==='F')+'">'+nL('Female','أنثى')+'</button><button data-nsx="M" aria-pressed="'+(nbSx(b)==='M')+'">'+nL('Male','ذكر')+'</button></div></div></div></div>'+
    '<div class="card" style="margin-top:12px">'+f('nbT',nL('Your target weight (kg)','وزنك المطلوب (كيلو)'),N.target,'')+'</div>'+
    '<div class="nt-foot"><button class="btn" id="nbSave">'+nL('Confirm and continue','أكد وكمل')+'</button></div>'}
 // which day template a date of the cycle uses: the 21 day schedule (v2) or Mon..Sun (old plans)
@@ -1923,7 +1925,7 @@ function nutCard(){var N=nGet(),a=ACC(),st='',btn=nL('Open','افتح');
 ACT.nut=function(){SEC='plan';PLANTAB='nut';store('wbc_sec','plan');store('wbc_ptab','nut');NV='home';render();scrollTo(0,0);nLoad(NUT[ACC().cid]&&NUT[ACC().cid].questions?'get':'intake_get').catch(function(){})};
 function nGo(v){if(v==='close'){SEC='plan';PLANTAB='nut';NV='home';render();scrollTo(0,0);return}var wasQ=NV==='q';
   if(v==='plan'||v==='grocery'){var N=nGet()||{},cy=(N.nut||{}).cycle;NWK=0;NDAY=cy&&cy.day?(cy.day-1)%7:nV4(N)?0:nDayIdx()}   // open on today (a draft starts today)
-  NV=v;NDRAFT={};render();if(!wasQ&&v!=='home')scrollTo(0,0)}
+  if(v==='body')NBD=null;NV=v;NDRAFT={};render();if(!wasQ&&v!=='home')scrollTo(0,0)}
 function nImg(file){return new Promise(function(res,rej){var r=new FileReader();r.onerror=rej;
   if(file.type==='application/pdf'){r.onload=function(){res({b64:String(r.result).split(',')[1],mime:'application/pdf'})};r.readAsDataURL(file);return}
   r.onload=function(){var im=new Image();im.onload=function(){var s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res({b64:c.toDataURL('image/jpeg',.85).split(',')[1],mime:'image/jpeg'})};im.onerror=rej;im.src=r.result};r.readAsDataURL(file)})}
@@ -1939,7 +1941,8 @@ function nutBind(){var N=nGet()||{};
   $$('[data-nin]').forEach(function(x){x.oninput=function(){NDRAFT[x.dataset.nin]=x.value}});
   var nx=$('[data-nqnext]');if(nx)nx.onclick=function(){var qs=N.questions||[],last=NQS===qs.length-1,ans=Object.assign({},NDRAFT);
     nLoad('intake_save',{answers:ans,step:NQS+1,done:last},nx).then(function(){NDRAFT={};if(last){NV='home';render();toast(nL('Saved. Your numbers are ready.','انحفظ. أرقامك جاهزة.'))}else{NQS++;render();var w=$('.rd-win');if(w)w.scrollTop=0}}).catch(function(){})};
-  $$('[data-nsx]').forEach(function(b){b.onclick=function(){$$('[data-nsx]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
+  $$('[data-nsx]').forEach(function(b){b.onclick=function(){(NBD=NBD||{}).sx=b.dataset.nsx;$$('[data-nsx]').forEach(function(x){x.setAttribute('aria-pressed',x===b)})}});
+  ['nbW','nbH','nbY','nbT'].forEach(function(id){var e=$('#'+id);if(e)e.oninput=function(){(NBD=NBD||{})[id]=e.value}});
   var sv=$('#nbSave');if(sv)sv.onclick=function(){var g=function(id){var e=$('#'+id);return e?Number(String(e.value).replace(',','.'))||0:0},sx=$('[data-nsx][aria-pressed="true"]');
     var d={weight:g('nbW'),height:g('nbH'),birth:g('nbY'),sex:sx?sx.dataset.nsx:'',target:g('nbT')};
     var ob=N.body||{},miss=[];if(ob.weight&&!d.weight)miss.push(nL('weight','الوزن'));if(ob.height&&!d.height)miss.push(nL('height','الطول'));if(N.target&&!d.target)miss.push(nL('goal weight','الوزن المطلوب'));
@@ -2162,7 +2165,7 @@ function avatar(a,big){return a.photo?'<img src="'+esc(a.photo)+'" alt="">':esc(
 /* ---------- profile steps: see HELP + PROFILE STEPS below ---------- */
 function runsKey(){return 'wbc_runs_'+(ACC()?ACC().cid:'')+'_'+(D?D.today:'')}
 function runsToday(){return +(store(runsKey())||0)}
-ACT.nutbody=function(){PLANTAB='nut';store('wbc_ptab','nut');NV='body';SEC='plan';render();scrollTo(0,0);nWarm(true)};
+ACT.nutbody=function(){NBD=null;PLANTAB='nut';store('wbc_ptab','nut');NV='body';SEC='plan';render();scrollTo(0,0);nWarm(true)};
 ACT.nutq=function(){var N=nGet()||{};PLANTAB='nut';store('wbc_ptab','nut');NQS=Math.min(N.step||0,((N.questions||[]).length||7)-1);NV='q';NDRAFT={};SEC='plan';render();nWarm(true)};
 ACT.play=function(){goSec('play')};
 ACT.plan=function(t){goPlan(t==='nut'?'nut':'wo')};
