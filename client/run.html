@@ -990,7 +990,7 @@ function bldUI(){var s=BLD.spec,h='',tab=BLD.tab,sw=function(key,list,cur,labels
     BLD.nmBusy=1;BLD.nmMsg='';bldUI();
     rapi({op:'get',name:v}).then(function(r){BLD.nmBusy=0;PROF=r;if(r&&r.runName!==undefined){store('cr_nm',r.runName);BLD.nmMsg=v?'Saved. You run as '+r.runName+'.':'Back to your first name.'}else{store('cr_nm',v);BLD.nmMsg='Saved on this phone. It shows on the leaderboards once the game server is updated.'}BLD.nmDraft=null;bldUI()})
       .catch(function(e){BLD.nmBusy=0;var m=String(e&&e.message||e);if(m==='offline'||m==='not allowed'||m==='signin'){store('cr_nm',v);BLD.nmMsg='Saved on this phone.'}else{BLD.nmErr=true;BLD.nmMsg=m}bldUI()})}}
-function bldMake(){var v=++BLD.ver;$('#pvl').style.opacity=1;avBuild(JSON.parse(JSON.stringify(BLD.spec))).then(function(a){if(v!==BLD.ver){a.dispose();return}if(BLD.av){BLD.sc.remove(BLD.av.holder);BLD.av.dispose()}BLD.av=a;BLD.sc.add(a.holder);a.state('idle',0);bldTaunt(false);$('#pvl').style.opacity=0}).catch(function(e){console.warn(e);$('#pvl').textContent='Could not load. Check your connection.'})}
+function bldMake(){var v=++BLD.ver;$('#pvl').style.opacity=1;avBuild(JSON.parse(JSON.stringify(BLD.spec))).then(function(a){if(v!==BLD.ver){a.dispose();return}if(BLD.av){BLD.sc.remove(BLD.av.holder);BLD.av.dispose()}BLD.av=a;BLD.sc.add(a.holder);a.state('idle',0);bldTaunt(false);try{if(!store('cr_avsal')&&store('cr_av')===JSON.stringify(BLD.spec))bldSalSnap()}catch(e){}$('#pvl').style.opacity=0}).catch(function(e){console.warn(e);$('#pvl').textContent='Could not load. Check your connection.'})}
 // the picked taunt on the preview runner (loaded once, shared)
 function bldTaunt(now){var id=BLD.spec.tn,a=BLD.av;if(!id){if(a)a.setTaunt(null);return}tauntGet(id).then(function(d){if(BLD.av!==a||!a||BLD.spec.tn!==id)return;a.setTaunt(d);if(now&&BLD.tab==='taunt'){a.state('idle',0);a.state('taunt',0)}}).catch(function(){})}
 // where the camera looks for each tab: a point on the runner, distance, fov, height, and which side turns to the camera (null: slow spin)
@@ -1020,7 +1020,7 @@ function bldStep(dt){var a=BLD.av,v=BLD.vw||(BLD.vw=bldViewOf()),tn=BLD.tab==='t
       if(ty==null)BLD.yaw+=dt*.35;else{var d=ty-BLD.yaw;d=Math.atan2(Math.sin(d),Math.cos(d));BLD.yaw+=d*Math.min(1,dt*3.5)}}
     a.holder.rotation.y=BLD.yaw;a.holder.updateMatrixWorld(true)}
   bldCam(dt)}
-function builderOpen(){$('#pick').style.display='flex';$('#game').style.display='none';BLD.spec=avSpec();if(PROF&&PROF.studio)avOwnOnly(BLD.spec);BLD.buy='';BLD.msg='';BLD.nmMsg='';try{var t0=store('cr_tab');if(t0&&TABS.some(function(t){return t[0]===t0}))BLD.tab=t0}catch(e){}
+function builderOpen(){tauntGet('tn_salute').then(function(d){BLD.salD=d}).catch(function(){});$('#pick').style.display='flex';$('#game').style.display='none';BLD.spec=avSpec();if(PROF&&PROF.studio)avOwnOnly(BLD.spec);BLD.buy='';BLD.msg='';BLD.nmMsg='';try{var t0=store('cr_tab');if(t0&&TABS.some(function(t){return t[0]===t0}))BLD.tab=t0}catch(e){}
   if(!BLD.r){var c=$('#pv');BLD.r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true});BLD.r.outputEncoding=THREE.sRGBEncoding;BLD.r.setPixelRatio(Math.min(2,devicePixelRatio||1));BLD.r.setClearColor(0x000000,0);
     BLD.sc=new THREE.Scene();BLD.sc.add(new THREE.HemisphereLight(0xffffff,0x3a4a4a,1.05));var d=new THREE.DirectionalLight(0xfff4e8,1.15);d.position.set(2,4,4);BLD.sc.add(d);var d2=new THREE.DirectionalLight(0xff6a8a,.5);d2.position.set(-3,2,-3);BLD.sc.add(d2);
     var fl=new THREE.Mesh(new THREE.CircleGeometry(.75,40),new THREE.MeshBasicMaterial({color:0xe0457a,transparent:true,opacity:.18}));fl.rotation.x=-Math.PI/2;fl.position.y=.005;BLD.sc.add(fl);
@@ -1028,13 +1028,20 @@ function builderOpen(){$('#pick').style.display='flex';$('#game').style.display=
     c.addEventListener('pointerdown',function(e){BLD.drag={x:e.clientX,y:BLD.yaw}});addEventListener('pointermove',function(e){if(BLD.drag)BLD.yaw=BLD.drag.y+(e.clientX-BLD.drag.x)*.012});addEventListener('pointerup',function(){BLD.drag=null});addEventListener('resize',bldSize)}
   bldSize();bldView();BV.init=0;bldUI();bldMake();tauntMan();if(!BLD.raf)BLD.raf=requestAnimationFrame(bldLoop);
   if(!PROF)profLoad().then(function(){if($('#pick').style.display!=='none')bldUI()})}
+/* the app's Play button: 14 frames of the runner's own Salute, head to waist, saved as one strip (cr_avsal). Majd, 31 Oct 2026 */
+function bldSalSnap(){var a=BLD.av,d=BLD.salD;if(!a||!d||!d.clip)return;var y0=a.holder.rotation.y,cp=BLD.cam.position.clone(),cf=BLD.cam.fov,w=BLD.r.domElement.width,h=BLD.r.domElement.height;
+  try{a.setTaunt(d);a.state('idle',0);a.state('taunt',0);a.holder.rotation.y=-Math.PI/2+.3;var D=2.7,HV=1.3*Math.max(1,h/w);BLD.cam.position.set(0,1.5,D);BLD.cam.fov=2*Math.atan(HV/2/D)*180/Math.PI;BLD.cam.updateProjectionMatrix();BLD.cam.lookAt(0,1.45,0);BLD.r.setClearColor(0x000000,0);
+    var N=14,F=150,c=document.createElement('canvas'),x=c.getContext('2d'),s=Math.min(w,h),dur=d.clip.duration,t=0;c.width=F*N;c.height=F;
+    for(var i=0;i<N;i++){var tt=.25+(dur-.35)*i/(N-1);a.state('taunt',tt-t);t=tt;a.holder.updateMatrixWorld(true);BLD.r.render(BLD.sc,BLD.cam);x.drawImage(BLD.r.domElement,(w-s)/2,(h-s)/2,s,s,i*F,0,F,F)}
+    var u=c.toDataURL('image/webp',.82);if(u.indexOf('image/webp')<0)u=c.toDataURL('image/png');store('cr_avsal',u);store('cr_avsaln',String(N))}catch(e){}
+  a.holder.rotation.y=y0;BLD.cam.position.copy(cp);BLD.cam.fov=cf;BLD.cam.updateProjectionMatrix();bldTaunt(false);a.state('idle',0)}
 function bldSnap(){if(!BLD.av)return;var y0=BLD.av.holder.rotation.y,w=BLD.r.domElement.width,h=BLD.r.domElement.height,cp=BLD.cam.position.clone(),cf=BLD.cam.fov;BLD.av.holder.rotation.y=-Math.PI/2+.3;BLD.av.state('idle',0);BLD.av.state('idle',.5);
   BLD.cam.position.set(0,1.05,5.2);BLD.cam.fov=28;BLD.cam.updateProjectionMatrix();BLD.cam.lookAt(0,.88,0);BLD.av.holder.updateMatrixWorld(true);
   BLD.r.setClearColor(0x000000,0);BLD.r.render(BLD.sc,BLD.cam);try{var c=document.createElement('canvas'),ow=360,oh=Math.round(360*h/w);c.width=ow;c.height=oh;c.getContext('2d').drawImage(BLD.r.domElement,0,0,ow,oh);store('cr_avimg',c.toDataURL('image/png'))}catch(e){}
   BLD.av.holder.rotation.y=y0;BLD.cam.position.copy(cp);BLD.cam.fov=cf;BLD.cam.updateProjectionMatrix()}
 $('#go').onclick=function(){var s=BLD.spec,L=bldLocked();try{store('cr_tab',BLD.tab)}catch(e){}
   if(L.length){var x=L[0];BLD.tab=x.tab;if(x.slot)BLD.gslot=x.slot;if(x.pl)BLD.tpl=x.pl;BLD.msg=x.n+' is locked. Buy it, or pick one that is yours to run.';bldUI();bldView();var d=document.querySelector('.ofd');if(d)d.scrollIntoView({block:'center',behavior:'smooth'});return}
-  store('cr_av',JSON.stringify(s));bldSnap();try{parent.postMessage('wb-runner',PO)}catch(e){}start()};
+  store('cr_av',JSON.stringify(s));bldSnap();bldSalSnap();try{parent.postMessage('wb-runner',PO)}catch(e){}start()};
 
 
 /* ---------- music and sounds (made in the browser, no files) ---------- */

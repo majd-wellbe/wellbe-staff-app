@@ -605,6 +605,10 @@ main{padding-bottom:calc(86px + env(safe-area-inset-bottom,0px)) !important}
 :root nav.tabs.v3 .dome .avc{position:absolute;top:-4px;right:-22px;display:flex;align-items:center;gap:3px;background:#f2c46b;color:#3b2a00;font:800 11px var(--display);padding:3px 7px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.4);letter-spacing:0}
 :root nav.tabs.v3 .dome .avc img{width:13px;height:13px}
 .avs .arm{transform-box:view-box;transform-origin:78px 64px;animation:avSal 4.2s ease-in-out infinite}
+:root nav.tabs.v3 .dome.av .avsp{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));width:96px;height:96px;margin-left:-48px;background-repeat:no-repeat;background-size:1400% 100%;background-position:0 0;animation:avSp 4.6s infinite;animation-timing-function:step-end}
+:root nav.tabs.v3 .dome.av img.avim{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));height:96px;margin-left:-48px;width:96px;object-fit:cover;object-position:50% 12%}
+@keyframes avSp{0.00%{background-position:0.0000% 0}2.39%{background-position:7.6923% 0}4.78%{background-position:15.3846% 0}7.17%{background-position:23.0769% 0}9.57%{background-position:30.7692% 0}11.96%{background-position:38.4615% 0}14.35%{background-position:46.1538% 0}16.74%{background-position:53.8462% 0}19.13%{background-position:61.5385% 0}21.52%{background-position:69.2308% 0}23.91%{background-position:76.9231% 0}26.30%{background-position:84.6154% 0}28.70%{background-position:92.3077% 0}31.09%{background-position:100.0000% 0}33.48%{background-position:0 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){:root nav.tabs.v3 .dome.av .avsp{animation:none}}
 @keyframes avSal{0%,58%,100%{transform:rotate(0)}10%,40%{transform:rotate(-158deg)}}
 @media (prefers-reduced-motion:reduce){.avs .arm{animation:none}}
 :root nav.tabs.v3 .dome .pi{width:44px;height:44px;border-radius:50%;background:#0a0e0f;color:#fff;display:grid;place-items:center;margin-top:6px}
@@ -1994,6 +1998,10 @@ var AVSKIN=['#f6e0cc','#ecc6a4','#dcab84','#c98e66','#b07650','#8f5b3c','#6e432b
 function avLook(){var s=null;try{s=JSON.parse(store('cr_av')||'null')}catch(e){}s=s||{};
   var hx=function(c,d){return /^#[0-9a-f]{6}$/i.test(c||'')?c:d};
   return {m:s.b==='m',skin:AVSKIN[+s.skin]||AVSKIN[1],hair:s.hair||(s.b==='m'?'buzzed':'long'),hc:hx(s.hc,'#3b2416'),top:hx(s.tc,'#1f6e5b'),beard:!!+s.beard,none:s.top==='none'}}
+// the Play button shows the client's real runner from the game: a saluting strip (cr_avsal, made when they save their runner),
+// else the still picture (cr_avimg), else the flat drawing below. Majd, 31 Oct 2026
+function avHtml(){var u=store('cr_avsal')||'',i=store('cr_avimg')||'',ok=function(x){return /^data:image\/(webp|png);base64,[A-Za-z0-9+\/=]+$/.test(x)};
+  if(ok(u))return '<span class="avsp" style="background-image:url('+u+')" aria-hidden="true"></span>';if(ok(i))return '<img class="avim" alt="" src="'+i+'">';return avSvg()}
 function avSvg(){var L=avLook(),sk=L.skin,hc=L.hc,tc=L.none?sk:L.top,sh=function(c){return c},h='';
   // body and shoulders
   h+='<path d="M30 84 C30 64 42 56 56 56 C70 56 82 64 82 84 Z" fill="'+tc+'"/>';
@@ -2019,7 +2027,7 @@ function tabsView(){
   var b=function(sec,ic,lb,dot){return '<button data-help="tab-'+sec+'" data-sec="'+sec+'"'+(SEC===sec?' aria-current="page"':'')+'>'+ICON(ic)+'<span>'+lb+'</span>'+(dot?'<span class="dot num">'+dot+'</span>':'')+'</button>'};
   var shop=g?'<a class="tb" data-help="tab-whatsapp" href="'+waLink('Hi '+DESK()+', I have a question about Wellbe.')+'" target="_blank" rel="noopener">'+ICON('i-wa')+'<span>'+DESK()+'</span></a>':b('shop','i-bag','Shop',n);
   return '<nav class="tabs v3" data-help="tabs" aria-label="Main"><div class="in">'+b('center','i-home',g?'Wellbe':'Center')+b('plan','i-dumbbell','My Plan')+'<span aria-hidden="true"></span>'+shop+b('me','i-me','Me')+
-   '<button class="dome av" data-help="tab-play" data-sec="play" aria-label="Play"'+(SEC==='play'?' aria-current="page"':'')+'>'+avSvg()+avCoins()+'<b>Play</b></button></div></nav>'}
+   '<button class="dome av" data-help="tab-play" data-sec="play" aria-label="Play"'+(SEC==='play'?' aria-current="page"':'')+'>'+avHtml()+avCoins()+'<b>Play</b></button></div></nav>'}
 function rdH2(t,link,act){return '<div class="rd-h2"><h2>'+t+'</h2>'+(link?'<button data-act="'+act+'">'+link+'</button>':'')+'</div>'}
 var WDS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function rdSessRow(s,chip,past){var d=dOf(s.date),td=s.date===D.today;
