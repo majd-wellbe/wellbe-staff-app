@@ -746,7 +746,7 @@ VIEWS.dash=function(){
    (PROJ?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-alert')+'<span>Forecast: sessions after today count as given and every booked client as present. Real numbers once they are marked.</span></div>':'')+
    cmpPicker()+
    '<div class="kpis"><button class="kpi hero" data-drill="net" style="text-align:left"><span>Net profit</span><b class="num" style="color:'+(N.net>=0?'var(--good)':'var(--bad)')+'">'+money(N.net)+'</b><small>Delivered revenue minus trainer pay and expenses'+(M?'<br>'+dl('net',money):'')+'</small></button>'+
-   tile('Delivered revenue',money(N.rev),'Sessions actually given','rev','rev',money)+tile('Cash collected',money(N.cash),'Paid on center packages started in this period','cash','cash',money)+tile('Trainer pay',money(N.pay),'Per your pay rules','pay','pay',money,true)+
+   '<div class="kpi hero" style="text-align:left"><span>You made (Majd)</span><b class="num" style="color:'+(N.mine>=0?'var(--good)':'var(--bad)')+'">'+money(N.mine)+'</b><small>Center profit '+money(N.net)+' + your sessions '+money(N.mjPay)+' + product profit '+money(N.posP)+(M?'<br>'+dl('mine',money):'')+'</small></div>'+tile('Delivered revenue',money(N.rev),'Sessions actually given','rev','rev',money)+tile('Cash collected',money(N.cash),'Paid on center packages started in this period','cash','cash',money)+tile('Trainer pay',money(N.pay),'Per your pay rules','pay','pay',money,true)+
    tile('Expenses',money(N.exp),N.expN+' entries','exp','exp',money,true)+'<button class="kpi" data-go="pay" style="text-align:left"><span>Late payments</span><b class="num">'+money(N.owed)+'</b><small>'+overdue().length+' clients</small></button>'+tile('Sessions',N.sessions,'Given in this period','sess','sessions')+
    (N.insWait.n||N.insAmt?'<button class="kpi" data-drill="ins" style="text-align:left"><span>Waiting from insurance</span><b class="num">'+money(N.insWait.amt)+'</b><small>Not counted yet. '+(N.insAmt?money(N.insAmt)+' paid in this period':'Counts when NextCare pays')+'</small></button>':'')+'</div>'+
    '<div class="h"><h2>Revenue by service</h2><small>Tap one</small></div><div class="card bars">'+Object.keys(N.byType).sort(function(a,b){return N.byType[b]-N.byType[a]}).map(function(k){return '<button data-drill="svc|'+esc(k)+'" style="display:block;width:100%;text-align:left">'+bar(k,N.byType[k],maxType,money(N.byType[k])+(M?' '+dTxt(N.byType[k]-(M.byType[k]||0)):''))+'</button>'}).join('')+'</div>'+
@@ -772,7 +772,9 @@ function dashNums(R){
   var ip=insPaidIn(from,to),ipAmt=ip.reduce(function(a,c){return a+(c.paidAmount||0)},0);
   if(ipAmt){var g='Physio (Majd)';rev+=ipAmt;byType[g]=(byType[g]||0)+ipAmt;pay+=ipAmt;var mj=byTrainer.Majd=byTrainer.Majd||{sessions:0,rev:0,pay:0};mj.rev+=ipAmt;mj.pay+=ipAmt}
   var iw=insWaiting();
-  return {romy:ro,insPaid:ip,insAmt:ipAmt,insWait:iw,R:R,done:done,byType:byType,rev:rev,byTrainer:byTrainer,pay:pay,exp:exp,expN:ex.length,ex:ex,cash:cash,net:rev-pay-exp,sessions:done.length,hours:hours,owed:overdue().reduce(function(a,b){return a+b.due},0)}}
+  // what Majd made personally (Majd, 31 Oct): center profit + his own sessions + POS product profit
+  var mjPay=(byTrainer.Majd||{}).pay||0,posP=(POS||[]).filter(function(x){return x.d>=from&&x.d<=to&&x.d<=upTo()}).reduce(function(t,x){return t+(+x.profit||0)},0),net0=rev-pay-exp;
+  return {mjPay:mjPay,posP:posP,mine:net0+mjPay+posP,romy:ro,insPaid:ip,insAmt:ipAmt,insWait:iw,R:R,done:done,byType:byType,rev:rev,byTrainer:byTrainer,pay:pay,exp:exp,expN:ex.length,ex:ex,cash:cash,net:rev-pay-exp,sessions:done.length,hours:hours,owed:overdue().reduce(function(a,b){return a+b.due},0)}}
 // what one session earned the center and what it cost in trainer pay
 function sessCharged(s){var v=0;s.clients.forEach(function(c){if(deducts(c.att||'Present'))v+=centerValue(s,c)});return v}
 function sessPay(s,count){var r=payOf(s.trainer);
