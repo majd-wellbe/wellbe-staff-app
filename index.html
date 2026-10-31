@@ -548,11 +548,12 @@ function insWaiting(){var due=0,n=0,paid=0,by={};SESS.forEach(function(s){if(s.d
 function asstOf(){return WB.staff().filter(function(x){return x.role==='assistant'&&x.active!==false})[0]||null}
 function asstRule(){var a=asstOf(),p=(a&&a.pay)||{},f=p.fixed||{};return {name:a?first(a.name):'Romy',base:p.base!=null&&p.base!==''?+p.base:200,newPct:f.newPct!=null?+f.newPct:7,recPct:f.recPct!=null?+f.recPct:2,from:f.newFrom!=null?+f.newFrom:99}}
 function cnum(id){var m=/(\d+)/.exec(String(id||''));return m?+m[1]:0}
-function romyPkgs(){var X=ix();if(X.romy)return X.romy;var R=asstRule(),fu={};
-  SESS.forEach(function(s){if(!/^1:[123]$/.test(s.tab))return;s.clients.forEach(function(c){if(c.pkg&&(!fu[c.pkg]||s.date<fu[c.pkg]))fu[c.pkg]=s.date})});
-  var el=PKGS.filter(function(p){return /1:1|1:2|1:3/.test(p.type)&&p.price>0&&p.total>1&&!/cancel/i.test(p.status||'')&&cnum(p.client)>=R.from&&!isMel(p.client)&&fu[p.id]});
-  var firstOf={};el.forEach(function(p){if(!firstOf[p.client]||fu[p.id]<fu[firstOf[p.client].id])firstOf[p.client]=p});
-  X.romy=el.map(function(p){var nw=firstOf[p.client]===p;return {p:p,date:fu[p.id],isNew:nw,amt:Math.round(p.price*(nw?R.newPct:R.recPct))/100}});return X.romy}
+function romyPkgs(){var X=ix();if(X.romy)return X.romy;var R=asstRule();
+  /* 31 Oct 2026: 7% only on a client's very first paid package ever (any service). Every later package is 2%. Counted on the package start date. */
+  var paid=PKGS.filter(function(p){return p.price>0&&p.start&&!/cancel/i.test(p.status||'')}),firstPaid={};
+  paid.forEach(function(p){if(!firstPaid[p.client]||p.start<firstPaid[p.client])firstPaid[p.client]=p.start});
+  var el=paid.filter(function(p){return /1:1|1:2|1:3/.test(p.type)&&p.total>1&&cnum(p.client)>=R.from&&!isMel(p.client)});
+  X.romy=el.map(function(p){var nw=p.start===firstPaid[p.client];return {p:p,date:p.start,isNew:nw,amt:Math.round(p.price*(nw?R.newPct:R.recPct))/100}});return X.romy}
 function romyPay(from,to){var R=asstRule(),fixed=0,d=dOf(from.slice(0,8)+'01');
   while(ymd(d)<=to){var ms=ymd(d),me=ymdOf(d.getFullYear(),d.getMonth()+1,0),a=ms<from?from:ms,b=me>to?to:me,full=a===ms&&(b===me||(ms<=T&&b>=T));
     fixed+=full?R.base:R.base*(Math.round((dOf(b)-dOf(a))/864e5)+1)/(+me.slice(8));d=new Date(d.getFullYear(),d.getMonth()+1,1,12)}
