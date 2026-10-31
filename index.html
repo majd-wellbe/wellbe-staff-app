@@ -535,7 +535,7 @@ function centerValue(s,c){if(melSvc(s.tab))return 0;if(insSess(s,c))return 0;   
 var INS={clients:[],claims:[]};
 function insOf(cid){var l=INS.clients||[];for(var i=0;i<l.length;i++)if(l[i].cid===cid)return l[i];return null}
 function insPP(tab){return tab==='Physio'||tab==='Prehab'||/physio|prehab/i.test(tab||'')}
-function insSess(s,c){return insPP(s.tab)&&(/insur/i.test(s.pay||'')||!!insOf(c.cid))}
+function insSess(s,c){return insPP(s.tab)&&!!insOf(c.cid)&&/insur/i.test(s.pay||'')} /* 31 Oct: only clients in INSURANCE CLIENTS AND sessions marked Insurance (Anji's own paid sessions and old Georges rows are normal) */
 function insRate(cid){var x=insOf(cid);return x&&x.rate||((payOf('Majd').fixed||{}).PhysioIns)||27}
 function insPaidIn(from,to){return (INS.claims||[]).filter(function(c){return /paid/i.test(c.status||'')&&c.paidOn&&c.paidOn>=from&&c.paidOn<=to})}
 function insWaiting(){var due=0,n=0,paid=0,by={};SESS.forEach(function(s){if(s.date>T||!delivered(s))return;s.clients.forEach(function(c){if(!insSess(s,c)||!deducts(c.att||'Present'))return;var r=insRate(c.cid);due+=r;n++;var k=s.date.slice(0,7);(by[k]=by[k]||{n:0,amt:0}).n++;by[k].amt+=r})});
