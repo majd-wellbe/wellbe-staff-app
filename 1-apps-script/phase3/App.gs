@@ -108,7 +108,7 @@ function app_route_(b) {
 function appRoute_(b) {
   var me = appWho_(b.key);
   if (!me) return json_({ ok: false, error: 'auth' });
-  var staffOnly = { app_change: 1, app_book: 1, app_pay: 1, app_sell: 1, app_lead: 1, app_expense: 1, app_rec_add: 1, app_rec_stop: 1, app_pos: 1, app_week: 1, app_client: 1, app_flag: 1, app_req_done: 1, app_disc: 1, app_freeze: 1, app_cedit: 1, app_ins_set: 1, app_ins_submit: 1, app_ins_paid: 1, app_pkg_price: 1, app_sess_edit: 1, app_sess_remove: 1, app_notify: 1 };
+  var staffOnly = { app_change: 1, app_book: 1, app_pay: 1, app_sell: 1, app_lead: 1, app_expense: 1, app_rec_add: 1, app_rec_stop: 1, app_pos: 1, app_week: 1, app_client: 1, app_flag: 1, app_req_done: 1, app_disc: 1, app_freeze: 1, app_cedit: 1, app_ins_set: 1, app_ins_submit: 1, app_ins_paid: 1, app_pkg_price: 1, app_pkg_delete: 1, app_sess_edit: 1, app_sess_remove: 1, app_notify: 1 };
   var ownerOnly = { app_intake: 1, app_upload: 1 };
   if (ownerOnly[b.action] && me.role !== 'owner') return json_({ ok: false, error: 'not allowed' });
   if (staffOnly[b.action] && me.role === 'trainer') return json_({ ok: false, error: 'not allowed' });
@@ -134,7 +134,7 @@ function appRoute_(b) {
     var fn = {
       app_att: appAtt_, app_change: appChange_, app_book: appBook_, app_pay: walletPay_, app_sell: walletSell_,
       app_notes: appNotes_, app_expense: appExpense_, app_rec_add: appRecAdd_, app_rec_stop: appRecStop_,
-      app_pos: appPos_, app_week: appWeek_, app_client: appClient_, app_flag: appFlag_, app_intake: appIntake_, app_upload: appUpload_, app_req_done: appReqDone_, app_disc: appDisc_, app_freeze: appFreeze_, app_cedit: appClientEdit_, app_ins_set: insSet_, app_ins_submit: insSubmit_, app_ins_paid: insPaid_, app_pkg_price: pkgPrice_, app_sess_edit: appSessEdit_, app_sess_remove: appSessRemove_, app_notify: appNotify_
+      app_pos: appPos_, app_week: appWeek_, app_client: appClient_, app_flag: appFlag_, app_intake: appIntake_, app_upload: appUpload_, app_req_done: appReqDone_, app_disc: appDisc_, app_freeze: appFreeze_, app_cedit: appClientEdit_, app_ins_set: insSet_, app_ins_submit: insSubmit_, app_ins_paid: insPaid_, app_pkg_price: pkgPrice_, app_pkg_delete: appPkgDel_, app_sess_edit: appSessEdit_, app_sess_remove: appSessRemove_, app_notify: appNotify_
     , app_wo_list: woList_, app_wo_get: woGet_, app_wo_save: woSave_, app_wo_decide: woDecide_, app_wo_log: woLog_, app_wo_ex: woEx_, app_nut_list: nutList_, app_nut_get: nutGet_, app_nut_decide: nutDecide_, app_notice_read: appNoticeRead_ }[b.action];
 
     if (!fn) return json_({ ok: false, error: 'unknown action' });
@@ -964,6 +964,28 @@ function appDisc_(b) {
 }
 
 // staff freeze: 1 week, once per package (same rule as the client app)
+// app_pkg_delete: { pkg, why } owner and Romy (30 Oct 2026). Never erases history: the package is marked Cancelled
+// (hidden from booking, freeze and late payments) with a note. Refused while sessions from today on are booked on it.
+function appPkgDel_(b, me) {
+  var ops = SpreadsheetApp.openById(CFG.OPS_ID), ps = ops.getSheetByName('PACKAGES'), id = String(b.pkg || '').trim();
+  var row = appPkgRow_(ps, id), today = Utilities.formatDate(new Date(), CFG.TZ, 'yyyy-MM-dd'), ahead = [];
+  if (/cancel/i.test(String(ps.getRange(row, 14).getValue()))) return { already: true };
+  Object.keys(AT).forEach(function (k) {
+    var cfg = AT[k], sh = ops.getSheetByName(cfg.sheet); if (!sh || sh.getLastRow() < 3) return;
+    var rng = sh.getRange(3, 1, sh.getLastRow() - 2, cfg.width), v = rng.getValues(), d = rng.getDisplayValues();
+    for (var i = 0; i < v.length; i++) {
+      if (!v[i][0] || /cancel/i.test(String(v[i][cfg.status - 1]))) continue;
+      var ymd = appYmd_(v[i][1], d[i][1]); if (ymd < today) continue;
+      if (cfg.slots.some(function (sl) { return String(v[i][sl.pkg - 1]).trim() === id && !(sl.att && /early/i.test(String(v[i][sl.att - 1]))); })) ahead.push(ymd);
+    }
+  });
+  if (ahead.length) { ahead.sort(); throw new Error((ahead.length === 1 ? '1 session is' : ahead.length + ' sessions are') + ' still booked on this package (' + ahead[0] + (ahead.length > 1 ? ' and more' : '') + '). Move or cancel them first.'); }
+  ps.getRange(row, 14).setValue('Cancelled');
+  var note = String(ps.getRange(row, 21).getValue() || '');
+  ps.getRange(row, 21).setValue(appendNote_(note, 'Deleted ' + Utilities.formatDate(new Date(), CFG.TZ, 'dd/MM') + ' (' + me.name + ')' + (b.why ? ': ' + String(b.why).slice(0, 120) : '')));
+  return { deleted: id };
+}
+
 function appFreeze_(b, me) {
   var ops = SpreadsheetApp.openById(CFG.OPS_ID), pkg = String(b.pkg);
   if (clFrozen_(ops)[pkg]) throw new Error('This package already had its freeze');

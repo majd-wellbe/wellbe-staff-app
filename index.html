@@ -449,7 +449,7 @@ function renewMsg(p){var left=avail(p),o=offerOf(p),pk=p.type.split(' (')[0];
  var head='Hi '+first(p.name)+', this is '+DESK()+' from Wellbe. You '+(left===0?'just finished':'have 1 session left on')+' your '+pk+' package.';
  if(!o)return head+' Want me to renew it so you keep your spot?';
  return head+' Before you renew, two ways to save:\n\n3 months: $'+o.p3+' instead of $'+o.t3+' ('+pct('m3Pct')+'% off), one payment.\n6 months: $'+o.p6+' instead of $'+o.t6+' ('+pct('m6Pct')+'% off), paid in 2: $'+o.half+' now and $'+(o.p6-o.half)+' on day 1 of month 3.\n\nSame spot, same coach. Which one works for you?'}
-function lateRule(p){ if(!p||!p.price) return null; if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=lateLimit(p.total); return {due:due, late:p.used>=limit, limit:limit} }
+function lateRule(p){ if(!p||!p.price) return null; if(insOf(p.client)&&insPP(p.kind)) return null; /* insurance pays, never the client */ if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=lateLimit(p.total); return {due:due, late:p.used>=limit, limit:limit} }
 // payment is late after this session: 12 pack -> 3, 8 pack -> 2, else 1 (cfg.late)
 function lateLimit(total){var l=(C('late.limits')||[]).filter(function(x){return total>=x[0]})[0];return l?l[1]:C('late.else')}
 function lateText(){return (C('late.limits')||[]).map(function(x){return 'session '+x[1]+' ('+x[0]+' pack)'}).join(' or ')}
@@ -475,7 +475,7 @@ function applyBoot(d){dirty();
     SESS=d.sessions.concat(HIST||[]);SESS.forEach(function(s){['id','ref','tab','date','start','end','status'].forEach(function(k){s[k]=code(s[k])});s.clients.forEach(function(c){c.att=code(c.att);c.flag=code(c.flag);c.pkg=code(c.pkg);c.reminded=!!REM[s.date+'|'+s.id+'|'+c.pkg]})});
     (LEADS||[]).forEach(function(l){['id','date','time','type','status'].forEach(function(k){l[k]=code(l[k])})});
     (RECURRING||[]).forEach(function(e){e.every=code(e.every)});
-    NOTICES=d.notices||[];REFS=d.refs||[];WALLET=d.wallet||{};LEADFU_IDS={};(d.leadFollowups||[]).forEach(function(f){LEADFU_IDS[f.id]=1});LEADFU=(d.leadFollowups||[]).filter(function(f){return !FUDONE[f.id+'|'+f.stage]});INTAKES=d.intakes||[];FILES=d.files||[];REQUESTS=(d.requests||[]).map(function(q){['id','type','status','pkg','slot'].forEach(function(k){q[k]=code(q[k])});return q});
+    INS=d.ins||{clients:[],claims:[]};NOTICES=d.notices||[];REFS=d.refs||[];WALLET=d.wallet||{};LEADFU_IDS={};(d.leadFollowups||[]).forEach(function(f){LEADFU_IDS[f.id]=1});LEADFU=(d.leadFollowups||[]).filter(function(f){return !FUDONE[f.id+'|'+f.stage]});INTAKES=d.intakes||[];FILES=d.files||[];REQUESTS=(d.requests||[]).map(function(q){['id','type','status','pkg','slot'].forEach(function(k){q[k]=code(q[k])});return q});
     if(ME.role==='trainer'){   // trainers only see the clients they trained in the last windows.trainerSee days or have booked
       var from=ymd(addDays(TODAY,-C('windows.trainerSee'))),mine={};SESS.forEach(function(s){if(s.trainer===ME.trainer&&s.date>=from&&s.status!=='Cancelled')s.clients.forEach(function(c){if(c.cid)mine[c.cid]=1})});
       CLIENTS=CLIENTS.filter(function(c){return mine[c.id]});PKGS=PKGS.filter(function(p){return mine[p.client]});INTAKES=INTAKES.filter(function(x){return mine[x.cid]});FILES=FILES.filter(function(x){return mine[x.cid]})}
@@ -518,7 +518,8 @@ function buildPatterns(){
 function payOf(name){return staffT(name).pay||{}}
 // per session pay for fixed-rate people (by service, PhysioIns = physio paid by insurance, training = any other session)
 function fixedPay(s){var r=payOf(s.trainer),f=r.fixed;if(r.rule!=='fixed'||!f)return 0;
-  if(s.clients.length&&s.clients.every(function(c){var p=pkgById(c.pkg);return p&&!(p.price>0)&&/assessment/i.test(p.type||'')}))return 0;   // free assessments pay nothing (Majd, 30 Oct)
+  if(s.clients.length&&s.clients.every(function(c){var p=pkgById(c.pkg);return p&&!(p.price>0)&&/assessment/i.test(p.type||'')}))return 0;
+  if(s.clients.length&&s.clients.every(function(c){return insSess(s,c)}))return 0;   // insurance sessions: Majd is paid when the insurer pays   // free assessments pay nothing (Majd, 30 Oct)
   if(s.tab==='Physio'&&/insur/i.test(s.pay||'')&&f.PhysioIns!=null)return f.PhysioIns;if(f[s.tab]!=null)return f[s.tab];if(f.training!=null)return f.training;var k=Object.keys(f);return k.length===1?f[k[0]]:0}
 function fixedText(f){var k=Object.keys(f||{});if(k.length===1&&k[0]!=='training')return '$'+f[k[0]]+'/session';
   var out=[],grp={};if(f.training!=null)out.push('$'+f.training+' training');
@@ -526,8 +527,37 @@ function fixedText(f){var k=Object.keys(f||{});if(k.length===1&&k[0]!=='training
   Object.keys(grp).forEach(function(v){out.push('$'+v+' '+grp[v].join('/'))});if(f.PhysioIns!=null)out.push('$'+f.PhysioIns+' insurance');return out.join(', ')}
 // the cut trainer's own clients pay her; the center only gets her cut per pass (paid upfront by her). Her fixed service (Madero) is 100% hers.
 function isMel(cid){var c=clientById(cid);return !!(c&&c.mel)}
-function centerValue(s,c){if(melSvc(s.tab))return 0;if(isMel(c.cid))return melCut();var p=pkgById(c.pkg);return p&&p.total?p.price/p.total:0}
+function centerValue(s,c){if(melSvc(s.tab))return 0;if(insSess(s,c))return 0;   // counted when the insurer pays
+ if(isMel(c.cid))return melCut();var p=pkgById(c.pkg);return p&&p.total?p.price/p.total:0}
 // PROJ (Numbers > "This month, full"): sessions still to come count as given, every booked client present
+// INSURANCE (Majd, 31 Oct): an insured client (INSURANCE CLIENTS tab, e.g. NextCare) never owes us. Their physio and prehab sessions
+// count $0 when given; revenue and Majd's pay ($27 a session = what NextCare pays) count in the month NextCare pays the claim (about 90 days later).
+var INS={clients:[],claims:[]};
+function insOf(cid){var l=INS.clients||[];for(var i=0;i<l.length;i++)if(l[i].cid===cid)return l[i];return null}
+function insPP(tab){return tab==='Physio'||tab==='Prehab'||/physio|prehab/i.test(tab||'')}
+function insSess(s,c){return insPP(s.tab)&&(/insur/i.test(s.pay||'')||!!insOf(c.cid))}
+function insRate(cid){var x=insOf(cid);return x&&x.rate||((payOf('Majd').fixed||{}).PhysioIns)||27}
+function insPaidIn(from,to){return (INS.claims||[]).filter(function(c){return /paid/i.test(c.status||'')&&c.paidOn&&c.paidOn>=from&&c.paidOn<=to})}
+function insWaiting(){var due=0,n=0,paid=0,by={};SESS.forEach(function(s){if(s.date>T||!delivered(s))return;s.clients.forEach(function(c){if(!insSess(s,c)||!deducts(c.att||'Present'))return;var r=insRate(c.cid);due+=r;n++;var k=s.date.slice(0,7);(by[k]=by[k]||{n:0,amt:0}).n++;by[k].amt+=r})});
+  // a month is settled by the claims paid for that month (claim month = month the sessions were given)
+  (INS.claims||[]).forEach(function(c){if(/paid/i.test(c.status||'')&&by[c.month])by[c.month].paid=(by[c.month].paid||0)+(c.paidAmount||0)});
+  var amt=0;Object.keys(by).forEach(function(k){by[k].left=Math.max(0,Math.round((by[k].amt-(by[k].paid||0))*100)/100);amt+=by[k].left});return {amt:Math.round(amt*100)/100,n:n,by:by}}
+// ROMY (assistant), same rules as the Owner Dashboard: fixed $200 a month + 7% of a new client's first training package
+// + 2% of their later training packages. A package counts in the month of its first session. Never single passes, $0 packages,
+// cancelled packages or Melanie's own clients. "New" = client number 99 and up. Rates live in the STAFF tab (romy row).
+function asstOf(){return WB.staff().filter(function(x){return x.role==='assistant'&&x.active!==false})[0]||null}
+function asstRule(){var a=asstOf(),p=(a&&a.pay)||{},f=p.fixed||{};return {name:a?first(a.name):'Romy',base:p.base!=null&&p.base!==''?+p.base:200,newPct:f.newPct!=null?+f.newPct:7,recPct:f.recPct!=null?+f.recPct:2,from:f.newFrom!=null?+f.newFrom:99}}
+function cnum(id){var m=/(\d+)/.exec(String(id||''));return m?+m[1]:0}
+function romyPkgs(){var X=ix();if(X.romy)return X.romy;var R=asstRule(),fu={};
+  SESS.forEach(function(s){if(!/^1:[123]$/.test(s.tab))return;s.clients.forEach(function(c){if(c.pkg&&(!fu[c.pkg]||s.date<fu[c.pkg]))fu[c.pkg]=s.date})});
+  var el=PKGS.filter(function(p){return /1:1|1:2|1:3/.test(p.type)&&p.price>0&&p.total>1&&!/cancel/i.test(p.status||'')&&cnum(p.client)>=R.from&&!isMel(p.client)&&fu[p.id]});
+  var firstOf={};el.forEach(function(p){if(!firstOf[p.client]||fu[p.id]<fu[firstOf[p.client].id])firstOf[p.client]=p});
+  X.romy=el.map(function(p){var nw=firstOf[p.client]===p;return {p:p,date:fu[p.id],isNew:nw,amt:Math.round(p.price*(nw?R.newPct:R.recPct))/100}});return X.romy}
+function romyPay(from,to){var R=asstRule(),fixed=0,d=dOf(from.slice(0,8)+'01');
+  while(ymd(d)<=to){var ms=ymd(d),me=ymdOf(d.getFullYear(),d.getMonth()+1,0),a=ms<from?from:ms,b=me>to?to:me,full=a===ms&&(b===me||(ms<=T&&b>=T));
+    fixed+=full?R.base:R.base*(Math.round((dOf(b)-dOf(a))/864e5)+1)/(+me.slice(8));d=new Date(d.getFullYear(),d.getMonth()+1,1,12)}
+  var list=romyPkgs().filter(function(x){return x.date>=from&&x.date<=to&&x.date<=upTo()}),bonus=list.reduce(function(t,x){return t+x.amt},0);
+  return {name:R.name,R:R,fixed:Math.round(fixed*100)/100,bonus:Math.round(bonus*100)/100,total:Math.round((fixed+bonus)*100)/100,list:list}}
 var PROJ=false;function upTo(){return PROJ?'9999-12-31':T}
 function delivered(s){if(PROJ&&s.date>T&&s.status==='Cancelled')return false;return s.clients.some(function(c){return deducts(c.att||(s.date<=T||PROJ?'Present':''))})}
 function tier(n,own){var t=(own||C('pay.tiers')||[]).filter(function(x){return x[0]==null||n<x[0]})[0];return t?t[1]:0}   // own: a trainer's own steps (STAFF tab, Fixed pay JSON {"tiers":...})
@@ -712,11 +742,12 @@ VIEWS.dash=function(){
    cmpPicker()+
    '<div class="kpis"><button class="kpi hero" data-drill="net" style="text-align:left"><span>Net profit</span><b class="num" style="color:'+(N.net>=0?'var(--good)':'var(--bad)')+'">'+money(N.net)+'</b><small>Delivered revenue minus trainer pay and expenses'+(M?'<br>'+dl('net',money):'')+'</small></button>'+
    tile('Delivered revenue',money(N.rev),'Sessions actually given','rev','rev',money)+tile('Cash collected',money(N.cash),'Paid on center packages started in this period','cash','cash',money)+tile('Trainer pay',money(N.pay),'Per your pay rules','pay','pay',money,true)+
-   tile('Expenses',money(N.exp),N.expN+' entries','exp','exp',money,true)+'<button class="kpi" data-go="pay" style="text-align:left"><span>Late payments</span><b class="num">'+money(N.owed)+'</b><small>'+overdue().length+' clients</small></button>'+tile('Sessions',N.sessions,'Given in this period','sess','sessions')+'</div>'+
+   tile('Expenses',money(N.exp),N.expN+' entries','exp','exp',money,true)+'<button class="kpi" data-go="pay" style="text-align:left"><span>Late payments</span><b class="num">'+money(N.owed)+'</b><small>'+overdue().length+' clients</small></button>'+tile('Sessions',N.sessions,'Given in this period','sess','sessions')+
+   (N.insWait.n||N.insAmt?'<button class="kpi" data-drill="ins" style="text-align:left"><span>Waiting from insurance</span><b class="num">'+money(N.insWait.amt)+'</b><small>Not counted yet. '+(N.insAmt?money(N.insAmt)+' paid in this period':'Counts when NextCare pays')+'</small></button>':'')+'</div>'+
    '<div class="h"><h2>Revenue by service</h2><small>Tap one</small></div><div class="card bars">'+Object.keys(N.byType).sort(function(a,b){return N.byType[b]-N.byType[a]}).map(function(k){return '<button data-drill="svc|'+esc(k)+'" style="display:block;width:100%;text-align:left">'+bar(k,N.byType[k],maxType,money(N.byType[k])+(M?' '+dTxt(N.byType[k]-(M.byType[k]||0)):''))+'</button>'}).join('')+'</div>'+
    '<div class="h"><h2>1:3 fill rate by hour</h2><small>Seats used of '+cap13+'</small></div><div class="card bars">'+Object.keys(N.hours).sort().map(function(h){var x=N.hours[h],pct=Math.round(x.seats/x.cap*100);return '<button data-drill="hour|'+h+'" style="display:block;width:100%;text-align:left">'+bar(hl(h),pct,100,pct+'%')+'</button>'}).join('')+'</div>'+
    '<div class="h"><h2>Trainers</h2><small>Tap a row</small></div><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th class="r">Revenue</th><th class="r">Pay</th><th class="r">Margin</th></tr></thead><tbody>'+
-   Object.keys(N.byTrainer).map(function(k){var t=N.byTrainer[k],m=t.rev-t.pay;return '<tr data-drill="'+(m<0?'loss':'tr')+'|'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class="r num">'+t.sessions+'</td><td class="r num">'+money(t.rev)+'</td><td class="r num">'+money(t.pay)+'</td><td class="r num" style="color:'+(m>=0?'var(--good)':'var(--bad)')+';text-decoration:'+(m<0?'underline':'none')+'">'+money(m)+(m<0?' ⚠':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+   Object.keys(N.byTrainer).map(function(k){var t=N.byTrainer[k],m=t.rev-t.pay;if(t.asst)return '<tr data-drill="asst|" style="cursor:pointer"><td><b>'+esc(k)+'</b> <span class="muted" style="font-size:13px">desk</span></td><td class="r num">'+N.romy.list.length+' pkg</td><td class="r num">-</td><td class="r num">'+money(t.pay)+'</td><td class="r muted">salary</td></tr>';return '<tr data-drill="'+(m<0?'loss':'tr')+'|'+esc(k)+'" style="cursor:pointer"><td><b>'+esc(k)+'</b></td><td class="r num">'+t.sessions+'</td><td class="r num">'+money(t.rev)+'</td><td class="r num">'+money(t.pay)+'</td><td class="r num" style="color:'+(m>=0?'var(--good)':'var(--bad)')+';text-decoration:'+(m<0?'underline':'none')+'">'+money(m)+(m<0?' ⚠':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+
    '<div class="h"><h2>What the numbers say</h2></div><div class="card" style="padding:14px 16px">'+briefOf(N,M,C2).map(function(x){return '<p style="margin:0 0 10px;font-size:15px">'+x+'</p>'}).join('')+'</div>'+
    '<div class="h"><h2>Trial leads</h2><small>Landing page</small></div><div class="card bars">'+
    bar('Leads',LEADS.length,LEADS.length,LEADS.length)+bar('Booked a time',LEADS.filter(function(l){return l.date}).length,LEADS.length,LEADS.filter(function(l){return l.date}).length)+bar('Confirmed',LEADS.filter(function(l){return l.status==='Confirmed'}).length,LEADS.length,LEADS.filter(function(l){return l.status==='Confirmed'}).length)+'</div>';
@@ -732,7 +763,11 @@ function dashNums(R){
   var ex=EXPENSES.filter(function(e){return e.d>=from&&e.d<=to}),exp=ex.reduce(function(a,b){return a+b.amt},0);
   var cash=PKGS.filter(function(p){return p.start>=from&&p.start<=to&&!melSvc(p.kind)&&!isMel(p.client)}).reduce(function(a,p){return a+(p.paid||0)},0);
   var hours={},cap13=svc('1:3').cap;SESS.filter(function(s){return s.tab==='1:3'&&s.date>=from&&s.date<=to&&s.date<=upTo()&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=cap13});
-  return {R:R,done:done,byType:byType,rev:rev,byTrainer:byTrainer,pay:pay,exp:exp,expN:ex.length,ex:ex,cash:cash,net:rev-pay-exp,sessions:done.length,hours:hours,owed:overdue().reduce(function(a,b){return a+b.due},0)}}
+  var ro=romyPay(from,to);if(ro.total){pay+=ro.total;byTrainer[ro.name]={sessions:0,rev:0,pay:ro.total,asst:true}}
+  var ip=insPaidIn(from,to),ipAmt=ip.reduce(function(a,c){return a+(c.paidAmount||0)},0);
+  if(ipAmt){var g='Physio (Majd)';rev+=ipAmt;byType[g]=(byType[g]||0)+ipAmt;pay+=ipAmt;var mj=byTrainer.Majd=byTrainer.Majd||{sessions:0,rev:0,pay:0};mj.rev+=ipAmt;mj.pay+=ipAmt}
+  var iw=insWaiting();
+  return {romy:ro,insPaid:ip,insAmt:ipAmt,insWait:iw,R:R,done:done,byType:byType,rev:rev,byTrainer:byTrainer,pay:pay,exp:exp,expN:ex.length,ex:ex,cash:cash,net:rev-pay-exp,sessions:done.length,hours:hours,owed:overdue().reduce(function(a,b){return a+b.due},0)}}
 // what one session earned the center and what it cost in trainer pay
 function sessCharged(s){var v=0;s.clients.forEach(function(c){if(deducts(c.att||'Present'))v+=centerValue(s,c)});return v}
 function sessPay(s,count){var r=payOf(s.trainer);
@@ -743,7 +778,7 @@ function sessPay(s,count){var r=payOf(s.trainer);
 function sessRows(list,R){
   var cnt={};SESS.forEach(function(s){if(s.date>=R.from.slice(0,8)+'01'&&s.date<=R.to&&s.date<=upTo()&&delivered(s)){var k=s.trainer+'|'+s.date.slice(0,7);cnt[k]=(cnt[k]||0)+1}});
   return list.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.start<b.start?-1:1}).map(function(s){var ch=sessCharged(s),py=sessPay(s,cnt[s.trainer+'|'+s.date.slice(0,7)]||0);
-    return {s:s,ch:ch,py:py,gap:ch-py,who:s.clients.filter(function(c){return deducts(c.att||'Present')}).map(function(c){var p=pkgById(c.pkg);return esc(c.name)+(p?' <span class="muted">('+esc(p.type.split(' (')[0])+(p.price>0?', '+money(p.total?p.price/p.total:0)+'/session':', free')+')</span>':'')}).join('<br>')}})}
+    return {s:s,ch:ch,py:py,gap:ch-py,who:s.clients.filter(function(c){return deducts(c.att||'Present')}).map(function(c){var p=pkgById(c.pkg);return esc(c.name)+(insSess(s,c)?' <span class="muted">('+esc((insOf(c.cid)||{}).insurer||'Insurance')+', counted when paid)</span>':p?' <span class="muted">('+esc(p.type.split(' (')[0])+(p.price>0?', '+money(p.total?p.price/p.total:0)+'/session':', free')+')</span>':'')}).join('<br>')}})}
 function sessTable(rows){if(!rows.length)return '<div class="empty">Nothing here.</div>';
   var tc=rows.reduce(function(a,r){return a+r.ch},0),tp=rows.reduce(function(a,r){return a+r.py},0);
   return '<div class="card tblwrap"><table class="tbl"><thead><tr><th>Session</th><th class="r">Charged</th><th class="r">Pay</th></tr></thead><tbody>'+rows.map(function(r){return '<tr data-sx="'+r.s.id+'" style="cursor:pointer"><td><b>'+dayLabel(r.s.date)+' · '+hl(r.s.start)+'</b><div class="muted" style="font-size:13px">'+esc(r.s.tab)+' · '+esc(r.s.trainer)+'</div><div style="font-size:13px">'+(r.who||'<span class="muted">nobody counted</span>')+'</div></td><td class="r num">'+money(r.ch)+'</td><td class="r num" style="color:'+(r.py>r.ch?'var(--bad)':'inherit')+'">'+money(r.py)+'</td></tr>'}).join('')+
@@ -758,10 +793,18 @@ function drill(key){var R=curRange(),N=dashNums(R),x=key.split('|'),k=x[0],v=x.s
   else if(k==='svc'){title=v+' · '+R.label;body=sessTable(bySess(function(s){return svcGroup(s.tab)===v}))}
   else if(k==='hour'){title='1:3 at '+hl(v)+' · '+R.label;body=sessTable(sessRows(SESS.filter(function(s){return s.tab==='1:3'&&s.start===v&&s.date>=R.from&&s.date<=R.to&&s.date<=upTo()&&s.status!=='Cancelled'}),R))}
   else if(k==='rev'||k==='sess'||k==='pay'){title=(k==='pay'?'Trainer pay':k==='rev'?'Delivered revenue':'Sessions')+' · '+R.label;
-    body=k==='pay'?'<div class="card tblwrap" style="margin-bottom:12px"><table class="tbl"><tbody>'+Object.keys(N.byTrainer).map(function(t){var b=N.byTrainer[t];return '<tr data-drill2="'+(b.rev<b.pay?'loss':'tr')+'|'+esc(t)+'" style="cursor:pointer"><td><b>'+esc(t)+'</b> <span class="muted">'+b.sessions+' sessions</span></td><td class="r num">'+money(b.pay)+'</td></tr>'}).join('')+'</tbody></table></div>':
+    body=k==='pay'?'<div class="card tblwrap" style="margin-bottom:12px"><table class="tbl"><tbody>'+Object.keys(N.byTrainer).map(function(t){var b=N.byTrainer[t];return '<tr data-drill2="'+(b.asst?'asst':b.rev<b.pay?'loss':'tr')+'|'+esc(t)+'" style="cursor:pointer"><td><b>'+esc(t)+'</b> <span class="muted">'+b.sessions+' sessions</span></td><td class="r num">'+money(b.pay)+'</td></tr>'}).join('')+'</tbody></table></div>':
      '<div class="card bars" style="margin-bottom:12px">'+Object.keys(N.byType).map(function(t){return '<button data-drill2="svc|'+esc(t)+'" style="display:block;width:100%;text-align:left">'+bar(t,N.byType[t],Math.max.apply(null,Object.keys(N.byType).map(function(q){return N.byType[q]})),money(N.byType[t]))+'</button>'}).join('')+'</div>'+sessTable(sessRows(N.done,R))}
   else if(k==='exp'){title='Expenses · '+R.label;var cat={};N.ex.forEach(function(e){cat[e.cat]=(cat[e.cat]||0)+e.amt});
     body='<div class="card bars" style="margin-bottom:12px">'+Object.keys(cat).sort(function(a,b){return cat[b]-cat[a]}).map(function(c){return bar(c||'Other',cat[c],N.exp||1,money(cat[c]))}).join('')+'</div><div class="card tblwrap"><table class="tbl"><tbody>'+N.ex.slice().sort(function(a,b){return a.d<b.d?-1:1}).map(function(e){return '<tr><td><b>'+esc(e.what||e.cat||'')+'</b><div class="muted" style="font-size:13px">'+dayLabel(e.d)+' · '+esc(e.cat||'')+'</div></td><td class="r num">'+money(e.amt)+'</td></tr>'}).join('')+'</tbody></table></div>'}
+  else if(k==='asst'){var ro=N.romy,R=ro.R;title=ro.name+' · '+curRange().label;
+    body='<div class="kpis" style="margin-bottom:12px">'+kpi('Fixed',money(ro.fixed),money(R.base)+' a month')+kpi('Bonus',money(ro.bonus),R.newPct+'% new client · '+R.recPct+'% repeat')+'</div>'+
+     '<div class="note" style="margin-bottom:10px">'+ICON('i-cash')+'<span>A package counts in the month of its first session. '+R.newPct+'% on a new client\'s first training package (client '+R.from+' and up), '+R.recPct+'% on their later ones. Never single passes, $0 packages or '+esc(melName())+'\'s own clients.</span></div>'+
+     (ro.list.length?'<div class="card tblwrap"><table class="tbl"><thead><tr><th>Package</th><th class="r">Price</th><th class="r">Bonus</th></tr></thead><tbody>'+ro.list.slice().sort(function(a,b){return a.date<b.date?-1:1}).map(function(x){return '<tr data-cl="'+x.p.client+'" style="cursor:pointer"><td><b>'+esc(x.p.name)+'</b><div class="muted" style="font-size:13px">'+esc(x.p.type.split(' (')[0])+' · first session '+dayLabel(x.date)+' · <b style="color:'+(x.isNew?'var(--good)':'var(--ink-2)')+'">'+(x.isNew?'NEW '+R.newPct+'%':'repeat '+R.recPct+'%')+'</b></div></td><td class="r num">'+money(x.p.price)+'</td><td class="r num">'+money(x.amt)+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">No bonus package in this period.</div>')}
+  else if(k==='ins'){title='Insurance · '+R.label;var w=N.insWait,ms=Object.keys(w.by).sort().reverse();
+    body='<div class="note" style="margin-bottom:10px">'+ICON('i-heart')+'<span>Insured clients pay nothing. Their sessions count $0 when given; the money and Majd\'s $'+insRate('')+' per session count in the month the insurer pays.</span></div>'+
+     '<div class="card tblwrap" style="margin-bottom:12px"><table class="tbl"><thead><tr><th>Sessions given in</th><th class="r">Sessions</th><th class="r">Still waiting</th></tr></thead><tbody>'+ms.map(function(m){return '<tr><td><b>'+monthName(m)+'</b>'+(w.by[m].paid?'<div class="muted" style="font-size:13px">'+money(w.by[m].paid)+' paid</div>':'')+'</td><td class="r num">'+w.by[m].n+'</td><td class="r num">'+money(w.by[m].left)+'</td></tr>'}).join('')+'</tbody></table></div>'+
+     '<div class="h"><h2 style="font-size:17px">Claims</h2></div>'+((INS.claims||[]).length?'<div class="card tblwrap"><table class="tbl"><tbody>'+INS.claims.map(function(c){return '<tr><td><b>'+esc(c.name)+'</b><div class="muted" style="font-size:13px">'+esc(c.insurer)+' · '+esc(c.month)+' · '+c.sessions+' sessions'+(c.expected?' · expected '+dayLabel(c.expected):'')+'</div></td><td class="r num">'+money(c.amount)+'<div class="muted" style="font-size:12px">'+esc(c.status||'Sent')+(c.paidOn?' '+dayLabel(c.paidOn):'')+'</div></td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">No claim sent yet.</div>')}
   else if(k==='cash'){title='Cash collected · '+R.label;var ps=PKGS.filter(function(p){return p.start>=R.from&&p.start<=R.to&&!melSvc(p.kind)&&!isMel(p.client)});
     body='<div class="card tblwrap"><table class="tbl"><thead><tr><th>Package</th><th class="r">Paid</th><th class="r">Price</th></tr></thead><tbody>'+ps.map(function(p){return '<tr data-cl="'+p.client+'" style="cursor:pointer"><td><b>'+esc(p.name)+'</b><div class="muted" style="font-size:13px">'+esc(p.type)+' · '+dayLabel(p.start)+'</div></td><td class="r num">'+money(p.paid||0)+'</td><td class="r num">'+money(p.price)+'</td></tr>'}).join('')+'</tbody></table></div>'}
   else if(k==='net'){title='Net profit · '+R.label;body='<div class="card tblwrap"><table class="tbl"><tbody><tr data-drill2="rev"><td>Delivered revenue</td><td class="r num">'+money(N.rev)+'</td></tr><tr data-drill2="pay"><td>Trainer pay</td><td class="r num">−'+money(N.pay)+'</td></tr><tr data-drill2="exp"><td>Expenses</td><td class="r num">−'+money(N.exp)+'</td></tr><tr><td><b>Net profit</b></td><td class="r num"><b>'+money(N.net)+'</b></td></tr></tbody></table></div><p class="muted" style="margin-top:10px">Margin: '+(N.rev?Math.round(N.net/N.rev*100):0)+'% of delivered revenue.</p>'}
@@ -789,8 +832,10 @@ function briefOf(N,M,C2){var out=[],ks=Object.keys(N.byType).sort(function(a,b){
     out.push('Against '+esc(C2.short)+': net '+(N.net>=M.net?'up ':'down ')+money(Math.abs(N.net-M.net))+', revenue '+(N.rev>=M.rev?'up ':'down ')+money(Math.abs(N.rev-M.rev))+', '+(N.sessions-M.sessions>=0?'+':'')+(N.sessions-M.sessions)+' sessions.');
     if(up.length)out.push('<b>Pushed more:</b> '+up.map(function(x){return esc(x[0])+' +'+money(x[1])}).join(', ')+'.');
     if(down.length)out.push('<b>Sold less:</b> '+down.map(function(x){return esc(x[0])+' −'+money(-x[1])}).join(', ')+'.')}
+  if(N.insWait.amt)out.push('<b>Waiting from insurance:</b> '+money(N.insWait.amt)+' for '+N.insWait.n+' sessions given. Not in these numbers until NextCare pays.');
   var low=ks.filter(function(k){return N.byType[k]/tot<0.05});if(low.length)out.push('<b>Barely selling:</b> '+low.map(esc).join(', ')+' (under 5% of revenue each).');
-  var neg=Object.keys(N.byTrainer).filter(function(k){var t=N.byTrainer[k];return t.rev<t.pay});if(neg.length)out.push('<b>Paid more than they brought in:</b> '+neg.map(function(k){var t=N.byTrainer[k];return esc(k)+' ('+money(t.pay-t.rev)+')'}).join(', ')+'. Tap the row in Trainers to see which sessions.');
+  var neg=Object.keys(N.byTrainer).filter(function(k){var t=N.byTrainer[k];return !t.asst&&t.rev<t.pay});
+  if(N.romy&&N.romy.total)out.push('<b>'+esc(N.romy.name)+':</b> '+money(N.romy.total)+' ('+money(N.romy.fixed)+' fixed + '+money(N.romy.bonus)+' bonus on '+N.romy.list.length+' package'+(N.romy.list.length===1?'':'s')+').');if(neg.length)out.push('<b>Paid more than they brought in:</b> '+neg.map(function(k){var t=N.byTrainer[k];return esc(k)+' ('+money(t.pay-t.rev)+')'}).join(', ')+'. Tap the row in Trainers to see which sessions.');
   var hs=Object.keys(N.hours).map(function(h){var x=N.hours[h];return [h,x.seats/x.cap]}).sort(function(a,b){return a[1]-b[1]});
   if(hs.length>1)out.push('1:3 fill: best at '+hl(hs[hs.length-1][0])+' ('+Math.round(hs[hs.length-1][1]*100)+'%), weakest at '+hl(hs[0][0])+' ('+Math.round(hs[0][1]*100)+'%).');
   return out}
@@ -1063,7 +1108,7 @@ ACTIONS.week=function(){
 function staffClientTools(c){
   var open=pkgsOfClient(c.id).filter(function(p){return p.client===c.id&&isOpenPkg(p)}).sort(byStart),fzl=daysText(C('windows.freezeDays'));
   return '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div style="display:flex;gap:10px;align-items:flex-end"><div class="field" style="margin:0;flex:1"><label for="cdisc">Client discount %</label><input id="cdisc" type="number" inputmode="decimal" min="0" max="100" value="'+(c.disc||0)+'"></div><button class="btn sec sm" id="saveDisc" style="min-height:48px">Save</button></div><div class="muted" style="font-size:13px;margin-top:6px">Filled in automatically every time you sell this client a package.</div></div>'+
-   (open.length?'<span class="flabel">Freeze ('+fzl+' per package)</span><div class="list" style="margin:8px 0 14px">'+open.map(function(p){return '<div class="row" style="min-height:54px"><div class="main"><b>'+esc(p.type.split(' (')[0])+'</b><span>Ends '+(p.expiry?dayLabel(p.expiry):'?')+' · '+avail(p)+' left</span></div>'+(p.frozen?'<span class="pill p-mute">Freeze used</span>':'<button class="btn sec sm" data-frz="'+p.id+'">'+ICON('i-cal')+'Freeze '+fzl+'</button>')+'</div>'}).join('')+'</div>':'');
+   (open.length?'<span class="flabel">Freeze ('+fzl+' per package)</span><div class="list" style="margin:8px 0 14px">'+open.map(function(p){return '<div class="row" style="min-height:54px;flex-wrap:wrap"><div class="main"><b>'+esc(p.type.split(' (')[0])+'</b><span>Ends '+(p.expiry?dayLabel(p.expiry):'?')+' · '+avail(p)+' left</span></div>'+'<div style="display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;margin-top:8px">'+(p.frozen?'<span class="pill p-mute">Freeze used</span>':'<button class="btn sec sm" data-frz="'+p.id+'">'+ICON('i-cal')+'Freeze '+fzl+'</button>')+(ME.role!=='trainer'?'<button class="btn sec sm" style="color:var(--bad)" data-pdel="'+p.id+'">'+ICON('i-x')+'Delete package</button>':'')+'</div></div>'}).join('')+'</div>':'');
 }
 // referrals on the client sheet (front desk and owner): who invited them, who they invited, wallet credit
 function refClientBox(c){var due=refDue(c.id),got=refGot(c.id),mine=refsBy(c.id),wb=walletOf(c.id),lines=[];
@@ -1075,11 +1120,27 @@ function refClientBox(c){var due=refDue(c.id),got=refGot(c.id),mine=refsBy(c.id)
   return lines.length?'<div class="notebox" style="border-left:4px solid #e8a400"><b>Referrals</b>'+lines.join('<br>')+'</div>':''}
 function bindStaffClientTools(c){
   if($('#saveDisc'))$('#saveDisc').onclick=function(){var d=Math.max(0,Math.min(100,+$('#cdisc').value||0));c.disc=d;save('app_disc',{cid:c.id,name:c.name,disc:d},d?first(c.name)+' now gets '+d+'% off':'Discount removed for '+first(c.name));render()};
+  $$('[data-pdel]').forEach(function(b){b.onclick=function(){pkgDelete(b.dataset.pdel)}});
   $$('[data-frz]').forEach(function(b){b.onclick=function(){var p=pkgById(b.dataset.frz),fz=C('windows.freezeDays'),fzl=daysText(fz);
     openSheet('Freeze '+first(c.name)+'’s package','<div class="card" style="padding:12px 14px"><b>'+esc(p.type)+'</b><div class="muted" style="font-size:14px">Ends '+(p.expiry?dayLabel(p.expiry):'?')+'</div></div><div class="note good" style="margin-top:12px">'+ICON('i-cal')+'<span>Moves the end date '+fz+' days later. Only once per package.</span></div>'+
      '<div class="two"><div class="field"><label for="fzf">Freeze starts</label><input id="fzf" type="date" value="'+T+'"></div><div class="field"><label for="fzn">Reason</label><input id="fzn" type="text" placeholder="e.g. travel"></div></div>','<button class="btn ok full" id="doFz">'+ICON('i-check')+'Freeze '+fzl+'</button>');
     $('#doFz').onclick=function(){var from=$('#fzf').value,note=$('#fzn').value.trim();p.frozen=1;closeSheet();save('app_freeze',{pkg:p.id,from:from,note:note},null,true).then(function(j){toast('Frozen: '+first(c.name)+' now ends '+dayLabel(j.end))})}}});
 }
+// Delete package (owner and Romy): two confirmations. Nothing is erased: the package becomes Cancelled and disappears from booking,
+// freeze and late payments; its past sessions and the money already paid stay recorded. Refused while sessions from today on use it.
+function pkgDelete(pid){var p=pkgById(pid);if(!p){toast('Package not found, refresh');return}var c=clientById(p.client)||{name:p.name},cid=p.client;
+  var ahead=SESS.filter(function(s){return s.date>=T&&s.status!=='Cancelled'&&s.clients.some(function(x){return x.pkg===pid&&x.att!=='Early Cancel'})});
+  var info='<div class="card" style="padding:12px 14px;margin-bottom:12px"><b>'+esc(p.type)+'</b><div class="muted" style="font-size:14px">'+esc(c.name)+' · '+p.used+' of '+p.total+' used · '+avail(p)+' left · '+(p.expiry?'ends '+dayLabel(p.expiry):'no end date')+'</div><div class="muted" style="font-size:14px">Price '+money(p.price)+' · paid '+money(p.paid||0)+'</div></div>';
+  if(ahead.length){openSheet('Delete package',info+'<div class="note bad">'+ICON('i-alert')+'<span><b>Can\'t delete yet.</b> '+ahead.length+' session'+(ahead.length>1?'s are':' is')+' booked on it from today on (first: '+dayLabel(ahead.map(function(s){return s.date}).sort()[0])+'). Move or cancel '+(ahead.length>1?'them':'it')+' first.</span></div>');return}
+  openSheet('Delete package?',info+'<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>It disappears from booking, freeze and late payments. Past sessions'+((p.paid||0)>0?' and the '+money(p.paid)+' already paid':'')+' stay recorded. You can\'t undo this from the app.</span></div>'+
+    '<div class="field"><label for="pdw">Why? <span class="muted" style="font-weight:500">(optional)</span></label><input id="pdw" type="text" placeholder="e.g. sold by mistake, duplicate"></div>',
+    '<button class="btn full" id="pdGo" style="background:var(--bad)">'+ICON('i-x')+'Delete this package</button><button class="btn sec full" id="pdNo">Keep it</button>');
+  $('#pdNo').onclick=function(){closeSheet()};
+  $('#pdGo').onclick=function(){var b=this;
+    if(b.dataset.sure!=='1'){b.dataset.sure='1';b.innerHTML=ICON('i-alert')+'Tap again to delete for good';return}   // second confirmation
+    b.disabled=true;b.textContent='Deleting…';
+    save('app_pkg_delete',{pkg:pid,why:$('#pdw').value.trim()},null,true).then(function(){p.status='Cancelled';dirty();toast(p.type.split(' (')[0]+' deleted for '+first(c.name));clientSheet(cid)})
+     .catch(function(e){b.disabled=false;b.dataset.sure='';b.innerHTML=ICON('i-x')+'Delete this package';if(!$('#pdErr')){var x=document.createElement('div');x.id='pdErr';x.className='note bad';x.style.margin='10px 0';b.parentNode.insertBefore(x,b)}$('#pdErr').innerHTML=ICON('i-alert')+'<span><b>Not deleted.</b> '+esc(String(e&&e.message||e))+'</span>'})}}
 function clientSheet(id){
   var c=clientById(id);if(!c){toast('Client file not found');return}var p=pkgOf(id),r=p&&lateRule(p);
   openSheet(c.name,'<div class="kv" style="margin-bottom:14px">'+(ME.role==='trainer'?'':'<dt>Phone</dt><dd>'+esc(c.phone)+'</dd><dt>Email</dt><dd>'+esc(c.email)+'</dd>')+'<dt>Package</dt><dd>'+(p?esc(p.type):'None')+'</dd>'+(p?'<dt>Passes left</dt><dd class="num">'+avail(p)+' of '+p.total+'</dd><dt>Expires</dt><dd>'+(p.expiry?dayLabel(p.expiry):'')+'</dd><dt>Balance</dt><dd class="num" style="color:'+(r&&r.due?'var(--bad)':'var(--good)')+'">'+(r&&r.due?money(r.due)+' due':'Paid')+'</dd>':'')+'</div>'+
@@ -1193,7 +1254,7 @@ ACTIONS.recurring=function(){
 ACTIONS.inventory=function(){openSheet('Inventory','<div class="list">'+INVENTORY.map(function(i){return '<div class="row"><div class="main"><b>'+esc(i.p)+'</b><span>Sells at $'+i.price+'</span></div><span class="pill '+(i.left<=1?'p-warn':'p-mute')+'">'+i.left+' left</span></div>'}).join('')+'</div>')};
 ACTIONS.payroll=function(){
   var monthStart=ymd(new Date(TODAY.getFullYear(),TODAY.getMonth(),1)),by=monthByTrainer(monthStart);
-  openSheet('Payroll','<p class="muted" style="margin-bottom:10px">Month to date, from your pay rules. Final once every session is marked.</p><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th>Rule</th><th class="r">Pay</th></tr></thead><tbody>'+Object.keys(by).map(function(k){var r=payOf(k),rule=r.rule==='tier'?('Tier $'+tier(by[k].sessions)+(r.base?' + $'+r.base+' base':'')):r.rule==='cut'?'Center clients: price minus $'+(r.cut||0)+'/session. Her own clients and '+svcKeys().filter(melSvc).join(', ')+': paid to her directly, $0 here':r.rule==='fixed'?fixedText(r.fixed):'No pay rule';return '<tr><td><b>'+esc(k)+'</b></td><td class="r num">'+by[k].sessions+'</td><td>'+rule+'</td><td class="r num">'+money(trainerPay(k,by[k]))+'</td></tr>'}).join('')+'</tbody></table></div>')};
+  openSheet('Payroll','<p class="muted" style="margin-bottom:10px">Month to date, from your pay rules. Final once every session is marked.</p><div class="card tblwrap"><table class="tbl"><thead><tr><th>Trainer</th><th class="r">Sessions</th><th>Rule</th><th class="r">Pay</th></tr></thead><tbody>'+Object.keys(by).map(function(k){var r=payOf(k),rule=r.rule==='tier'?('Tier $'+tier(by[k].sessions,r.tiers||(r.fixed&&r.fixed.tiers))+(r.base?' + $'+r.base+' base':'')):r.rule==='cut'?'Center clients: price minus $'+(r.cut||0)+'/session. Her own clients and '+svcKeys().filter(melSvc).join(', ')+': paid to her directly, $0 here':r.rule==='fixed'?fixedText(r.fixed):'No pay rule';return '<tr><td><b>'+esc(k)+'</b></td><td class="r num">'+by[k].sessions+'</td><td>'+rule+'</td><td class="r num">'+money(trainerPay(k,by[k]))+'</td></tr>'}).join('')+(function(){var ro=romyPay(monthStart,T);return '<tr><td><b>'+esc(ro.name)+'</b></td><td class="r num">-</td><td>'+money(ro.R.base)+' fixed + '+ro.R.newPct+'% new / '+ro.R.recPct+'% repeat packages ('+ro.list.length+')</td><td class="r num">'+money(ro.total)+'</td></tr>'})()+'</tbody></table></div>')};
 
 
 /* ---------- trainer notes ---------- */
@@ -1260,7 +1321,7 @@ ACTIONS.book=function(){
    '<button class="btn full" id="doBook" disabled>Choose a client</button>');
   var list=function(){var q=$('#bq').value.toLowerCase();$('#bpick').innerHTML=q?CLIENTS.filter(function(c){return c.name.toLowerCase().indexOf(q)>-1}).slice(0,6).map(function(c){return '<button class="row" style="min-height:48px" data-bc="'+c.id+'"><div class="main"><b>'+esc(c.name)+'</b><span>'+esc(c.phone)+'</span></div></button>'}).join(''):'';
     $$('[data-bc]').forEach(function(b){b.onclick=function(){pick(b.dataset.bc)}})};
-  var pick=function(id){st.cid=id;var c=clientById(id),p=pkgOf(id),r=p&&lateRule(p);$('#bq').value=c.name;$('#bpick').innerHTML='';
+  var pick=function(id){st.cid=id;st.pkg=null;var c=clientById(id),p=pkgOf(id),r=p&&lateRule(p);$('#bq').value=c.name;$('#bpick').innerHTML='';
     $('#binfo').innerHTML=(c.notes?'<div class="note warn" style="margin-bottom:8px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+
       (c.program?'<div class="notebox"><b>Program</b>'+esc(c.program)+'</div>':'')+
       '<div id="bpkg"></div>';
@@ -1278,10 +1339,16 @@ ACTIONS.book=function(){
     var bs=function(){var x=PKG_TYPES[+$('#bsty').value],pr=Math.max(0,+$('#bspr').value||0),dc=x.p>0?Math.max(0,Math.round((1-pr/x.p)*10000)/100):0;$('#bsum').innerHTML=ICON('i-check')+'<span>List '+money(x.p)+' · you charge '+money(pr)+' · '+(dc?'<b>'+dc+'% discount</b>':'no discount')+' · '+money(Math.max(0,pr-Math.min(pr,+$('#bspd').value||0)))+' left to pay</span>'};
     $('#bsty').onchange=function(){$('#bspr').value=PKG_TYPES[+this.value].p;bs()};$('#bspr').oninput=bs;$('#bspd').oninput=bs;bs()};
   // the package this session will use, for the type and day picked now
-  var paintPkg=function(){var box=$('#bpkg');if(!box||!st.cid)return;var ty=$('#bty').value,p=bookPkg(st.cid,ty,$('#bd').value),r=p&&lateRule(p);
-    box.innerHTML=p?'<div class="notebox"><b>Uses package</b>'+esc(p.type)+' · '+avail(p)+' of '+p.total+' left'+(r?' · <span style="color:var(--bad);font-weight:700">'+(r.late?'payment late: ':'owes ')+money(r.due)+'</span>':'')+'</div>'
-      :'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No '+esc(ty)+' package with passes left. '+(ME.role==='trainer'?'Ask '+esc(WB.deskName())+' to sell one first.':'Sell one below and book it in one tap.')+'</span></div>'};
-  var autoSell=function(){paintPkg();if(ME.role==='trainer'||!st.cid)return;var ty=$('#bty').value;if(bookPkg(st.cid,ty,$('#bd').value)){clearSell();cap();return}
+  // every package that can take this session (right type, a free pass); the oldest one is picked first, Romy or Majd can switch before booking
+  var cands=function(ty){return pkgsOfClient(st.cid).filter(function(x){return x.client===st.cid&&!/cancel/i.test(x.status)&&(x.kind===ty||(ty==='1:3'&&/trial/i.test(x.type)))&&avail(x)>0}).sort(byStart)};
+  var chosen=function(){var ty=$('#bty').value,d=$('#bd').value,l=cands(ty),x=st.pkg&&l.filter(function(y){return y.id===st.pkg})[0];return x||bookPkg(st.cid,ty,d)||l[0]||null};
+  var paintPkg=function(){var box=$('#bpkg');if(!box||!st.cid)return;var ty=$('#bty').value,l=cands(ty),p=chosen(),r=p&&lateRule(p);
+    var lab=function(x){return x.type.split(' (')[0].replace(' Sessions','').replace(' - ',' ')+' · '+avail(x)+' left · '+(x.expiry?(x.expiry<T?'ended ':'to ')+dayLabel(x.expiry).replace(/^\w+ /,''):'no end')};
+    box.innerHTML=p?'<div class="field" style="margin-bottom:8px"><label for="bpk">Uses package</label>'+(l.length>1?'<select id="bpk">'+l.map(function(x){return '<option value="'+x.id+'"'+(x.id===p.id?' selected':'')+'>'+esc(lab(x))+'</option>'}).join('')+'</select>':'<div class="notebox" style="margin:0">'+esc(lab(p))+'</div>')+
+      (r?'<div style="color:var(--bad);font-weight:700;font-size:14px;margin-top:4px">'+(r.late?'Payment late: ':'Owes ')+money(r.due)+'</div>':'')+'</div>'
+      :'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No '+esc(ty)+' package with passes left. '+(ME.role==='trainer'?'Ask '+esc(WB.deskName())+' to sell one first.':'Sell one below and book it in one tap.')+'</span></div>';
+    if($('#bpk')){ssScan(box);$('#bpk').onchange=function(){st.pkg=this.value;paintPkg()}}};
+  var autoSell=function(){paintPkg();if(ME.role==='trainer'||!st.cid)return;var ty=$('#bty').value;if(chosen()){clearSell();cap();return}
     if(!$('#bsell')||$('#bsell').dataset.ty!==ty){$('#bcap').innerHTML='';bkSellPanel(ty,(singleType(ty)||{}).name);if($('#bsell'))$('#bsell').dataset.ty=ty}if($('#bsell'))$('#doBook').textContent='Sell and book '+first(clientById(st.cid).name)};
   var clearSell=function(){if($('#bsell')){$('#bcap').innerHTML='';var b=$('#doBook');if(st.cid)b.textContent='Book '+first(clientById(st.cid).name)}};
   var recompute=function(){var f=fixedTr($('#bty').value);if(f)ssSet($('#btr'),f);autoSell();cap()};   // every field change goes through here, so the sell panel always matches the type
@@ -1290,7 +1357,7 @@ ACTIONS.book=function(){
   // a trainer who only runs one service (osteo) switches the type to it; leaving that service goes back to the first type
   $('#btr').onchange=function(){var only=onlySvc(this.value),cur=WB.staffById(svc($('#bty').value).fixed);if(only)ssSet($('#bty'),only);else if(cur&&!cur.train)ssSet($('#bty'),svcKeys()[0]);recompute()};
   $('#doBook').onclick=function(){var d=$('#bd').value,t=$('#bt').value,tr=$('#btr').value,ty=$('#bty').value,c=clientById(st.cid);
-    var p=bookPkg(st.cid,ty,d);
+    var p=chosen();   // the package shown under Uses package
     if(overCap(d,t,tr,1)){toast(tr+' is full at that hour');return}
     var btn=this;if(btn.disabled)return;
     if(!p&&ME.role!=='trainer'){if(!d||!t){toast('Pick a day and time');return}if(!$('#bsell')||$('#bsell').dataset.ty!==ty){autoSell();return}
