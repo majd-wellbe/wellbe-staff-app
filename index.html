@@ -517,7 +517,7 @@ function buildPatterns(){
 // pay rules per person: cfg.staff[].pay  {rule:'tier', base} | {rule:'cut', cut} | {rule:'fixed', fixed:{training, Physio, PhysioIns, Prehab, Osteo...}}
 function payOf(name){return staffT(name).pay||{}}
 // per session pay for fixed-rate people (by service, PhysioIns = physio paid by insurance, training = any other session)
-function fixedPay(s){var r=payOf(s.trainer),f=r.fixed;if(r.rule!=='fixed'||!f)return 0;
+function fixedPay(s){var r=payOf(s.trainer),f=r.fixed;if(osteoShare(s))return 0;if(r.rule!=='fixed'||!f)return 0;
   if(s.clients.length&&s.clients.every(function(c){var p=pkgById(c.pkg);return p&&!(p.price>0)&&/assessment/i.test(p.type||'')}))return 0;
   if(s.clients.length&&s.clients.every(function(c){return insSess(s,c)}))return 0;   // insurance sessions: Majd is paid when the insurer pays   // free assessments pay nothing (Majd, 30 Oct)
   if(s.tab==='Physio'&&/insur/i.test(s.pay||'')&&f.PhysioIns!=null)return f.PhysioIns;if(f[s.tab]!=null)return f[s.tab];if(f.training!=null)return f.training;var k=Object.keys(f);return k.length===1?f[k[0]]:0}
@@ -527,7 +527,11 @@ function fixedText(f){var k=Object.keys(f||{});if(k.length===1&&k[0]!=='training
   Object.keys(grp).forEach(function(v){out.push('$'+v+' '+grp[v].join('/'))});if(f.PhysioIns!=null)out.push('$'+f.PhysioIns+' insurance');return out.join(', ')}
 // the cut trainer's own clients pay her; the center only gets her cut per pass (paid upfront by her). Her fixed service (Madero) is 100% hers.
 function isMel(cid){var c=clientById(cid);return !!(c&&c.mel)}
-function centerValue(s,c){if(melSvc(s.tab))return 0;if(insSess(s,c))return 0;   // counted when the insurer pays
+/* OSTEO (Majd, 31 Oct, from Oct 2026 on): Jad keeps the money and gives the center $10 per session for his own clients, $20 for center clients.
+   His own client = someone who only ever bought osteo here (Nour Milan, Karim Karim). Center pays him nothing. Earlier months unchanged. */
+function osteoShare(s){return /osteo/i.test(s.tab||'')&&s.date>='2026-10-01'}
+function osteoOwn(cid){var l=PKGS.filter(function(p){return p.client===cid});return l.length>0&&l.every(function(p){return /osteo/i.test(p.type||'')})}
+function centerValue(s,c){if(melSvc(s.tab))return 0;if(osteoShare(s))return osteoOwn(c.cid)?10:20;if(insSess(s,c))return 0;   // counted when the insurer pays
  if(isMel(c.cid))return melCut();var p=pkgById(c.pkg);return p&&p.total?p.price/p.total:0}
 // PROJ (Numbers > "This month, full"): sessions still to come count as given, every booked client present
 // INSURANCE (Majd, 31 Oct): an insured client (INSURANCE CLIENTS tab, e.g. NextCare) never owes us. Their physio and prehab sessions
