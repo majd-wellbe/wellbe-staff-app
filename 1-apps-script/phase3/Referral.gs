@@ -52,13 +52,14 @@ function refSetReq_(ops, row, reqId) { var f = {}; f[RC.REQ] = reqId; refSet_(op
 // PACKAGES: highest PKG number and each client's paid packages (price above 0, not trial / free, not cancelled)
 function refPkgNum_(id) { var m = String(id || '').match(/(\d+)\s*$/); return m ? Number(m[1]) : 0; }
 function refPkgInfo_(ops) {
-  var sh = ops.getSheetByName('PACKAGES'), out = { max: 0, paidBy: {} };
+  var sh = ops.getSheetByName('PACKAGES'), out = { max: 0, paidBy: {}, trialBy: {} };
   if (!sh || sh.getLastRow() < 3) return out;
   sh.getRange(3, 1, sh.getLastRow() - 2, 14).getValues().forEach(function (r) {
     var id = String(r[0] || '').trim(); if (!/^PKG-/i.test(id)) return;
     var n = refPkgNum_(id); if (n > out.max) out.max = n;
     var cid = String(r[1] || '').trim().toUpperCase(), t = cfgType_(String(r[3] || ''));
     var price = typeof appNum_ === 'function' ? appNum_(r[8]) : Number(r[8]);
+    if (t && t.trial && Number(r[5]) >= 1 && !/cancel/i.test(String(r[13] || ''))) { (out.trialBy[cid] = out.trialBy[cid] || []).push({ id: id, num: n }); return; }   // trial attended (Majd, 2 Nov 2026)
     if (!(Number(price) > 0) || (t && (t.trial || t.free)) || /cancel/i.test(String(r[13] || ''))) return;
     (out.paidBy[cid] = out.paidBy[cid] || []).push({ id: id, num: n });
   });
@@ -123,7 +124,7 @@ function refOnSale_(ops, cid) {
 function refOnSaleRun_(ops, cid) {
   var amt = refAmount_(); if (!amt || !/^C\d+$/.test(cid)) return null;
   var sh = ops.getSheetByName(REF.TAB); if (!sh || sh.getLastRow() < 2) return null;
-  var pk = refPkgInfo_(ops), paid = pk.paidBy[cid] || []; if (!paid.length) return null;
+  var pk = refPkgInfo_(ops), paid = pk.paidBy[cid] || [], q = paid.concat(pk.trialBy[cid] || []).sort(function (a, b) { return a.num - b.num; }); if (!q.length) return null;
   var idx = refIndex_(ops), keys = idx.keysOf[cid]; if (!keys) return null;
   var rows = refRows_(ops).filter(function (r) { return keys[r.key]; });
   if (!rows.length || rows.some(function (r) { return r.status === 'Rewarded'; })) return null;   // once per friend phone
@@ -133,8 +134,9 @@ function refOnSaleRun_(ops, cid) {
   if (r.by === cid || (idx.keysOf[r.by] || {})[r.key]) {
     f[RC.STATUS] = 'Not eligible'; f[RC.FCID] = cid; f[RC.NOTE] = 'Self referral'; refSet_(ops, r.row, f); return null;
   }
-  var before = paid.filter(function (p) { return p.num <= r.mark; }), after = paid.filter(function (p) { return p.num > r.mark; });
-  if (before.length || !after.length) {
+  var before = paid.filter(function (p) { return p.num <= r.mark; }), after = q.filter(function (p) { return p.num > r.mark; });   // reward on the friend's trial attended or first paid package after the invite
+  if (!before.length && !after.length) return null;
+  if (before.length) {
     f[RC.STATUS] = 'Already a client'; f[RC.FCID] = cid; f[RC.NOTE] = 'Paid package ' + (before[0] || paid[0]).id + ' was there before the invite'; refSet_(ops, r.row, f); return null;
   }
   var pkg = after[0].id, who = appClientInfo_(r.by) || { name: r.byName }, reason = 'Referral: ' + r.friend;
@@ -142,7 +144,7 @@ function refOnSaleRun_(ops, cid) {
   f[RC.STATUS] = 'Rewarded'; f[RC.FCID] = cid; f[RC.FPKG] = pkg; f[RC.CREDIT] = amt; f[RC.AT] = refNow_();
   refSet_(ops, r.row, f);
   try {
-    if (typeof noticeAdd_ === 'function') noticeAdd_(ops, r.by, 'Referral credit', String(r.friend).split(' ')[0] + ' joined Wellbe. $' + amt + ' Wellbe Credit is ready for your next package. Thank you for sharing Wellbe!');
+    if (typeof noticeAdd_ === 'function') noticeAdd_(ops, r.by, 'Referral credit', String(r.friend).split(' ')[0] + ' came to the free trial. $' + amt + ' Wellbe Credit is ready for your next package. Thank you for sharing Wellbe!');
   } catch (e) { Logger.log('Referral notice not saved: ' + e); }
   return { id: r.id, by: r.by, byName: who.name || r.byName, friend: r.friend, amount: amt, pkg: pkg };
 }
@@ -226,4 +228,11 @@ function refSetup() {
   var ops = SpreadsheetApp.openById(CFG.OPS_ID);
   refTab_(ops);
   Logger.log('REFERRALS tab ready. Referral credit: $' + refAmount_() + ' (SETTINGS key referral.amount). Rows: ' + refRows_(ops).length);
+}
+
+// daily at 7am: gives the credit when an invited friend attended their free trial (trial passes are marked used by the sessions sync)
+function setupReferralTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (tr) { if (tr.getHandlerFunction() === 'refCheckAll') ScriptApp.deleteTrigger(tr); });
+  ScriptApp.newTrigger('refCheckAll').timeBased().everyDays(1).atHour(7).inTimezone(CFG.TZ).create();
+  refCheckAll();
 }

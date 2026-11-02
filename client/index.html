@@ -1584,7 +1584,7 @@ function inviteSheet(nm,ph){var a=ACC(),picker=!!(navigator.contacts&&navigator.
     busy(b,true);
     send('app_cl_request',{kind:'invite',fname:n,phone:p,msg:msg}).then(function(j){var st=((j&&j.ref)||{}).status,amt=refAmt();
        if(j&&j.ref){a.refs=(a.refs||[]).filter(function(x){return x.n!==n});a.refs.unshift({n:n,d:D.today,st:{'Already invited':'already','Already a client':'client'}[st]||'invited'})}
-       success('Invite on its way! 🎉',''+DESK()+' will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.'+(st==='Invited'&&amt?' When '+esc(first)+' joins, you get '+money(amt)+' Wellbe Credit for your next package.':''))})
+       success('Invite on its way! 🎉',''+DESK()+' will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.'+(st==='Invited'&&amt?' When '+esc(first)+' comes to the free trial, you get '+money(amt)+' Wellbe Credit for your next package.':''))})
      .catch(function(e){busy(b,false);
        if(e&&/own number/i.test(e.message||'')){toast(e.message);return}   // you cannot invite yourself
        // backend not updated yet: hand it to Romy on WhatsApp in one tap
@@ -2100,11 +2100,11 @@ VIEWS.home=function(){var a=ACC(),p=currentPkg(a),q=quoteOfDay(),up=a.upcoming.f
   h+='<div style="margin-top:22px" data-help="invite">'+friendCard()+'</div>';
   return h};
 function rdRate(){return rdH2('Rate us')+'<div class="rd-rate" data-help="rate"><div class="card"><div class="stars">★★★★★</div><b>On Google</b><span>Helps others find us</span><button class="btn sm" style="margin-top:10px;width:100%;background:#e8a400;color:#fff" data-review="1">Review</button></div><div class="card"><div class="stars">★★★★★</div><b>In the app</b><span>Tell us how we are doing</span><button class="btn sm sec2" style="margin-top:10px;width:100%" data-act="rate">Rate</button></div></div>'}
-function friendCard(){var a=ACC()||{},amt=refAmt();return '<div class="invite rd-inv"><h3>Who would you like to invite to Wellbe?</h3><p>We’ll reach out with a warm welcome and a free trial session from you.</p>'+
-  (amt?'<div class="ref-earn">'+ICON('i-gift','width:22px;height:22px;flex:none')+'<span>If your friend joins Wellbe, you get <b>'+money(amt)+' Wellbe Credit</b> for your next package.</span></div>':'')+
+function friendCard(){var a=ACC()||{},amt=refAmt();return '<div class="invite rd-inv"><h3>'+(amt?'Invite a friend for a free trial and win '+money(amt)+' Wellbe Credit':'Who would you like to invite to Wellbe?')+'</h3><p>We’ll reach out with a warm welcome and a free trial session from you.</p>'+
+  (amt?'<div class="ref-earn">'+ICON('i-gift','width:22px;height:22px;flex:none')+'<span>When your friend comes to their free trial session, you get <b>'+money(amt)+' Wellbe Credit</b> for your next package.</span></div>':'')+
   '<button class="pick" data-act="friend"><span class="ic">'+ICON('i-users')+'</span><span class="grow"><b>Choose from my contacts</b><span>'+(navigator.contacts&&navigator.contacts.select?'Pick them, or type their name and phone number':'Type their name and phone number')+'</span></span>'+ICON('i-plus','width:20px;height:20px')+'</button>'+refList(a)+'</div>'}
 // referral credit: the server setting referral.amount (0 = off). It is wallet money for packages, not the game's Cash or coins
-function refAmt(){var v=Number(cfg('referral.amount',5));return v>0?v:0}
+function refAmt(){var v=Number(cfg('referral.amount',10));return v>0?v:0}
 var REFST={invited:['Invited',''],joined:['Joined','j'],earned:['earned','e'],already:['Already invited','m'],client:['Already a client','m']};
 function refList(a){var r=a.refs||[],cr=+a.credit||0;if(!r.length&&!(cr>0))return '';
   return '<div class="ref-list"><div class="ref-h"><b>Your invites</b>'+(cr>0?'<span class="ref-cr">'+money(cr)+' credit ready</span>':'')+'</div>'+
