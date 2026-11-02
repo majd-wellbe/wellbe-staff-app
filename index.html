@@ -1348,18 +1348,26 @@ ACTIONS.book=function(){
   // the package this session will use, for the type and day picked now
   // every package that can take this session (right type, a free pass); the oldest one is picked first, Romy or Majd can switch before booking
   var cands=function(ty){return pkgsOfClient(st.cid).filter(function(x){return x.client===st.cid&&!/cancel/i.test(x.status)&&(x.kind===ty||(ty==='1:3'&&/trial/i.test(x.type)))&&avail(x)>0}).sort(byStart)};
-  var chosen=function(){var ty=$('#bty').value,d=$('#bd').value,l=cands(ty),x=st.pkg&&l.filter(function(y){return y.id===st.pkg})[0];return x||bookPkg(st.cid,ty,d)||l[0]||null};
-  var paintPkg=function(){var box=$('#bpkg');if(!box||!st.cid)return;var ty=$('#bty').value,l=cands(ty),p=chosen(),r=p&&lateRule(p);
+  // Majd, 2 Nov: the package is ALWAYS a dropdown, chosen first. It lists every package of the client with passes left (any service);
+  // picking one sets the type (and the fixed trainer). "Sell a new package" opens the sell panel.
+  var allPk=function(){return pkgsOfClient(st.cid).filter(function(x){return x.client===st.cid&&!/cancel/i.test(x.status)&&avail(x)>0}).sort(byStart)};
+  var pkKind=function(x){return C('services')[x.kind]?x.kind:(/trial/i.test(x.type)?'1:3':x.kind)};
+  var chosen=function(){if(st.pkg==='none')return null;var ty=$('#bty').value,d=$('#bd').value,l=cands(ty),x=st.pkg&&l.filter(function(y){return y.id===st.pkg})[0];return x||bookPkg(st.cid,ty,d)||l[0]||null};
+  var paintPkg=function(){var box=$('#bpkg');if(!box||!st.cid)return;var ty=$('#bty').value,all=allPk(),p=chosen(),r=p&&lateRule(p),tr=ME.role==='trainer';
     var lab=function(x){return x.type.split(' (')[0].replace(' Sessions','').replace(' - ',' ')+' · '+avail(x)+' left · '+(x.expiry?(x.expiry<T?'ended ':'to ')+dayLabel(x.expiry).replace(/^\w+ /,''):'no end')};
-    box.innerHTML=p?'<div class="field" style="margin-bottom:8px"><label for="bpk">Uses package</label>'+(l.length>1?'<select id="bpk">'+l.map(function(x){return '<option value="'+x.id+'"'+(x.id===p.id?' selected':'')+'>'+esc(lab(x))+'</option>'}).join('')+'</select>':'<div class="notebox" style="margin:0">'+esc(lab(p))+'</div>')+
-      (r?'<div style="color:var(--bad);font-weight:700;font-size:14px;margin-top:4px">'+(r.late?'Payment late: ':'Owes ')+money(r.due)+'</div>':'')+'</div>'
-      :'<div class="note bad" style="margin-bottom:8px">'+ICON('i-alert')+'<span>No '+esc(ty)+' package with passes left. '+(ME.role==='trainer'?'Ask '+esc(WB.deskName())+' to sell one first.':'Sell one below and book it in one tap.')+'</span></div>';
-    if($('#bpk')){ssScan(box);$('#bpk').onchange=function(){st.pkg=this.value;paintPkg()}}};
+    box.innerHTML='<div class="field" style="margin-bottom:8px"><label for="bpk">Uses package</label><select id="bpk">'+
+      all.map(function(x){return '<option value="'+x.id+'"'+(p&&x.id===p.id?' selected':'')+'>'+esc(lab(x))+'</option>'}).join('')+
+      (tr?'':'<option value="none"'+(p?'':' selected')+'>+ Sell a new package</option>')+
+      (!all.length&&tr?'<option value="" selected>No package with passes left</option>':'')+'</select>'+
+      (r?'<div style="color:var(--bad);font-weight:700;font-size:14px;margin-top:4px">'+(r.late?'Payment late: ':'Owes ')+money(r.due)+'</div>':'')+
+      (!p?'<div class="note bad" style="margin-top:6px">'+ICON('i-alert')+'<span>No '+esc(ty)+' package with passes left. '+(tr?'Ask '+esc(WB.deskName())+' to sell one first.':'Sell one below and book it in one tap.')+'</span></div>':'')+'</div>';
+    ssScan(box);$('#bpk').onchange=function(){var v=this.value;if(!v)return;if(v==='none'){st.pkg='none';autoSell();return}
+      var x=all.filter(function(y){return y.id===v})[0];st.pkg=v;if(x){var k=pkKind(x);if(C('services')[k]&&$('#bty').value!==k){ssSet($('#bty'),k);var f=fixedTr(k);if(f)ssSet($('#btr'),f)}}recompute()}};
   var autoSell=function(){paintPkg();if(ME.role==='trainer'||!st.cid)return;var ty=$('#bty').value;if(chosen()){clearSell();cap();return}
     if(!$('#bsell')||$('#bsell').dataset.ty!==ty){$('#bcap').innerHTML='';bkSellPanel(ty,(singleType(ty)||{}).name);if($('#bsell'))$('#bsell').dataset.ty=ty}if($('#bsell'))$('#doBook').textContent='Sell and book '+first(clientById(st.cid).name)};
   var clearSell=function(){if($('#bsell')){$('#bcap').innerHTML='';var b=$('#doBook');if(st.cid)b.textContent='Book '+first(clientById(st.cid).name)}};
   var recompute=function(){var f=fixedTr($('#bty').value);if(f)ssSet($('#btr'),f);autoSell();cap()};   // every field change goes through here, so the sell panel always matches the type
-  $('#bty').onchange=recompute;
+  $('#bty').onchange=function(){if(st.pkg==='none')st.pkg=null;recompute()};
   $('#bd').onchange=recompute;$('#bt').onchange=recompute;
   // a trainer who only runs one service (osteo) switches the type to it; leaving that service goes back to the first type
   $('#btr').onchange=function(){var only=onlySvc(this.value),cur=WB.staffById(svc($('#bty').value).fixed);if(only)ssSet($('#bty'),only);else if(cur&&!cur.train)ssSet($('#bty'),svcKeys()[0]);recompute()};
