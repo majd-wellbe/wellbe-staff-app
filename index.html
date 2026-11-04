@@ -286,6 +286,8 @@ input.wonote{margin-top:6px}
 input,select,textarea,.wop input,.wop select{font-size:16px}
 .sheet{max-height:90vh;max-height:90dvh}
 .sheet .sb{overscroll-behavior:contain}
+
+.wodupn{min-height:44px;border-radius:12px;padding:0 10px;font:inherit;background:var(--card);color:inherit;border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -1737,9 +1739,9 @@ function woEditView(){
     ph.workouts.forEach(function(w,j){var wp=pp+'.workouts.'+j,open=WOOPEN[i+'|'+j],n=(w.main||[]).reduce(function(a,b){return a+b.moves.length},0);
       h+='<div class="wow'+(open?' open':'')+'"><button class="wowh" data-wob="tog|'+i+'|'+j+'"><span class="won w">W'+(j+1)+'</span><b>'+esc(w.name||'Workout')+'</b><small>'+n+' moves</small><span class="chev">'+(open?'▴':'▾')+'</span></button>';
       if(open)h+='<div class="wowb">'+inp(wp+'.name',w.name,'Workout name, e.g. Anterior chain','pn')+['warm','main','abs','stretch'].map(function(s){return sec(wp,w,s)}).join('')+
-        '<div class="wowa"><button class="btn sec" data-wob="dupW|'+i+'|'+j+'">Duplicate</button>'+(j>0?'<button class="btn sec" data-wob="up|'+pp+'.workouts|'+j+'">Move up</button>':'')+'<button class="btn sec" style="color:var(--bad)" data-wob="del|'+pp+'.workouts|'+j+'">Delete</button></div></div>';
+        '<div class="wowa"><select class="wodupn" data-dupn="'+i+'|'+j+'" aria-label="How many copies">'+[1,2,3,4,5,6].map(function(n){return '<option value="'+n+'">'+n+(n>1?' copies':' copy')+'</option>'}).join('')+'</select><button class="btn sec" data-wob="dupW|'+i+'|'+j+'">Duplicate</button>'+(j>0?'<button class="btn sec" data-wob="up|'+pp+'.workouts|'+j+'">Move up</button>':'')+'<button class="btn sec" style="color:var(--bad)" data-wob="del|'+pp+'.workouts|'+j+'">Delete</button></div></div>';
       h+='</div>'});
-    h+='<button class="woadd big" data-wob="addW|'+i+'">+ Workout in '+esc(ph.name||'this phase')+'</button></div>'});
+    h+='<button class="woadd big" data-wob="addW|'+i+'">+ Workout in '+esc(ph.name||'this phase')+'</button><button class="woadd" data-wob="dupP|'+i+'">⧉ Duplicate '+esc(ph.name||'this phase')+' with all its workouts</button></div>'});
   h+='<button class="btn sec full" data-wob="addPhase" style="margin-top:6px">'+ICON('i-plus')+'Add a phase</button><div class="wosave"><button class="btn full" data-wob="save">Save program</button></div>';
   return h;
 }
@@ -1823,7 +1825,11 @@ function woAct(a){
   if(k==='tog'){var key=a[1]+'|'+a[2];WOOPEN[key]=!WOOPEN[key];re(1);return}
   if(k==='addPhase'){WOE.phases.push(woNewPhase(WOE.phases.length+1));re(1);return}
   if(k==='addW'){var ws=WOE.phases[+a[1]].workouts;ws.push(woNewW(ws.length+1));WOOPEN[a[1]+'|'+(ws.length-1)]=1;re(1);return}
-  if(k==='dupW'){var ws2=WOE.phases[+a[1]].workouts,cp=woClone(ws2[+a[2]]);cp.name=cp.name+' (copy)';ws2.splice(+a[2]+1,0,cp);WOOPEN[a[1]+'|'+(+a[2]+1)]=1;re(1);return}
+  // Majd, 4 Nov: duplicate a workout as many times as needed (day 1 into day 2, 3...), and a whole phase (week) with its workouts
+  if(k==='dupW'){var ws2=WOE.phases[+a[1]].workouts,j0=+a[2],sel=$('[data-dupn="'+a[1]+'|'+a[2]+'"]'),nc=Math.max(1,Math.min(6,+(sel&&sel.value)||1));
+    for(var c=nc;c>=1;c--){var cp=woClone(ws2[j0]);cp.name=(ws2[j0].name||'Workout')+(nc>1?' (copy '+c+')':' (copy)');ws2.splice(j0+1,0,cp)}
+    WOOPEN={};WOOPEN[a[1]+'|'+(j0+1)]=1;re(1);toast(nc+(nc>1?' copies':' copy')+' added');return}
+  if(k==='dupP'){var i0=+a[1],np=woClone(WOE.phases[i0]);np.name=(np.name||'Phase')+' (copy)';WOE.phases.splice(i0+1,0,np);WOOPEN={};re(1);toast('Phase duplicated with '+np.workouts.length+' workouts');return}
   var arr=woGet(WOE,a[1]);if(!arr)return;
   if(k==='add'){arr.push(a[2]==='block'?{type:'single',rounds:'',rest:'',moves:[woNewMove('main')]}:woNewMove(a[2]));re(1);return}
   if(k==='del'){if(/workouts$|^phases$/.test(a[1])&&!confirm('Delete it?'))return;arr.splice(+a[2],1);if(a[1]==='phases'&&!arr.length)arr.push(woNewPhase(1));re(1);return}
