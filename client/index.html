@@ -2127,7 +2127,15 @@ ACT.wallet=function(){var a=ACC(),l=wbDue(a),cr=+a.credit||0,c=wbCash(a),due=l.r
    row('Wellbe Credits','Earned in the Corniche Run'+(c&&c.pending?'. $'+(c.pending/100).toFixed(2)+' waiting for your next renewal':''),c?'$'+((+c.bal||0)/100).toFixed(2):'–','var(--ink)')+'</div>'+
    (due>0?'<p class="muted" style="margin-top:12px">Pay '+money(due)+' at the center at your next session'+(cr>0?'. Your '+money(cr)+' credit can be taken off':'')+'.</p>':'');
   openSheet('Your wallet',h)};
-ACT.credits=function(){goSec('play')};
+ACT.credits=function(){var a=ACC();if(!RUNST){try{RUNST=JSON.parse(store('wbc_run_'+a.cid)||'null')}catch(e){}}runLoad();
+  var C=RUNST&&RUNST.cash,GC=cfg('game.cash')||{},usd=function(x){return '$'+((+x||0)/100).toFixed(2)};
+  if(!C){openSheet('Wellbe Credits','<p class="muted">Open Play once to load your Wellbe Credits.</p>','<button class="btn block" id="wcPlay">Open Play</button>');$('#wcPlay').onclick=function(){closeSheet();goSec('play')};return}
+  var min=C.min||GC.REDEEM_MIN||100,max=C.max||GC.REDEEM_MAX||2000,use=Math.min(C.bal,max);
+  var h='<div style="text-align:center;padding:6px 0 10px"><b style="font:800 44px var(--display)">'+usd(C.bal)+'</b><p class="muted">Earned in the Corniche Run. Use up to '+usd(max)+' at a time on your next package or online workout.</p></div>'+
+   (C.pending?'<div class="note good">'+ICON('i-check')+'<span><b>'+usd(C.pending)+'</b> is waiting. '+DESK()+' takes it off your next package when you renew.</span></div>':C.bal<min?'<div class="note">'+ICON('i-alert')+'<span>You can use Wellbe Credits from '+usd(min)+'. Keep running to earn more.</span></div>':'');
+  var btn=!C.pending&&C.bal>=min?'<button class="btn block" id="wcUse">Use '+usd(use)+' on my next package</button>':'';
+  openSheet('Wellbe Credits',h,btn+'<button class="btn ghost block" style="margin-top:8px" id="wcPlay">Earn more in Play</button>');
+  if($('#wcUse'))$('#wcUse').onclick=function(){ACT.rredeem()};$('#wcPlay').onclick=function(){closeSheet();goSec('play')}};
 /* ---------- sheets used by Center and Me ---------- */
 function allSess(a){return a.upcoming.slice().sort(function(x,y){return x.at-y.at})}
 ACT.sess=function(id){var a=ACC(),s=a.upcoming.filter(function(x){return x.id===id})[0]||a.past.filter(function(x){return x.id===id})[0];if(!s)return;

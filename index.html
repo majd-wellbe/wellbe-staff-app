@@ -907,6 +907,8 @@ function refAmt(){var v=C('referral.amount');if(v===undefined||v===null)return 5
 function refNote(cid,total){var r=refDue(cid);if(!r||!(total>0)||!refAmt())return '';var by=first(r.byName||'');
   return '<div class="note good" style="margin-top:8px">'+ICON('i-heart')+'<span><b>Referred by '+esc(r.byName)+':</b> '+money(refAmt())+' credit will be added to '+esc(by)+'.</span></div>'}
 function wmoney(n){n=+n||0;return n%1?'$'+n.toFixed(2):money(n)}
+// Wellbe Credits (Corniche Run) a client asked to use: 'Game cash' requests not handled yet, amount in data.cents
+function gameCredOf(cid){return (REQUESTS||[]).filter(function(q){return q.cid===cid&&q.type==='Game cash'&&q.status==='New'}).map(function(q){return {id:q.id,amt:Math.round(((q.data&&+q.data.cents)||0))/100}}).filter(function(q){return q.amt>0})}
 function walletOf(cid){var v=+(WALLET||{})[cid]||0;return v>0?Math.round(v*100)/100:0}
 var REQ_META={'Physio visit':['i-heart','bad'],'Freeze':['i-cal','warn'],'Reschedule':['i-swap','warn'],'Session request':['i-cal','warn'],'Supplement order':['i-cash','warn'],'Supplement request':['i-cash','mute'],'3 month offer':['i-repeat','bad'],'6 month upgrade':['i-repeat','bad'],'Cancelled':['i-alert','mute'],'Running late':['i-alert','warn'],'Joined a spot':['i-users','mute']};
 // client app requests: the front desk reads, acts, and marks it handled
@@ -1184,7 +1186,7 @@ ACTIONS.sell=function(cid){
    '<div class="field"><label for="sday">Starts</label><input id="sday" type="date" value="'+T+'"></div>'+
    '<div class="field"><span class="flabel">Paid by</span>'+methodSeg('sm')+'</div><div id="swal"></div><div id="sumP" class="note good"></div><div id="sref"></div>',
    '<button class="btn ok full" id="doSell">'+ICON('i-check')+'Create package</button>');
-  segBind('#sm');var USEW=true;
+  segBind('#sm');var USEW=true,USEG=true;
   var clientDisc=function(){var c=clientById($('#sc').value);return c&&c.disc||0};
   var setDisc=function(){PRICE=null;$('#sd').value=Math.max(clientDisc(),months===3?pct('m3Pct'):months===6?pct('m6Pct'):0)};
   segBind('#smo',function(b){months=+b.dataset.m;setDisc();
@@ -1195,15 +1197,18 @@ ACTIONS.sell=function(cid){
     var cid=$('#sc').value,wb=walletOf(cid),wu=USEW?Math.min(wb,Math.max(0,total-paid)):0;
     $('#swal').innerHTML=wb?'<label class="note good" style="margin-bottom:8px;cursor:pointer"><input type="checkbox" id="sw" style="width:20px;height:20px;flex:none"'+(USEW?' checked':'')+'><span><b>Wallet credit '+wmoney(wb)+'</b> (overpaid or referral credit). Use it on this package'+(wu?': '+wmoney(wu)+' off what is left to pay':'')+'.</span></label>':'';
     if($('#sw'))$('#sw').onchange=function(){USEW=this.checked;sum()};
+    var gq=gameCredOf(cid),gc=gq.reduce(function(a,q){return a+q.amt},0),gu=USEG?Math.min(gc,total):0;   // Wellbe Credits the client chose to use (Corniche Run), Majd 4 Nov
+    if(gc)$('#swal').innerHTML+='<label class="note good" style="margin-bottom:8px;cursor:pointer"><input type="checkbox" id="sgc" style="width:20px;height:20px;flex:none"'+(USEG?' checked':'')+'><span><b>Wellbe Credits '+wmoney(gc)+'</b> to use on this package (from the app). Charge '+wmoney(Math.max(0,total-gc))+' instead of '+money(total)+'.</span></label>';
+    if($('#sgc'))$('#sgc').onchange=function(){USEG=this.checked;sum()};total=Math.max(0,Math.round((total-gu)*100)/100);
     $('#sref').innerHTML=refNote(cid,total);paid=paid+wu;
     var lines=months>1?'<br>'+[].concat.apply([],Array(months).fill(0).map(function(x,k){return [k]})).map(function(k){var dd=ymd(addDays(dOf(st),C('windows.packDays')*k));return 'Month '+(k+1)+': '+dayLabel(dd)+' · '+t.n+' sessions · '+money(k<months-1?each:total-each*(months-1))}).join('<br>'):'';
     $('#sumP').innerHTML=ICON('i-check')+'<span>'+(months>1?'<b>'+months+' packages, one per month.</b> ':'')+t.n+' passes'+(months>1?' each':'')+' · total '+money(total)+(months>1?' instead of '+money(t.p*months):'')+' · '+money(Math.max(0,total-paid))+' left to pay'+(months===6?' (2nd half due on day 1 of month 3)':'')+'.'+
       (months===1?' Valid '+validText(t)+'.':'')+lines+(mad?'<br>'+esc(t.kind)+': 100% '+esc(melName())+', '+DESK()+' collects from the client as usual.':mel?'<br>'+esc(melName())+'\'s client: '+DESK()+' collects from the client, '+esc(melName())+' pays the center $'+melCut()+'/pass upfront.':'')+'</span>'};
   ['sp','sday'].forEach(function(i){$('#'+i).oninput=sum});$('#sd').oninput=function(){PRICE=null;sum()};$('#sfp').oninput=function(){var v=this.value;PRICE=v===''?null:Math.max(0,+v||0);sum()};$('#st').onchange=$('#st').oninput=function(){PRICE=null;sum()};$('#sc').onchange=function(){setDisc();sum()};setDisc();sum();
   $('#doSell').onclick=function(){var t=PKG_TYPES[+$('#st').value],c=clientById($('#sc').value),m=segVal('#sm',methods()[0]);if(!c){toast('Pick a client');return}
-    var tot=PRICE!=null?Math.round(PRICE*100)/100:Math.round(t.p*months*(1-(+$('#sd').value||0)/100));closeSheet();
-    var sb={cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,price:PRICE!=null?PRICE:undefined,paid:Math.max(0,Math.min(tot,+$('#sp').value||0)),method:m,start:$('#sday').value||T};if(USEW&&walletOf(c.id))sb.useWallet=true;
-    save('app_sell',sb,null,true).then(function(j){toast((j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name+(j.walletUsed?' · '+wmoney(j.walletUsed)+' wallet used':'')+(j.referral?' · '+money(j.referral.amount)+' credit added to '+first(j.referral.byName):''))})};
+    var tot=PRICE!=null?Math.round(PRICE*100)/100:Math.round(t.p*months*(1-(+$('#sd').value||0)/100)),gq=USEG?gameCredOf(c.id):[],gc=Math.min(tot,gq.reduce(function(a,q){return a+q.amt},0));if(gc)tot=Math.round((tot-gc)*100)/100;closeSheet();
+    var sb={cid:c.id,type:t.t,months:months,discount:+$('#sd').value||0,price:gc?tot:PRICE!=null?PRICE:undefined,paid:Math.max(0,Math.min(tot,+$('#sp').value||0)),method:m,start:$('#sday').value||T};if(USEW&&walletOf(c.id))sb.useWallet=true;
+    save('app_sell',sb,null,true).then(function(j){gq.forEach(function(q){q.status='Done';api('app_req_done',{id:q.id,act:'done'}).catch(function(){})});toast((gc?wmoney(gc)+' Wellbe Credits used · ':'')+(j.ids&&j.ids.length>1?j.ids.length+' months created':j.id+' created')+' for '+c.name+(j.walletUsed?' · '+wmoney(j.walletUsed)+' wallet used':'')+(j.referral?' · '+money(j.referral.amount)+' credit added to '+first(j.referral.byName):''))})};
 };
 // how long a new package stays valid: cfg.types months / days, else windows.singleDays (1 pass) or windows.packDays
 function validText(t){var ct=cfgType(t.t)||{};return ct.months?ct.months+' months':ct.days?daysText(ct.days):(t.n===1?C('windows.singleDays'):C('windows.packDays'))+' days'}
