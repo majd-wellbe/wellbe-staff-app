@@ -877,6 +877,7 @@ nav.tabs.coach-lift{z-index:81;pointer-events:none}
 .pf-sep{color:var(--ink-3)}
 .pf-ed{min-height:44px;padding:0 16px;border-radius:999px;font-weight:700;color:var(--mint-deep);background:var(--mint-soft)}
 @media (prefers-reduced-motion: reduce){.coach-ring,.coach-tip,.sw,.sw i{transition:none}}
+.wbar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 14px}.wbar button{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 14px;text-align:left;min-height:62px}.wbar small{display:flex;align-items:center;gap:5px;color:var(--ink-3);font-size:12px;font-weight:700;letter-spacing:.02em}.wbar b{display:block;font:800 19px var(--display);margin-top:3px}.wbar .wbbad{color:var(--crimson)}.wbar .wbok{color:var(--mint-deep)}.wbt{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:6px 0 2px}.wbr{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.wbr>b{font:800 19px var(--display);white-space:nowrap}.wbr small{display:block;color:var(--ink-3);font-size:13px;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1136,7 +1137,7 @@ function render(){
   if(ONB||(!D.guest&&!a.goal&&!store('wbc_goal_later_'+a.cid))){app.innerHTML=onbView(a);bindOnb(a);return}
   if(!full)VIEW='home';
   if(SEC==='work'){SEC='plan';PLANTAB='wo'}else if(SEC==='nut'){SEC='plan';PLANTAB='nut'}if(SEC==='shop'&&D.guest)SEC='center';
-  var body=(SEC==='center'&&!D.guest?noticeCards():'')+(SEC==='play'?VIEWS.play():SEC==='plan'?VIEWS.myplan():SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic());
+  var body=((SEC==='center'||SEC==='me')&&!D.guest?walletBar(a):'')+(SEC==='center'&&!D.guest?noticeCards():'')+(SEC==='play'?VIEWS.play():SEC==='plan'?VIEWS.myplan():SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic());
   setApp(app,'<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" data-help="whatsapp" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+''+DESK()+'</a>'+hqBtn()+'<button class="me" data-help="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+avatar(a)+'</button></div></div>'+
    '<main'+((SEC==='center'||SEC==='shop')&&!D.guest&&full&&cartTotal().n?' class="has-cart"':'')+'>'+((SEC==='center'||SEC==='me')&&D.accounts.length>1?'<div class="accs" role="tablist" aria-label="Accounts">'+D.accounts.map(function(x,i){return '<button class="acc" aria-pressed="'+(i===A)+'" data-acc="'+i+'">'+esc(x.first)+'</button>'}).join('')+'</div>':'')+body+'</main>'+
    tabsView()+((SEC==='center'||SEC==='shop')&&!D.guest?cartBar():'')+modalView());
@@ -2111,6 +2112,22 @@ function refList(a){var r=a.refs||[],cr=+a.credit||0;if(!r.length&&!(cr>0))retur
    r.slice(0,8).map(function(x){var l=REFST[x.st]||REFST.invited,t=x.st==='earned'?'+'+money(x.amt||refAmt())+' earned':l[0];
      return '<div class="ref-row"><span class="ref-av">'+esc(String(x.n||'?').charAt(0).toUpperCase())+'</span><div class="grow"><b>'+esc(x.n)+'</b><small>'+(x.d?'Invited '+esc(dayShort(x.d)):'Invited')+'</small></div><span class="ref-st '+l[1]+'">'+esc(t)+'</span></div>'}).join('')+
    (cr>0?'<p class="ref-note">'+DESK()+' takes your credit off your next package when you renew.</p>':'')+'</div>'}
+
+/* ---------- wallet strip (Majd, 4 Nov 2026): money to pay, wallet credit, and Wellbe Credits, always visible on Center and Me ---------- */
+function wbDue(a){return (a.pkgs||[]).filter(function(p){return p.phase!=='past'&&!p.ins&&+p.due>0})}
+function wbCash(a){var r=RUNST;if(!r){try{r=JSON.parse(store('wbc_run_'+a.cid)||'null')}catch(e){}}return r&&r.cash?r.cash:null}
+function walletBar(a){var due=wbDue(a).reduce(function(t,p){return t+(+p.due||0)},0),cr=+a.credit||0,c=wbCash(a);
+  var w=due>0?'<b class="wbbad">'+money(due)+' to pay</b>':cr>0?'<b class="wbok">'+money(cr)+' credit</b>':'<b class="wbok">All paid ✓</b>';
+  return '<div class="wbar" data-help="wallet"><button data-act="wallet"><small>'+ICON('i-card','width:15px;height:15px')+' Your wallet</small>'+w+'</button>'+
+   '<button data-act="credits"><small>💳 Wellbe Credits</small><b>'+(c?'$'+((+c.bal||0)/100).toFixed(2):'Open Play')+'</b></button></div>'}
+ACT.wallet=function(){var a=ACC(),l=wbDue(a),cr=+a.credit||0,c=wbCash(a),due=l.reduce(function(t,p){return t+(+p.due||0)},0);
+  var row=function(t,sub,v,col){return '<div class="wbr"><div><b>'+t+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div><b style="color:'+col+'">'+v+'</b></div>'};
+  var h='<div class="wbl"><div class="wbt">To pay</div>'+(l.length?l.map(function(p){return row(esc(p.label),p.start?'From '+esc(dmy(p.start)):'',money(p.due),'var(--crimson)')}).join(''):row('Nothing to pay','All your packages are paid.','✓','var(--mint-deep)'))+
+   '<div class="wbt">Yours to use</div>'+row('Wallet credit','Real money off your next package (invites, overpaid amounts)',money(cr),'var(--mint-deep)')+
+   row('Wellbe Credits','Earned in the Corniche Run'+(c&&c.pending?'. $'+(c.pending/100).toFixed(2)+' waiting for your next renewal':''),c?'$'+((+c.bal||0)/100).toFixed(2):'–','var(--ink)')+'</div>'+
+   (due>0?'<p class="muted" style="margin-top:12px">Pay '+money(due)+' at the center at your next session'+(cr>0?'. Your '+money(cr)+' credit can be taken off':'')+'.</p>':'');
+  openSheet('Your wallet',h)};
+ACT.credits=function(){goSec('play')};
 /* ---------- sheets used by Center and Me ---------- */
 function allSess(a){return a.upcoming.slice().sort(function(x,y){return x.at-y.at})}
 ACT.sess=function(id){var a=ACC(),s=a.upcoming.filter(function(x){return x.id===id})[0]||a.past.filter(function(x){return x.id===id})[0];if(!s)return;
