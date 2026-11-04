@@ -1031,15 +1031,19 @@ function builderOpen(){tauntGet('tn_salute').then(function(d){BLD.salD=d}).catch
   bldSize();bldView();BV.init=0;bldUI();bldMake();tauntMan();if(!BLD.raf)BLD.raf=requestAnimationFrame(bldLoop);
   if(!PROF)profLoad().then(function(){if($('#pick').style.display!=='none')bldUI()})}
 /* the app's Play button: 16 frames of the runner doing THEIR OWN taunt (Salute if none), hips up, saved as one strip (cr_avsal). Majd, 31 Oct 2026 */
-function bldSalSnap(){var a=BLD.av,id=BLD.spec.tn,d=(id&&BLD.tnD&&BLD.tnD[id])||BLD.salD;if(!a||!d||!d.clip)return;var y0=a.holder.rotation.y,cp=BLD.cam.position.clone(),cf=BLD.cam.fov,w=BLD.r.domElement.width,h=BLD.r.domElement.height;
+/* save a picture of the runner: the old one is removed first, and when the phone storage is full old caches go, so the newest look always wins (Majd, 4 Nov) */
+function avPut(k,u){try{localStorage.removeItem(k);localStorage.setItem(k,u);return true}catch(e){try{Object.keys(localStorage).filter(function(x){return /^wbc_(nut|run)_|^wbc_cache/.test(x)}).forEach(function(x){localStorage.removeItem(x)});localStorage.setItem(k,u);return true}catch(e2){return false}}}
+function bldSalSnap(){var a=BLD.av,id=BLD.spec.tn;if(!a)return;
+  if((id&&!(BLD.tnD&&BLD.tnD[id]))||!BLD.salD){Promise.all([tauntGet('tn_salute').then(function(x){BLD.salD=x}),id?tauntGet(id).then(function(x){(BLD.tnD=BLD.tnD||{})[id]=x}):0]).then(function(){if(BLD.av===a&&BLD.spec.tn===id&&BLD.salD){bldSalSnap();try{parent.postMessage('wb-runner',PO)}catch(e){}}}).catch(function(){});return}   // the taunt was still loading: make the strip as soon as it is here
+  var d=(id&&BLD.tnD[id])||BLD.salD;if(!d||!d.clip)return;var y0=a.holder.rotation.y,cp=BLD.cam.position.clone(),cf=BLD.cam.fov,w=BLD.r.domElement.width,h=BLD.r.domElement.height;
   try{a.setTaunt(d);a.state('idle',0);a.state('taunt',0);a.holder.rotation.y=-Math.PI/2+.3;var D=2.7,HV=1.12*Math.max(1,h/w);BLD.cam.position.set(0,1.5,D);BLD.cam.fov=2*Math.atan(HV/2/D)*180/Math.PI;BLD.cam.updateProjectionMatrix();BLD.cam.lookAt(0,1.47,0);BLD.r.setClearColor(0x000000,0);
     var N=16,F=150,c=document.createElement('canvas'),x=c.getContext('2d'),s=Math.min(w,h),dur=typeof d.clip==='string'?2.4:d.clip.duration,span=d.loop?Math.min(dur,2.4):Math.max(.5,dur-.35),t=0;c.width=F*N;c.height=F;
     for(var i=0;i<N;i++){var tt=.25+span*i/(N-1);a.state('taunt',tt-t);t=tt;a.holder.updateMatrixWorld(true);BLD.r.render(BLD.sc,BLD.cam);x.drawImage(BLD.r.domElement,(w-s)/2,(h-s)/2,s,s,i*F,0,F,F)}
-    var u=c.toDataURL('image/webp',.82);if(u.indexOf('image/webp')<0)u=c.toDataURL('image/png');store('cr_avsal',u);store('cr_avsaln',String(N));store('cr_avsalv','2')}catch(e){}
+    var u=c.toDataURL('image/webp',.82);if(u.indexOf('image/webp')<0)u=c.toDataURL('image/png');if(avPut('cr_avsal',u)){store('cr_avsaln',String(N));store('cr_avsalv','2')}}catch(e){}
   a.holder.rotation.y=y0;BLD.cam.position.copy(cp);BLD.cam.fov=cf;BLD.cam.updateProjectionMatrix();bldTaunt(false);a.state('idle',0)}
 function bldSnap(){if(!BLD.av)return;var y0=BLD.av.holder.rotation.y,w=BLD.r.domElement.width,h=BLD.r.domElement.height,cp=BLD.cam.position.clone(),cf=BLD.cam.fov;BLD.av.holder.rotation.y=-Math.PI/2+.3;BLD.av.state('idle',0);BLD.av.state('idle',.5);
   BLD.cam.position.set(0,1.05,5.2);BLD.cam.fov=28;BLD.cam.updateProjectionMatrix();BLD.cam.lookAt(0,.88,0);BLD.av.holder.updateMatrixWorld(true);
-  BLD.r.setClearColor(0x000000,0);BLD.r.render(BLD.sc,BLD.cam);try{var c=document.createElement('canvas'),ow=360,oh=Math.round(360*h/w);c.width=ow;c.height=oh;c.getContext('2d').drawImage(BLD.r.domElement,0,0,ow,oh);store('cr_avimg',c.toDataURL('image/png'))}catch(e){}
+  BLD.r.setClearColor(0x000000,0);BLD.r.render(BLD.sc,BLD.cam);try{var c=document.createElement('canvas'),ow=360,oh=Math.round(360*h/w);c.width=ow;c.height=oh;c.getContext('2d').drawImage(BLD.r.domElement,0,0,ow,oh);var u0=c.toDataURL('image/webp',.85);if(u0.indexOf('image/webp')<0)u0=c.toDataURL('image/png');avPut('cr_avimg',u0)}catch(e){}
   BLD.av.holder.rotation.y=y0;BLD.cam.position.copy(cp);BLD.cam.fov=cf;BLD.cam.updateProjectionMatrix()}
 /* Save style (Majd, 31 Oct 2026): keeps the look without starting a race; the app's Play button updates too */
 $('#savest').onclick=function(){var s=BLD.spec,L=bldLocked();try{store('cr_tab',BLD.tab)}catch(e){}

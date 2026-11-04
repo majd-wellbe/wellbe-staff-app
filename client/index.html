@@ -1330,7 +1330,7 @@ VIEWS.play=function(){if(ACC()&&(!RUNST||RUNC!==ACC().cid))runLoad();var raw=sto
   h+='<div class="chase" data-help="chase"><div class="o">'+SVGI('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')+'</div><p><b>Don’t trip twice.</b> One stumble and your coach closes in. A second one before you pull away and he catches you. Your points multiply up to x5 the longer you last.</p></div>';
   return h};
 var AVDIRTY=0;   // the runner's look changed in the game: redraw the Play button when the game closes
-addEventListener('message',function(e){if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;if(e.data==='wb-runner'){AVDIRTY=1;return}if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play'||AVDIRTY){AVDIRTY=0;render()}}});
+addEventListener('message',function(e){if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;if(e.data==='wb-runner'){var gf=$('#gameFrame');if(gf&&gf.classList.contains('on'))AVDIRTY=1;else render();return}if(e.data==='wb-close'){var f=$('#gameFrame');if(f){f.classList.remove('on');f.src='about:blank'}document.documentElement.style.overflow='';if(SEC==='play'||AVDIRTY){AVDIRTY=0;render()}}});
 // Profile: everything about the person
 // ---------- not a client yet: why Wellbe, services, packages, and 3 ways in
 function gTrialCard(){var t=D.guest.trial;if(!t)return '';
