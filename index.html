@@ -1377,7 +1377,11 @@ ACTIONS.book=function(){
   $('#bty').onchange=function(){if(st.pkg==='none')st.pkg=null;recompute()};
   $('#bd').onchange=recompute;$('#bt').onchange=recompute;
   // a trainer who only runs one service (osteo) switches the type to it; leaving that service goes back to the first type
-  $('#btr').onchange=function(){var only=onlySvc(this.value),cur=WB.staffById(svc($('#bty').value).fixed);if(only)ssSet($('#bty'),only);else if(cur&&!cur.train)ssSet($('#bty'),svcKeys()[0]);recompute()};
+  $('#btr').onchange=function(){var want=this.value,fx=fixedTr($('#bty').value);
+    // Majd, 6 Nov: picking a trainer who cannot run the current type (Prehab is always Majd) switches to a package that trainer can run (Chloe Prehab -> her 1:1 with Joe) instead of snapping back
+    if(fx&&fx!==want&&!onlySvc(want)){var alt=allPk().filter(function(x){var f=fixedTr(pkKind(x));return C('services')[pkKind(x)]&&(!f||f===want)})[0];
+      if(alt){st.pkg=alt.id;ssSet($('#bty'),pkKind(alt))}else{st.pkg=null;var k0=svcKeys().filter(function(k){return !fixedTr(k)})[0];if(k0)ssSet($('#bty'),k0)}ssSet($('#btr'),want);autoSell();cap();return}
+    var only=onlySvc(this.value),cur=WB.staffById(svc($('#bty').value).fixed);if(only)ssSet($('#bty'),only);else if(cur&&!cur.train)ssSet($('#bty'),svcKeys()[0]);recompute()};
   $('#doBook').onclick=function(){var d=$('#bd').value,t=$('#bt').value,tr=$('#btr').value,ty=$('#bty').value,c=clientById(st.cid);
     var p=chosen();   // the package shown under Uses package
     if(overCap(d,t,tr,1)){toast(tr+' is full at that hour');return}
