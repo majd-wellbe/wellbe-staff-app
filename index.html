@@ -288,6 +288,7 @@ input,select,textarea,.wop input,.wop select{font-size:16px}
 .sheet .sb{overscroll-behavior:contain}
 
 .wodupn{min-height:44px;border-radius:12px;padding:0 10px;font:inherit;background:var(--card);color:inherit;border:1px solid var(--line)}
+.wknav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}.wknav b{text-align:center;font-size:15px}.wknav b small{display:block;font-weight:600;color:var(--ink-3);font-size:12px}.wknav button[disabled]{opacity:.35}
 </style>
 </head>
 <body>
@@ -681,8 +682,14 @@ function nextDue(e){var d=dOf(e.start);var step={'Weekly':[0,7],'Monthly':[1,0],
 function nextWorkday(){var d=addDays(TODAY,1);while(d.getDay()===0)d=addDays(d,1);return d}
 
 VIEWS.schedule=function(){
-  var days=[];for(var i=-1;i<7;i++){var d=addDays(TODAY,i);if(d.getDay()!==0)days.push(ymd(d))}
-  return '<div class="h"><h2>Schedule</h2><button class="btn sec sm" data-act="week">'+ICON('i-cal','icon')+'Next week</button></div>'+
+  // Majd, 12 Nov: owner and front desk can go back up to 4 weeks (and 1 forward) to see past schedules
+  var wk=ME.role==='trainer'?0:(UI.wk||0),days=[];
+  if(!wk){for(var i=-1;i<7;i++){var d=addDays(TODAY,i);if(d.getDay()!==0)days.push(ymd(d))}}
+  else{var m0=addDays(monday,7*wk);for(var j=0;j<6;j++)days.push(ymd(addDays(m0,j)))}
+  if(days.indexOf(DAY)<0)DAY=wk?days[0]:T;
+  var wkLab=!wk?'This week':wk===-1?'Last week':wk===1?'Next week':(-wk)+' weeks ago';
+  return '<div class="h"><h2>Schedule</h2><button class="btn sec sm" data-act="week">'+ICON('i-cal','icon')+'Book next week</button></div>'+
+   (ME.role!=='trainer'?'<div class="wknav"><button class="btn sec sm" data-wk="'+(wk-1)+'"'+(wk<=-4?' disabled':'')+'>‹ Earlier</button><b>'+wkLab+'<small>'+dayLabel(days[0])+' to '+dayLabel(days[days.length-1])+'</small></b><button class="btn sec sm" data-wk="'+(wk+1)+'"'+(wk>=1?' disabled':'')+'>Later ›</button></div>':'')+
    '<div class="chips" role="tablist">'+days.map(function(d){return '<button class="chip" aria-pressed="'+(d===DAY)+'" data-day="'+d+'">'+(d===T?'Today':dayLabel(d))+'</button>'}).join('')+'</div>'+
    (function(){var all=sessOn(DAY),trs=[];all.forEach(function(s){if(s.trainer&&trs.indexOf(s.trainer)<0)trs.push(s.trainer)});trs.sort();if(UI.tr&&trs.indexOf(UI.tr)<0&&!all.length)UI.tr='';
     var list=UI.tr?all.filter(function(s){return s.trainer===UI.tr}):all;
@@ -867,6 +874,7 @@ function bindView(){
   // tap a session (not its buttons) to see and edit everything about it
   $$('[data-sess]').forEach(function(el){el.onclick=function(e){if(e.target.closest('button,a,input,select,textarea'))return;sessSheet(el.dataset.sess)}});
   $$('[data-day]').forEach(function(b){b.onclick=function(){DAY=b.dataset.day;render()}});
+  $$('[data-wk]').forEach(function(b){b.onclick=function(){UI.wk=Math.max(-4,Math.min(1,+b.dataset.wk||0));DAY='';render();scrollTo(0,0)}});
   $$('[data-tr]').forEach(function(b){b.onclick=function(){UI.tr=b.dataset.tr;render()}});
   $$('[data-client]').forEach(function(b){b.onclick=function(){clientSheet(b.dataset.client)}});
   $$('[data-paycl]').forEach(function(b){b.onclick=function(){paySheet(b.dataset.paycl)}});
@@ -962,6 +970,7 @@ function sessSheet(id){
       sessPayPill(p,staff)+(s.status==='Cancelled'&&!att[i]?'':'<div class="att" role="group" aria-label="Attendance for '+esc(c.name)+'">'+ATTS.map(function(x){return '<button class="'+x[1]+'" aria-pressed="'+(att[i]===x[0])+'" data-sxa="'+i+'|'+x[0]+'">'+x[0].replace(' Cancel',' cancel').replace('No Show','No show')+'</button>'}).join('')+'</div>')+
       '<div id="sxw'+i+'"></div></div>'}).join('')+
    (staff&&cap>s.clients.length&&s.status!=='Cancelled'?'<button class="btn sec full" id="sxAdd" style="margin-bottom:12px">'+ICON('i-plus')+'Add a client to the free seat</button>':'')+
+   (staff&&s.clients.length?'<button class="btn sec full" id="sxDel" style="margin-bottom:12px;color:var(--bad)">'+ICON('i-x')+'Delete this session</button>':'')+
    (isPP?'<div class="field"><span class="flabel">Payment for this session</span><div class="seg" id="sxPay">'+sessPays().map(function(m){return '<button class="chip" aria-pressed="'+(m===(s.pay||''))+'"'+dis+'>'+esc(m)+'</button>'}).join('')+'</div></div>':'');
   openSheet(s.tab+' session',body,'<button class="btn full" id="sxSave">Save changes</button>');
   var btn=$('#sxSave');
@@ -984,6 +993,14 @@ function sessSheet(id){
     api('app_sess_remove',{ref:s.ref,id:s.id,slot:c.slot}).then(function(){BUSY--;paintBusy();dirty();boot(true);
       sessNotify([{cids:[c.cid],names:[c.name],text:'Hi '+first(c.name)+', you are no longer booked in the '+s.tab+' session on '+dayLabel(s.date)+' at '+hl(s.start)+'. No pass was used.'}],'Removed from the session')})
      .catch(function(e){BUSY--;paintBusy();b.disabled=false;$('#sxErr').innerHTML='<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Not removed: '+esc(e.message)+'</span></div>'})}});
+  // Majd, 12 Nov: delete the whole session (owner and front desk): every client is taken out, no pass used, no trainer pay, the session is Cancelled
+  var del=$('#sxDel');if(del)del.onclick=function(){var b=del;
+    if(b.dataset.sure!=='1'){b.dataset.sure='1';b.innerHTML=ICON('i-x')+'Tap again: delete this '+esc(s.tab)+' session on '+dayLabel(s.date)+' at '+hl(s.start);return}
+    b.disabled=true;b.textContent='Deleting…';BUSY++;paintBusy();var cl=s.clients.slice(),fut=s.date>=T;
+    cl.reduce(function(p,c){return p.then(function(){return api('app_sess_remove',{ref:s.ref,id:s.id,slot:c.slot})})},Promise.resolve())
+     .then(function(){BUSY--;paintBusy();dirty();boot(true);closeSheet();toast('Session deleted: no pass used, no trainer pay');
+       if(fut)sessNotify([{cids:cl.map(function(c){return c.cid}).filter(Boolean),names:cl.map(function(c){return c.name}),text:'Hi, your '+s.tab+' session on '+dayLabel(s.date)+' at '+hl(s.start)+' was cancelled by Wellbe. No pass was used.'}],'Session cancelled')})
+     .catch(function(e){BUSY--;paintBusy();dirty();boot(true);b.disabled=false;b.textContent='Delete this session';$('#sxErr').innerHTML='<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Not fully deleted: '+esc(e.message)+'</span></div>'})};
   var add=$('#sxAdd');if(add)add.onclick=function(){ACTIONS.book();ssSet($('#bty'),s.tab);ssSet($('#btr'),s.trainer);$('#bd').value=s.date;$('#bt').value=s.start;['#bty','#btr','#bd'].forEach(function(q){var el=$(q);if(el)el.dispatchEvent(new Event('change'))})};
   btn.onclick=function(){
     if(staff){var dI=$('#sxD'),tI=$('#sxT'),trI=$('#sxTr'),rI=$('#sxR');if(dI&&dI.value)cur.date=dI.value;if(tI&&tI.value)cur.start=tI.value.slice(0,5);if(trI&&!trI.disabled)cur.trainer=trI.value;if(rI)cur.room=rI.value}   // read what is on screen now
