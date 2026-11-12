@@ -684,7 +684,7 @@ function nextWorkday(){var d=addDays(TODAY,1);while(d.getDay()===0)d=addDays(d,1
 VIEWS.schedule=function(){
   // Majd, 12 Nov: owner and front desk can go back up to 4 weeks (and 1 forward) to see past schedules
   var wk=ME.role==='trainer'?0:(UI.wk||0),days=[];
-  if(!wk){for(var i=-1;i<7;i++){var d=addDays(TODAY,i);if(d.getDay()!==0)days.push(ymd(d))}}
+  if(!wk){var st0=ME.role==='trainer'?addDays(TODAY,-1):monday;for(var d=st0;d<=addDays(TODAY,6);d=addDays(d,1))if(d.getDay()!==0)days.push(ymd(d))}   // this week from Monday (Majd, 12 Nov) and the next 6 days
   else{var m0=addDays(monday,7*wk);for(var j=0;j<6;j++)days.push(ymd(addDays(m0,j)))}
   if(days.indexOf(DAY)<0)DAY=wk?days[0]:T;
   var wkLab=!wk?'This week':wk===-1?'Last week':wk===1?'Next week':(-wk)+' weeks ago';
@@ -874,6 +874,7 @@ function bindView(){
   // tap a session (not its buttons) to see and edit everything about it
   $$('[data-sess]').forEach(function(el){el.onclick=function(e){if(e.target.closest('button,a,input,select,textarea'))return;sessSheet(el.dataset.sess)}});
   $$('[data-day]').forEach(function(b){b.onclick=function(){DAY=b.dataset.day;render()}});
+  var pcd=$('[data-day][aria-pressed="true"]');if(pcd&&pcd.parentNode.scrollWidth>pcd.parentNode.clientWidth)pcd.parentNode.scrollLeft=pcd.offsetLeft-pcd.parentNode.clientWidth/2+pcd.offsetWidth/2;   // today in view
   $$('[data-wk]').forEach(function(b){b.onclick=function(){UI.wk=Math.max(-4,Math.min(1,+b.dataset.wk||0));DAY='';render();scrollTo(0,0)}});
   $$('[data-tr]').forEach(function(b){b.onclick=function(){UI.tr=b.dataset.tr;render()}});
   $$('[data-client]').forEach(function(b){b.onclick=function(){clientSheet(b.dataset.client)}});
