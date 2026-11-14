@@ -6,7 +6,7 @@
 //   insurance pays about 90 days after it was sent
 // The router holds the lock.
 // =====================================================================
-var INS_CLIENT_HEAD = ['Client ID', 'Client', 'Insurance', 'Member number', 'Notes', 'Updated', 'By', 'Pays per session'];
+var INS_CLIENT_HEAD = ['Client ID', 'Client', 'Insurance', 'Member number', 'Notes', 'Updated', 'By', 'Pays per session', 'Session price', 'Client pays %'];
 var INS_CLAIM_HEAD = ['Claim ID', 'Client ID', 'Client', 'Insurance', 'Month', 'Sessions', 'Amount', 'Packages', 'Submitted', 'Expected payment', 'Reference', 'Status', 'Paid on', 'Paid amount', 'By'];
 
 function insClientsTab_(ops) { return appTab_(ops, 'INSURANCE CLIENTS', INS_CLIENT_HEAD); }
@@ -18,7 +18,12 @@ function insClients_(ops) {
   var sh = insClientsTab_(ops), n = sh.getLastRow();
   if (n < 2) return [];
   return sh.getRange(2, 1, n - 1, INS_CLIENT_HEAD.length).getValues().filter(function (r) { return r[0] && r[2]; })
-    .map(function (r) { return { cid: String(r[0]).trim().toUpperCase(), name: String(r[1]), insurer: String(r[2]), member: String(r[3]), notes: String(r[4]), rate: Number(r[7]) || cfg_().insurance.rate }; });
+    .map(function (r) {
+      // 14 Nov: copay. Session price + the % the client pays upfront; the insurer pays the rest (= rate) about 90 days after the claim
+      var price = Number(r[8]) || 0, pct = Math.min(100, Math.max(0, Number(r[9]) || 0));
+      var rate = price > 0 ? Math.round(price * (100 - pct)) / 100 : (Number(r[7]) || cfg_().insurance.rate);
+      return { cid: String(r[0]).trim().toUpperCase(), name: String(r[1]), insurer: String(r[2]), member: String(r[3]), notes: String(r[4]), rate: rate, price: price, pct: price > 0 ? pct : 0 };
+    });
 }
 function insClaims_(ops) {
   var sh = insClaimsTab_(ops), n = sh.getLastRow();
@@ -31,11 +36,15 @@ function insClaims_(ops) {
 }
 function insMap_(ops) { var m = {}; insClients_(ops).forEach(function (x) { m[x.cid] = x; }); return m; }
 
-// app_ins_set: { cid, name, insurer ('' = no longer insured), member, notes }
+// app_ins_set: { cid, name, insurer ('' = no longer insured), member, notes, price (session price), pct (client pays %) }
 function insSet_(b, me) {
   var ops = SpreadsheetApp.openById(CFG.OPS_ID), sh = insClientsTab_(ops), cid = String(b.cid).toUpperCase();
   var ids = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().map(function (r) { return String(r[0]).toUpperCase(); }) : [];
-  var row = [cid, clean_(b.name, 80), clean_(b.insurer, 60), clean_(b.member, 60), clean_(b.notes, 300), Utilities.formatDate(new Date(), CFG.TZ, 'dd/MM/yyyy HH:mm'), me.name, Number(b.rate) || cfg_().insurance.rate];
+  var price = Math.round((Number(b.price) || 0) * 100) / 100, pct = Math.min(100, Math.max(0, Number(b.pct) || 0));
+  if (price < 0) throw new Error('Session price missing');
+  var rate = price > 0 ? Math.round(price * (100 - pct)) / 100 : (Number(b.rate) || cfg_().insurance.rate);
+  if (String(sh.getRange(1, 9).getValue()) !== 'Session price') sh.getRange(1, 9, 1, 2).setValues([['Session price', 'Client pays %']]).setFontWeight('bold').setBackground('#1f2a2e').setFontColor('#ffffff');
+  var row = [cid, clean_(b.name, 80), clean_(b.insurer, 60), clean_(b.member, 60), clean_(b.notes, 300), Utilities.formatDate(new Date(), CFG.TZ, 'dd/MM/yyyy HH:mm'), me.name, rate, price || '', price ? pct : ''];
   var at = ids.indexOf(cid);
   if (at < 0) { if (row[2]) sh.appendRow(row); } else sh.getRange(at + 2, 1, 1, row.length).setValues([row]);
   return {};
@@ -110,14 +119,19 @@ function insBoot_(d) {
   return d;
 }
 
-// client app boot: insured clients never see money owed
+// client app boot: on physio / prehab packages an insured client only owes their own share (pct of the price), never the insurer's part
 function insClientBoot_(d) {
   try {
     var m = insMap_(SpreadsheetApp.openById(CFG.OPS_ID));
     (d.accounts || []).forEach(function (a) {
       var x = m[String(a.cid).toUpperCase()]; if (!x) return;
       a.insurer = x.insurer;
-      (a.pkgs || []).forEach(function (p) { p.due = 0; p.ins = x.insurer; });
+      (a.pkgs || []).forEach(function (p) {
+        if (!/physio|prehab/i.test(String(p.kind || '') + ' ' + String(p.label || ''))) return;
+        var price = Number(p.price) || 0, paid = price - (Number(p.due) || 0), mine = Math.round(price * (x.pct || 0)) / 100;
+        p.ins = x.insurer; p.insPct = x.pct || 0; p.insMine = mine;
+        p.due = Math.max(0, Math.round((mine - paid) * 100) / 100);
+      });
     });
   } catch (e) {}
   return d;

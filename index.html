@@ -452,7 +452,7 @@ function renewMsg(p){var left=avail(p),o=offerOf(p),pk=p.type.split(' (')[0];
  var head='Hi '+first(p.name)+', this is '+DESK()+' from Wellbe. You '+(left===0?'just finished':'have 1 session left on')+' your '+pk+' package.';
  if(!o)return head+' Want me to renew it so you keep your spot?';
  return head+' Before you renew, two ways to save:\n\n3 months: $'+o.p3+' instead of $'+o.t3+' ('+pct('m3Pct')+'% off), one payment.\n6 months: $'+o.p6+' instead of $'+o.t6+' ('+pct('m6Pct')+'% off), paid in 2: $'+o.half+' now and $'+(o.p6-o.half)+' on day 1 of month 3.\n\nSame spot, same coach. Which one works for you?'}
-function lateRule(p){ if(!p||!p.price) return null; if(insOf(p.client)&&insPP(p.kind)) return null; /* insurance pays, never the client */ if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=lateLimit(p.total); return {due:due, late:p.used>=limit, limit:limit} }
+function lateRule(p){ if(!p||!p.price) return null; if(insOf(p.client)&&insPP(p.kind)){var ix=insOf(p.client);if(!ix.pct||(p.status&&p.status!=='Active'))return null; /* insurance pays the rest: the client only owes their own % (14 Nov) */ var mine=Math.round(p.price*ix.pct)/100,od=Math.round((mine-(p.paid||0))*100)/100;if(od<=0)return null;var lim=lateLimit(p.total);return {due:od,late:p.used>=lim,limit:lim,ins:1}} if(p.status&&p.status!=='Active') return null; var due=Math.round((p.price-p.paid)*100)/100; if(due<=0) return null; var limit=lateLimit(p.total); return {due:due, late:p.used>=limit, limit:limit} }
 // payment is late after this session: 12 pack -> 3, 8 pack -> 2, else 1 (cfg.late)
 function lateLimit(total){var l=(C('late.limits')||[]).filter(function(x){return total>=x[0]})[0];return l?l[1]:C('late.else')}
 function lateText(){return (C('late.limits')||[]).map(function(x){return 'session '+x[1]+' ('+x[0]+' pack)'}).join(' or ')}
@@ -534,7 +534,7 @@ function isMel(cid){var c=clientById(cid);return !!(c&&c.mel)}
    His own client = someone who only ever bought osteo here (Nour Milan, Karim Karim). Center pays him nothing. Earlier months unchanged. */
 function osteoShare(s){return /osteo/i.test(s.tab||'')&&s.date>='2026-10-01'}
 function osteoOwn(cid){var l=PKGS.filter(function(p){return p.client===cid});return l.length>0&&l.every(function(p){return /osteo/i.test(p.type||'')})}
-function centerValue(s,c){if(melSvc(s.tab))return 0;if(osteoShare(s))return osteoOwn(c.cid)?10:20;if(insSess(s,c))return 0;   // counted when the insurer pays
+function centerValue(s,c){if(melSvc(s.tab))return 0;if(osteoShare(s))return osteoOwn(c.cid)?10:20;if(insSess(s,c))return insMine(c.cid);   // the client's own % counts when given, the insurer's part when it pays
  if(isMel(c.cid))return melCut();var p=pkgById(c.pkg);return p&&p.total?p.price/p.total:0}
 // PROJ (Numbers > "This month, full"): sessions still to come count as given, every booked client present
 // INSURANCE (Majd, 31 Oct): an insured client (INSURANCE CLIENTS tab, e.g. NextCare) never owes us. Their physio and prehab sessions
@@ -543,6 +543,7 @@ var INS={clients:[],claims:[]};
 function insOf(cid){var l=INS.clients||[];for(var i=0;i<l.length;i++)if(l[i].cid===cid)return l[i];return null}
 function insPP(tab){return tab==='Physio'||tab==='Prehab'||/physio|prehab/i.test(tab||'')}
 function insSess(s,c){return insPP(s.tab)&&!!insOf(c.cid)&&/insur/i.test(s.pay||'')} /* 31 Oct: only clients in INSURANCE CLIENTS AND sessions marked Insurance (Anji's own paid sessions and old Georges rows are normal) */
+function insMine(cid){var x=insOf(cid);return x&&x.price&&x.pct?Math.round(x.price*x.pct)/100:0}   /* client's share of one insured session */
 function insRate(cid){var x=insOf(cid);return x&&x.rate||((payOf('Majd').fixed||{}).PhysioIns)||27}
 function insPaidIn(from,to){return (INS.claims||[]).filter(function(c){return /paid/i.test(c.status||'')&&c.paidOn&&c.paidOn>=from&&c.paidOn<=to})}
 function insWaiting(){var due=0,n=0,paid=0,by={};SESS.forEach(function(s){if(s.date>T||!delivered(s))return;s.clients.forEach(function(c){if(!insSess(s,c)||!deducts(c.att||'Present'))return;var r=insRate(c.cid);due+=r;n++;var k=s.date.slice(0,7);(by[k]=by[k]||{n:0,amt:0}).n++;by[k].amt+=r})});
@@ -779,7 +780,8 @@ function dashNums(R){
   var hours={},cap13=svc('1:3').cap;SESS.filter(function(s){return s.tab==='1:3'&&s.date>=from&&s.date<=to&&s.date<=upTo()&&s.status!=='Cancelled'}).forEach(function(s){var h=s.start;hours[h]=hours[h]||{seats:0,cap:0};hours[h].seats+=s.clients.length;hours[h].cap+=cap13});
   var ro=romyPay(from,to);if(ro.total){pay+=ro.total;byTrainer[ro.name]={sessions:0,rev:0,pay:ro.total,asst:true}}
   var ip=insPaidIn(from,to),ipAmt=ip.reduce(function(a,c){return a+(c.paidAmount||0)},0);
-  if(ipAmt){var g='Physio (Majd)';rev+=ipAmt;byType[g]=(byType[g]||0)+ipAmt;pay+=ipAmt;var mj=byTrainer.Majd=byTrainer.Majd||{sessions:0,rev:0,pay:0};mj.rev+=ipAmt;mj.pay+=ipAmt}
+  if(ipAmt){var g='Physio (Majd)',per=(payOf('Majd').fixed||{}).PhysioIns||27,mjAmt=ip.reduce(function(a,c){var want=(c.sessions||0)*per;return a+(want?Math.min(c.paidAmount||0,want):(c.paidAmount||0))},0);   // Majd keeps his $27 a session, the rest of the claim is the center's (14 Nov)
+    rev+=ipAmt;byType[g]=(byType[g]||0)+ipAmt;pay+=mjAmt;var mj=byTrainer.Majd=byTrainer.Majd||{sessions:0,rev:0,pay:0};mj.rev+=ipAmt;mj.pay+=mjAmt}
   var iw=insWaiting();
   // what Majd made personally (Majd, 31 Oct): center profit + his own sessions + POS product profit
   var mjPay=(byTrainer.Majd||{}).pay||0,posP=(POS||[]).filter(function(x){return x.d>=from&&x.d<=to&&x.d<=upTo()}).reduce(function(t,x){return t+(+x.profit||0)},0),net0=rev-pay-exp;
@@ -818,7 +820,7 @@ function drill(key){var R=curRange(),N=dashNums(R),x=key.split('|'),k=x[0],v=x.s
      '<div class="note" style="margin-bottom:10px">'+ICON('i-cash')+'<span>A package counts in the month of its first session. '+R.newPct+'% on a new client\'s first training package (client '+R.from+' and up), '+R.recPct+'% on their later ones. Never single passes, $0 packages or '+esc(melName())+'\'s own clients.</span></div>'+
      (ro.list.length?'<div class="card tblwrap"><table class="tbl"><thead><tr><th>Package</th><th class="r">Price</th><th class="r">Bonus</th></tr></thead><tbody>'+ro.list.slice().sort(function(a,b){return a.date<b.date?-1:1}).map(function(x){return '<tr data-cl="'+x.p.client+'" style="cursor:pointer"><td><b>'+esc(x.p.name)+'</b><div class="muted" style="font-size:13px">'+esc(x.p.type.split(' (')[0])+' · first session '+dayLabel(x.date)+' · <b style="color:'+(x.isNew?'var(--good)':'var(--ink-2)')+'">'+(x.isNew?'NEW '+R.newPct+'%':'repeat '+R.recPct+'%')+'</b></div></td><td class="r num">'+money(x.p.price)+'</td><td class="r num">'+money(x.amt)+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">No bonus package in this period.</div>')}
   else if(k==='ins'){title='Insurance · '+R.label;var w=N.insWait,ms=Object.keys(w.by).sort().reverse();
-    body='<div class="note" style="margin-bottom:10px">'+ICON('i-heart')+'<span>Insured clients pay nothing. Their sessions count $0 when given; the money and Majd\'s $'+insRate('')+' per session count in the month the insurer pays.</span></div>'+
+    body='<div class="note" style="margin-bottom:10px">'+ICON('i-heart')+'<span>Insured clients pay their own % upfront: that part counts when the session is given. The insurer\'s part counts in the month it pays (about 90 days after the claim is sent), and Majd gets $'+((payOf('Majd').fixed||{}).PhysioIns||27)+' per session from it.</span></div>'+
      '<div class="card tblwrap" style="margin-bottom:12px"><table class="tbl"><thead><tr><th>Sessions given in</th><th class="r">Sessions</th><th class="r">Still waiting</th></tr></thead><tbody>'+ms.map(function(m){return '<tr><td><b>'+monthName(m)+'</b>'+(w.by[m].paid?'<div class="muted" style="font-size:13px">'+money(w.by[m].paid)+' paid</div>':'')+'</td><td class="r num">'+w.by[m].n+'</td><td class="r num">'+money(w.by[m].left)+'</td></tr>'}).join('')+'</tbody></table></div>'+
      '<div class="h"><h2 style="font-size:17px">Claims</h2></div>'+((INS.claims||[]).length?'<div class="card tblwrap"><table class="tbl"><tbody>'+INS.claims.map(function(c){return '<tr><td><b>'+esc(c.name)+'</b><div class="muted" style="font-size:13px">'+esc(c.insurer)+' · '+esc(c.month)+' · '+c.sessions+' sessions'+(c.expected?' · expected '+dayLabel(c.expected):'')+'</div></td><td class="r num">'+money(c.amount)+'<div class="muted" style="font-size:12px">'+esc(c.status||'Sent')+(c.paidOn?' '+dayLabel(c.paidOn):'')+'</div></td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">No claim sent yet.</div>')}
   else if(k==='cash'){title='Cash collected · '+R.label;var ps=PKGS.filter(function(p){return p.start>=R.from&&p.start<=R.to&&!melSvc(p.kind)&&!isMel(p.client)});
@@ -1134,6 +1136,54 @@ ACTIONS.week=function(){
      .then(function(j){toast(j.added+' bookings added'+(j.skipped.length?' · '+j.skipped.length+' skipped ('+trialTr()+' full or no package)':''))})};
 };
 // discount + freeze, inside the client sheet
+// INSURANCE on the client sheet (owner and front desk, 14 Nov): insurer, session price and the % the client pays upfront.
+// The insurer pays the rest. Claims: one per month of sessions, sent after the month ends; the insurer pays about 90 days after.
+function m2(n){n=Math.round((+n||0)*100)/100;return '$'+(n%1?n.toFixed(2):n)}
+function insMonths(cid){var by={};SESS.forEach(function(s){if(s.date>T||!delivered(s))return;s.clients.forEach(function(x){if(x.cid!==cid||!insSess(s,x)||!deducts(x.att||'Present'))return;var k=s.date.slice(0,7);var b=by[k]=by[k]||{n:0,pk:{}};b.n++;if(x.pkg)b.pk[x.pkg]=1})});return by}
+function insSplitText(price,pct){price=+price||0;pct=Math.max(0,Math.min(100,+pct||0));if(!price)return 'Put the session price to see the split.';
+  return 'Per session: client pays <b>'+m2(price*pct/100)+'</b> upfront ('+pct+'%), insurance pays <b>'+m2(price*(100-pct)/100)+'</b> about 90 days after the claim.'}
+function insClientBox(c){var x=insOf(c.id),cm=T.slice(0,7);
+  var form='<div class="two"><div class="field"><label for="iin">Insurance company</label><input id="iin" type="text" value="'+esc(x?x.insurer:'')+'" placeholder="e.g. NextCare"></div><div class="field"><label for="imn">Member number</label><input id="imn" type="text" value="'+esc(x?x.member||'':'')+'"></div></div>'+
+   '<div class="two"><div class="field"><label for="ipr">Session price ($)</label><input id="ipr" type="number" inputmode="decimal" min="0" step="0.5" value="'+(x&&x.price?x.price:'')+'" placeholder="e.g. 40"></div><div class="field"><label for="ipc">Client pays %</label><input id="ipc" type="number" inputmode="decimal" min="0" max="100" value="'+(x?x.pct||0:0)+'"></div></div>'+
+   '<div class="muted" id="insPrev" style="font-size:13px;margin:-2px 0 10px">'+insSplitText(x&&x.price,x&&x.pct)+'</div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec sm" id="insSave">'+ICON('i-check')+(x?'Save insurance':'Add insurance')+'</button>'+(x?'<button class="btn sec sm" id="insDel" style="color:var(--bad)">'+ICON('i-x')+'Not insured anymore</button>':'')+'</div>';
+  var rows='';
+  if(x){var by=insMonths(c.id),cl=(INS.claims||[]).filter(function(q){return q.cid===c.id}),ks={};Object.keys(by).forEach(function(k){ks[k]=1});cl.forEach(function(q){ks[q.month]=1});
+    rows=Object.keys(ks).sort().reverse().slice(0,6).map(function(k){var b=by[k]||{n:0},q=cl.filter(function(z){return z.month===k})[0],st;
+      if(q&&/paid/i.test(q.status||''))st='<span class="pill p-good">Paid '+m2(q.paidAmount)+(q.paidOn?' '+dayLabel(q.paidOn):'')+'</span>';
+      else if(q)st='<span class="muted" style="font-size:13px">Sent '+(q.submitted?dayLabel(q.submitted):'')+' · '+m2(q.amount)+(q.expected?' · expected '+dayLabel(q.expected):'')+'</span> <button class="btn sec sm" data-ipd="'+esc(q.id)+'">Mark paid</button>';
+      else if(k<cm&&b.n)st='<button class="btn sec sm" data-icl="'+k+'">'+ICON('i-check')+'Claim sent</button>';
+      else st='<span class="muted" style="font-size:13px">'+(k===cm?'Claim after the month ends':'No sessions')+'</span>';
+      return '<div class="row" style="min-height:54px;flex-wrap:wrap"><div class="main"><b>'+monthName(k)+'</b><span>'+b.n+' insured session'+(b.n===1?'':'s')+' · insurance owes '+m2(b.n*x.rate)+'</span></div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+st+'</div></div>'}).join('');
+    rows=rows?'<span class="flabel" style="margin-top:12px;display:block">Claims</span><div class="list" style="margin:8px 0 0">'+rows+'</div>':''}
+  return '<div class="card" style="padding:12px 14px;margin-bottom:12px;border-left:4px solid #2b7bb9"><b style="display:block;margin-bottom:8px">'+ICON('i-heart')+' Insurance'+(x?' · '+esc(x.insurer):'')+'</b>'+form+rows+'</div>'}
+function bindInsBox(c){if(!$('#insSave'))return;var x=insOf(c.id);
+  var prev=function(){$('#insPrev').innerHTML=insSplitText($('#ipr').value,$('#ipc').value)};$('#ipr').oninput=prev;$('#ipc').oninput=prev;
+  $('#insSave').onclick=function(){var ins=$('#iin').value.trim(),pr=Math.max(0,+$('#ipr').value||0),pc=Math.max(0,Math.min(100,+$('#ipc').value||0));
+    if(!ins){toast('Insurance company needed');return}if(!pr){toast('Session price needed');return}
+    var rate=Math.round(pr*(100-pc))/100,o={cid:c.id,name:c.name,insurer:ins,member:$('#imn').value.trim(),notes:x?x.notes||'':'',price:pr,pct:pc,rate:rate};
+    var l=INS.clients=(INS.clients||[]).filter(function(y){return y.cid!==c.id});l.push(o);
+    save('app_ins_set',{cid:c.id,name:c.name,insurer:ins,member:o.member,notes:o.notes,price:pr,pct:pc},first(c.name)+': pays '+m2(pr*pc/100)+' a session, '+ins+' pays '+m2(rate));render();clientSheet(c.id)};
+  if($('#insDel'))$('#insDel').onclick=function(){var b=this;if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again: '+first(c.name)+' pays full price from now';return}
+    INS.clients=(INS.clients||[]).filter(function(y){return y.cid!==c.id});save('app_ins_set',{cid:c.id,name:c.name,insurer:'',member:'',notes:''},first(c.name)+' is no longer insured');render();clientSheet(c.id)};
+  $$('[data-icl]').forEach(function(b){b.onclick=function(){var k=b.dataset.icl,m=insMonths(c.id)[k]||{n:0,pk:{}},amt=Math.round(m.n*x.rate*100)/100;
+    openSheet('Claim sent · '+monthName(k),'<div class="card" style="padding:12px 14px;margin-bottom:12px"><b>'+esc(c.name)+' · '+esc(x.insurer)+'</b><div class="muted" style="font-size:14px">'+m.n+' sessions in '+monthName(k)+' × '+m2(x.rate)+'</div></div>'+
+     '<div class="two"><div class="field"><label for="icd">Sent on</label><input id="icd" type="date" value="'+T+'"></div><div class="field"><label for="ica">Amount claimed ($)</label><input id="ica" type="number" inputmode="decimal" min="0" step="0.5" value="'+amt+'"></div></div>'+
+     '<div class="field"><label for="icr">Claim reference <span class="muted" style="font-weight:500">(optional)</span></label><input id="icr" type="text"></div><div class="note" id="icx">'+ICON('i-cal')+'<span></span></div>',
+     '<button class="btn ok full" id="doIc">'+ICON('i-check')+'Save claim</button>');
+    var ex=function(){$('#icx span').innerHTML='Expected payment: <b>'+dayLabel(ymd(addDays(dOf($('#icd').value||T),90)))+'</b> (90 days after it was sent).'};$('#icd').oninput=ex;ex();
+    $('#doIc').onclick=function(){var a=+$('#ica').value||0;if(!(a>0)){toast('Amount needed');return}closeSheet();
+      save('app_ins_submit',{cid:c.id,name:c.name,insurer:x.insurer,month:k,sessions:m.n,amount:a,submitted:$('#icd').value||T,ref:$('#icr').value.trim(),pkgs:Object.keys(m.pk).join(', ')},null,true).then(function(j){toast('Claim saved. '+x.insurer+' should pay by '+dayLabel(j.expected))})}}});
+  $$('[data-ipd]').forEach(function(b){b.onclick=function(){var q=(INS.claims||[]).filter(function(z){return z.id===b.dataset.ipd})[0];if(!q)return;
+    openSheet('Insurance paid','<div class="card" style="padding:12px 14px;margin-bottom:12px"><b>'+esc(c.name)+' · '+esc(q.insurer)+'</b><div class="muted" style="font-size:14px">'+monthName(q.month)+' claim · '+q.sessions+' sessions · '+m2(q.amount)+' claimed</div></div>'+
+     '<div class="two"><div class="field"><label for="ipa">Amount received ($)</label><input id="ipa" type="number" inputmode="decimal" min="0" step="0.5" value="'+q.amount+'"></div><div class="field"><label for="ipdd">Received on</label><input id="ipdd" type="date" value="'+T+'"></div></div>'+
+     '<div class="note good">'+ICON('i-cash')+'<span>The money goes on '+esc(first(c.name))+'’s packages and counts in this month’s numbers.</span></div>',
+     '<button class="btn ok full" id="doIp">'+ICON('i-check')+'Mark paid</button>');
+    $('#doIp').onclick=function(){var a=+$('#ipa').value||0;if(!(a>0)){toast('Amount needed');return}closeSheet();save('app_ins_paid',{id:q.id,amount:a,date:$('#ipdd').value||T},'Paid: '+m2(a)+' from '+q.insurer,true)}}});
+}
+function insSellNote(cid,t,total){var x=insOf(cid);if(!x||!insPP(t.kind))return '';
+  if(!x.pct)return '<div class="note" style="margin-top:8px">'+ICON('i-heart')+'<span>Insured by <b>'+esc(x.insurer)+'</b> at 100%: the client pays nothing.</span></div>';
+  var mine=Math.round(total*x.pct)/100;return '<div class="note" style="margin-top:8px">'+ICON('i-heart')+'<span>Insured by <b>'+esc(x.insurer)+'</b>: client pays '+x.pct+'%. Final price should be '+t.n+' × '+m2(x.price)+' = <b>'+m2(t.n*x.price)+'</b>. On '+m2(total)+' the client pays <b>'+m2(mine)+'</b> now, '+esc(x.insurer)+' pays '+m2(total-mine)+' after the claim.</span></div>'}
 function staffClientTools(c){
   var open=pkgsOfClient(c.id).filter(function(p){return p.client===c.id&&isOpenPkg(p)}).sort(byStart),fzl=daysText(C('windows.freezeDays'));
   return '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div style="display:flex;gap:10px;align-items:flex-end"><div class="field" style="margin:0;flex:1"><label for="cdisc">Client discount %</label><input id="cdisc" type="number" inputmode="decimal" min="0" max="100" value="'+(c.disc||0)+'"></div><button class="btn sec sm" id="saveDisc" style="min-height:48px">Save</button></div><div class="muted" style="font-size:13px;margin-top:6px">Filled in automatically every time you sell this client a package.</div></div>'+
@@ -1176,7 +1226,7 @@ function clientSheet(id){
    (ME.role!=='trainer'?'<label style="display:flex;gap:10px;align-items:center;margin:0 0 12px;font-weight:600"><input type="checkbox" id="melFlag" style="width:22px;height:22px"'+(c.mel?' checked':'')+'> '+esc(melName())+'\'s own client <span class="muted" style="font-weight:500;font-size:13px">('+esc(melName())+' pays the center $'+melCut()+'/pass)</span></label>':'')+
    (ME.role!=='trainer'?'<button class="btn sec full" id="editCl" style="margin-bottom:12px">'+ICON('i-edit')+'Edit name, phone, email</button>':'')+
    (ME.role!=='trainer'&&!c.email?'<div class="note warn" style="margin-bottom:12px">'+ICON('i-alert')+'<span>No email: '+esc(first(c.name))+' cannot sign in to the client app yet.</span></div>':'')+
-   (ME.role!=='trainer'?staffClientTools(c):'')+(ME.role!=='trainer'?refClientBox(c):'')+
+   (ME.role!=='trainer'?staffClientTools(c):'')+(ME.role!=='trainer'?refClientBox(c):'')+(ME.role!=='trainer'?insClientBox(c):'')+
    (c.goal?'<div class="notebox" style="border-left:4px solid var(--crimson)"><b>Their promise</b>\u201C'+esc(c.goal.promise)+'\u201D'+(c.goal.keys&&c.goal.keys.length?'<br><span class="muted" style="font-size:13px">'+c.goal.keys.map(esc).join(' · ')+'</span>':'')+'</div>':'')+
    (c.notes?'<div class="note warn" style="margin-bottom:10px">'+ICON('i-heart')+'<span><b>Always show:</b> '+esc(c.notes)+'</span></div>':'')+(c.program?'<div class="notebox"><b>Training program</b>'+esc(c.program)+'</div>':'')+(c.log.length?'<div class="notebox"><b>Session notes</b>'+c.log.slice(0,4).map(function(l){return dayLabel(l.d)+' · '+esc(l.by)+': '+esc(l.t)}).join('<br>')+'</div>':'')+
    (ME.role==='owner'?ownerClientExtras(c):'')+'<button class="btn sec full" id="woOpen" style="margin-bottom:14px">'+ICON('i-dumb')+'Workout program</button>',
@@ -1184,7 +1234,7 @@ function clientSheet(id){
   if($('#sellTo'))$('#sellTo').onclick=function(){ACTIONS.sell(id)};
   if($('#woOpen'))$('#woOpen').onclick=function(){closeSheet();woOpenClient(id)};
   if(ME.role==='owner')bindOwnerExtras(c);
-  if(ME.role!=='trainer')bindStaffClientTools(c);hxMount(id);nutClientBtn(id);
+  if(ME.role!=='trainer'){bindStaffClientTools(c);bindInsBox(c)}hxMount(id);nutClientBtn(id);
   if($('#editCl'))$('#editCl').onclick=function(){
     openSheet('Edit '+first(c.name),'<div class="field"><label for="ecn">Full name</label><input id="ecn" type="text" value="'+esc(c.name)+'" autocomplete="off"></div><div class="field"><label for="ecp">Phone</label><input id="ecp" type="tel" inputmode="tel" value="'+esc(c.phone)+'"></div><div class="field"><label for="ece">Email <span class="muted" style="font-weight:500">(used to sign in to the client app)</span></label><input id="ece" type="email" inputmode="email" autocomplete="off" value="'+esc(c.email)+'"></div><p class="muted" style="font-size:13px;margin-top:10px">Parents: put the parent\u2019s email on the child\u2019s profile, they will see it from their own sign in.</p>',
      '<button class="btn ok full" id="doEc">'+ICON('i-check')+'Save</button>');
@@ -1218,7 +1268,7 @@ ACTIONS.sell=function(cid){
     var gq=gameCredOf(cid),gc=gq.reduce(function(a,q){return a+q.amt},0),gu=USEG?Math.min(gc,total):0;   // Wellbe Credits the client chose to use (Corniche Run), Majd 4 Nov
     if(gc)$('#swal').innerHTML+='<label class="note good" style="margin-bottom:8px;cursor:pointer"><input type="checkbox" id="sgc" style="width:20px;height:20px;flex:none"'+(USEG?' checked':'')+'><span><b>Wellbe Credits '+wmoney(gc)+'</b> to use on this package (from the app). Charge '+wmoney(Math.max(0,total-gc))+' instead of '+money(total)+'.</span></label>';
     if($('#sgc'))$('#sgc').onchange=function(){USEG=this.checked;sum()};total=Math.max(0,Math.round((total-gu)*100)/100);
-    $('#sref').innerHTML=refNote(cid,total);paid=paid+wu;
+    $('#sref').innerHTML=refNote(cid,total)+insSellNote(cid,t,total);paid=paid+wu;
     var lines=months>1?'<br>'+[].concat.apply([],Array(months).fill(0).map(function(x,k){return [k]})).map(function(k){var dd=ymd(addDays(dOf(st),C('windows.packDays')*k));return 'Month '+(k+1)+': '+dayLabel(dd)+' · '+t.n+' sessions · '+money(k<months-1?each:total-each*(months-1))}).join('<br>'):'';
     $('#sumP').innerHTML=ICON('i-check')+'<span>'+(months>1?'<b>'+months+' packages, one per month.</b> ':'')+t.n+' passes'+(months>1?' each':'')+' · total '+money(total)+(months>1?' instead of '+money(t.p*months):'')+' · '+money(Math.max(0,total-paid))+' left to pay'+(months===6?' (2nd half due on day 1 of month 3)':'')+'.'+
       (months===1?' Valid '+validText(t)+'.':'')+lines+(mad?'<br>'+esc(t.kind)+': 100% '+esc(melName())+', '+DESK()+' collects from the client as usual.':mel?'<br>'+esc(melName())+'\'s client: '+DESK()+' collects from the client, '+esc(melName())+' pays the center $'+melCut()+'/pass upfront.':'')+'</span>'};
