@@ -7,10 +7,30 @@
 // The router holds the lock.
 // =====================================================================
 var INS_CLIENT_HEAD = ['Client ID', 'Client', 'Insurance', 'Member number', 'Notes', 'Updated', 'By', 'Pays per session', 'Session price', 'Client pays %'];
+// 16 Nov: insurance is set per package (sold on insurance): its sessions count as insured without marking each one
+var INS_PKG_HEAD = ['Package', 'Client ID', 'Client', 'Insurance', 'Client pays %', 'Updated', 'By'];
 var INS_CLAIM_HEAD = ['Claim ID', 'Client ID', 'Client', 'Insurance', 'Month', 'Sessions', 'Amount', 'Packages', 'Submitted', 'Expected payment', 'Reference', 'Status', 'Paid on', 'Paid amount', 'By'];
 
 function insClientsTab_(ops) { return appTab_(ops, 'INSURANCE CLIENTS', INS_CLIENT_HEAD); }
 function insClaimsTab_(ops) { return appTab_(ops, 'INSURANCE CLAIMS', INS_CLAIM_HEAD); }
+function insPkgsTab_(ops) { return appTab_(ops, 'INSURANCE PACKAGES', INS_PKG_HEAD); }
+// package ID -> { insurer, pct } (only rows with an insurer)
+function insPkgs_(ops) {
+  var sh = insPkgsTab_(ops), n = sh.getLastRow(), m = {};
+  if (n < 2) return m;
+  sh.getRange(2, 1, n - 1, INS_PKG_HEAD.length).getValues().forEach(function (r) {
+    var id = String(r[0]).trim(); if (!id || !String(r[3]).trim()) return;
+    m[id] = { cid: String(r[1]).trim().toUpperCase(), insurer: String(r[3]), pct: Math.min(100, Math.max(0, Number(r[4]) || 0)) };
+  });
+  return m;
+}
+// set / clear the insurance of one package (insurer '' = paid by the client again)
+function insPkgSet_(ops, pkg, cid, name, insurer, pct, me) {
+  var sh = insPkgsTab_(ops), n = sh.getLastRow(), at = -1;
+  if (n > 1) { var v = sh.getRange(2, 1, n - 1, 1).getValues(); for (var i = 0; i < v.length; i++) if (String(v[i][0]).trim() === pkg) at = i + 2; }
+  var row = [pkg, cid, clean_(name, 80), clean_(insurer, 60), insurer ? Math.min(100, Math.max(0, Number(pct) || 0)) : '', Utilities.formatDate(new Date(), CFG.TZ, 'dd/MM/yyyy HH:mm'), me.name];
+  if (at > 0) sh.getRange(at, 1, 1, row.length).setValues([row]); else if (insurer) sh.appendRow(row);
+}
 function insYmd_(v) { return v instanceof Date ? Utilities.formatDate(v, CFG.TZ, 'yyyy-MM-dd') : String(v || ''); }
 function insShift_(ymd, k) { return appShift_(ymd, k); }
 
@@ -95,39 +115,64 @@ function insPaid_(b, me) {
   return { left: left };
 }
 
-// app_pkg_price: { pkg, price } change what a sold package costs (price per session follows)
+// app_pkg_price: edit a sold package. Any of: { pkg, price, passes, expiry (yyyy-mm-dd), ins: { insurer, pct } (insurer '' = not insured) }
+// price per session follows the price and the passes. 16 Nov: passes, end date and insurance added (package sheet + selling on insurance)
 function pkgPrice_(b, me) {
   var ops = SpreadsheetApp.openById(CFG.OPS_ID), sh = ops.getSheetByName('PACKAGES'), row = appPkgRow_(sh, b.pkg);
-  var price = Math.round(Number(b.price) * 100) / 100; if (!(price >= 0)) throw new Error('Price missing');
-  var total = Number(sh.getRange(row, 5).getValue()) || 0, old = appNum_(sh.getRange(row, 9).getValue()) || 0;
-  sh.getRange(row, 9).setValue(price);
+  var r = sh.getRange(row, 1, 1, 22).getValues()[0], log = [], when = Utilities.formatDate(new Date(), CFG.TZ, 'dd/MM');
+  var total = Number(r[4]) || 0, used = Number(r[5]) || 0, price = appNum_(r[8]) || 0;
+  if (b.price !== undefined && b.price !== null && b.price !== '') {
+    var np = Math.round(Number(b.price) * 100) / 100; if (!(np >= 0)) throw new Error('Price missing');
+    if (np !== price) { log.push('Price $' + price + ' -> $' + np); price = np; sh.getRange(row, 9).setValue(price); }
+  }
+  if (b.passes !== undefined && b.passes !== null && b.passes !== '') {
+    var nt = Math.round(Number(b.passes)); if (!(nt >= 1) || nt > 200) throw new Error('Passes must be 1 to 200');
+    if (nt < used) throw new Error(used + ' sessions are already used on it: passes can\'t go below ' + used);
+    if (nt !== total) { log.push('Passes ' + total + ' -> ' + nt); sh.getRange(row, 7).setValue(Math.max(0, (Number(r[6]) || 0) + nt - total)); total = nt; sh.getRange(row, 5).setValue(total); if (/complete/i.test(String(r[13])) && total > used) sh.getRange(row, 14).setValue('Active'); }
+  }
+  if (b.expiry && /^\d{4}-\d{2}-\d{2}$/.test(String(b.expiry))) {
+    var ed = beirutDate_(String(b.expiry), 0);
+    log.push('Ends ' + Utilities.formatDate(ed, CFG.TZ, 'dd/MM/yyyy'));
+    sh.getRange(row, 11).setValue(ed); sh.getRange(row, 13).setValue(ed); sh.getRange(row, 11, 1, 3).setNumberFormat('dd/MM/yyyy');
+    if (String(r[13]) === 'Expired' && ed >= new Date()) sh.getRange(row, 14).setValue('Active');
+  }
   sh.getRange(row, 8).setValue(total ? Math.round(price / total * 100) / 100 : 0);
-  var note = String(sh.getRange(row, 21).getValue() || '');
-  sh.getRange(row, 21).setValue(appendNote_(note, 'Price $' + old + ' -> $' + price + ' ' + Utilities.formatDate(new Date(), CFG.TZ, 'dd/MM') + ' (' + me.name + ')'));
-  return { price: price };
+  // discount column follows: list price of the type, scaled to the passes
+  try { var ty = cfgTypes_().filter(function (x) { return x.name === String(r[3]); })[0];
+    if (ty && ty.price > 0 && ty.passes > 0) { var list = ty.price * total / ty.passes; sh.getRange(row, 20).setValue(Math.max(0, Math.round((1 - price / list) * 10000) / 10000)); } } catch (e) {}
+  if (b.ins) {
+    var ins = String(b.ins.insurer || '').trim(), cid = String(r[1]).trim().toUpperCase();
+    insPkgSet_(ops, String(b.pkg), cid, String(r[2]), ins, b.ins.pct, me);
+    log.push(ins ? 'Insurance ' + ins + ', client pays ' + (Number(b.ins.pct) || 0) + '%' : 'Not on insurance');
+    if (typeof appBumpClients_ === 'function') appBumpClients_([cid]);
+  }
+  if (log.length) sh.getRange(row, 21).setValue(appendNote_(String(r[20] || ''), log.join(', ') + ' ' + when + ' (' + me.name + ')'));
+  if (typeof appRecountMany_ === 'function' && b.passes) { var ids = {}; ids[String(b.pkg)] = 1; try { appRecountMany_(ops, ids); } catch (e) {} }
+  return { price: price, passes: total };
 }
 
 // staff boot: insured clients, claims, and the discount of each package
 function insBoot_(d) {
   try {
     var ops = SpreadsheetApp.openById(CFG.OPS_ID);
-    d.ins = { clients: insClients_(ops), claims: insClaims_(ops).map(function (c) { delete c.row; return c; }) };
+    d.ins = { clients: insClients_(ops), claims: insClaims_(ops).map(function (c) { delete c.row; return c; }), pkgs: insPkgs_(ops) };
     var disc = {};
     pkgsAll_(ops).forEach(function (x) { disc[x.id] = x.disc; });
     (d.pkgs || []).forEach(function (p) { if (disc[p.id]) p.disc = disc[p.id]; });
-  } catch (e) { d.ins = { clients: [], claims: [] }; }
+  } catch (e) { d.ins = { clients: [], claims: [], pkgs: {} }; }
   return d;
 }
 
 // client app boot: on physio / prehab packages an insured client only owes their own share (pct of the price), never the insurer's part
 function insClientBoot_(d) {
   try {
-    var m = insMap_(SpreadsheetApp.openById(CFG.OPS_ID));
+    var ops = SpreadsheetApp.openById(CFG.OPS_ID), m = insMap_(ops), pm = insPkgs_(ops);
     (d.accounts || []).forEach(function (a) {
-      var x = m[String(a.cid).toUpperCase()]; if (!x) return;
-      a.insurer = x.insurer;
+      var cx = m[String(a.cid).toUpperCase()];
+      if (cx) a.insurer = cx.insurer;
       (a.pkgs || []).forEach(function (p) {
-        if (!/physio|prehab/i.test(String(p.kind || '') + ' ' + String(p.label || ''))) return;
+        var x = pm[String(p.id)] || null;   // sold on insurance (16 Nov)
+        if (!x) { if (!cx || !/physio|prehab/i.test(String(p.kind || '') + ' ' + String(p.label || ''))) return; x = cx; }
         var price = Number(p.price) || 0, paid = price - (Number(p.due) || 0), mine = Math.round(price * (x.pct || 0)) / 100;
         p.ins = x.insurer; p.insPct = x.pct || 0; p.insMine = mine;
         p.due = Math.max(0, Math.round((mine - paid) * 100) / 100);
@@ -140,6 +185,6 @@ function insClientBoot_(d) {
 // run once from the editor: creates both tabs
 function insTest() {
   var ops = SpreadsheetApp.openById(CFG.OPS_ID);
-  insClientsTab_(ops); insClaimsTab_(ops);
+  insClientsTab_(ops); insClaimsTab_(ops); insPkgsTab_(ops);
   Logger.log('Insurance tabs ready. Clients: ' + insClients_(ops).length + ', claims: ' + insClaims_(ops).length);
 }
