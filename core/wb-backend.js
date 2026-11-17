@@ -35,7 +35,7 @@
   WB.backend = function () {
     var v = WB.store('wb_backend');
     if (v === 'supabase' || v === 'apps') return v;
-    return WB.get('backend.use', 'apps') === 'supabase' ? 'supabase' : 'apps';
+    return WB.get('backend.use', 'supabase') === 'apps' ? 'apps' : 'supabase';   // 17 Nov 2026: Supabase is the live system; a fresh phone (new staff link, first sign in) starts there. Only backend.use = apps sends everyone back.
   };
   WB.setBackend = function (v) { WB.store('wb_backend', v === 'supabase' || v === 'apps' ? v : null); };   // null: follow the settings
   WB.shadowOn = function () { return WB.store('wb_shadow') === '1'; };
