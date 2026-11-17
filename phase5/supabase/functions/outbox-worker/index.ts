@@ -11,7 +11,11 @@ async function whatsapp(to: string, body: string) {
   if (!keys[to] || !phones[to]) throw new Error(`no WhatsApp key for ${to}`);
   const u = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phones[to])}&apikey=${encodeURIComponent(keys[to])}&text=${encodeURIComponent(body)}`;
   const r = await fetch(u); const t = await r.text();
-  if (!r.ok || /error|invalid|not\s+allowed/i.test(t.slice(0, 400))) throw new Error(`CallMeBot ${r.status}: ${t.replace(/<[^>]+>/g, " ").slice(0, 160)}`);
+  // CallMeBot echoes the message back ("Text to send: ..."): only judge its own words, never our text
+  // (18 Nov: a message containing the word "error" was re-sent 5 times although it was delivered)
+  const own = t.replace(/<[^>]+>/g, " ").split(/Text to send:/i)[0];
+  const okSent = /queued|Message to:/i.test(own);
+  if (!r.ok || (!okSent && /error|invalid|not\s+allowed/i.test(own.slice(0, 400)))) throw new Error(`CallMeBot ${r.status}: ${own.slice(0, 160)}`);
 }
 
 async function email(to: string, body: string) {
