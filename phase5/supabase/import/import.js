@@ -369,8 +369,19 @@ function run(dir, gsDir) {
   const ic = tab('INSURANCE CLIENTS');
   if (ic) ic.slice(1).forEach((r, i) => {
     const u = cid(r[0], 'INSURANCE CLIENTS row ' + (i + 2)); if (!u || !S(r[2])) return;
-    ins('insurance_clients', ['client_id', 'insurer', 'member_number', 'notes', 'rate_cents', 'by_who', 'sheet_row'], [u, S(r[2]), S(r[3]), S(r[4]), cents(r[7]) || null, S(r[6]), i + 2]);
+    // 0020 (14 Nov copay): Session price (I) and Client pays % (J); the % only counts with a price, like insClients_
+    const ipr = cents(r[8]) || 0, ipc = ipr > 0 ? Math.min(100, Math.max(0, num(r[9]) || 0)) : 0;
+    ins('insurance_clients', ['client_id', 'insurer', 'member_number', 'notes', 'rate_cents', 'price_cents', 'client_pct', 'by_who', 'sheet_row'], [u, S(r[2]), S(r[3]), S(r[4]), cents(r[7]) || null, ipr, ipc, S(r[6]), i + 2]);
     count('insured clients');
+  });
+  // 0020 (16 Nov): packages sold on insurance (INSURANCE PACKAGES: Package, Client ID, Client, Insurance, Client pays %, Updated, By). Rows without an insurer are cleared ones.
+  const ip = tab('INSURANCE PACKAGES'), ipSeen = {};
+  if (ip) ip.slice(1).forEach((r, i) => {
+    const id = S(r[0]); if (!id || !S(r[3])) return;
+    const u = byLegacy.pkg[id]; if (!u) { warn(`INSURANCE PACKAGES row ${i + 2}: unknown package ${id}, row skipped`); return; }
+    if (ipSeen[id]) { warn(`INSURANCE PACKAGES row ${i + 2}: second row for ${id}, skipped`); return; } ipSeen[id] = 1;
+    ins('insurance_packages', ['package_id', 'insurer', 'client_pct', 'by_who', 'sheet_row'], [u, S(r[3]), Math.min(100, Math.max(0, num(r[4]) || 0)), S(r[6]), i + 2]);
+    count('insured packages');
   });
   const ik = tab('INSURANCE CLAIMS');
   if (ik) ik.slice(1).forEach((r, i) => {

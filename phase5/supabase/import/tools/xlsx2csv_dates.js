@@ -15,7 +15,9 @@ files.forEach(f => {
       if (c.t !== 'n' || !c.z || !XLSX.SSF.is_date(c.z)) return;
       const z = String(c.z).replace(/"[^"]*"|\[[^\]]*\]/g, '');
       if (!/[dy]/i.test(z)) return;                       // time-only (hh:mm, h:mm am/pm): keep as shown
-      const w = XLSX.SSF.format(/h/i.test(z) ? 'dd/mm/yyyy hh:mm:ss' : 'dd/mm/yyyy', c.v);
+      // 16 Nov: LEADS "Submitted" (column B) is shown as a date only but holds the time too; the Apps Script reads the time (lead follow-ups), so keep it
+      const hidden = /^LEADS/i.test(tab) && /^B\d+$/.test(k) && Math.abs(c.v - Math.round(c.v)) > 1 / 86400;
+      const w = XLSX.SSF.format(/h/i.test(z) || hidden ? 'dd/mm/yyyy hh:mm:ss' : 'dd/mm/yyyy', c.v);
       if (w !== c.w) fixed++; c.w = w;
     });
     const csv = XLSX.utils.sheet_to_csv(ws, { FS: ',', RS: '\n', blankrows: true, rawNumbers: false });
