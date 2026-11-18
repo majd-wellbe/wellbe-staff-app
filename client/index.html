@@ -2096,7 +2096,7 @@ VIEWS.home=function(){var a=ACC(),p=currentPkg(a),q=quoteOfDay(),up=a.upcoming.f
   var h='<div class="hello"><p>'+dayLong(D.today)+'</p><h1>Hi <em>'+esc(a.first)+'</em></h1></div>';
   h+='<div class="rd-q" data-help="quote"><span class="qi">'+ICON('i-spark','width:18px;height:18px')+'</span><div><small>Quote of the day</small><blockquote>“'+esc(q[0])+'”</blockquote><cite>'+esc(q[1])+'</cite></div></div>';
   h+=rdH2('Upcoming sessions',up.length?'See all':'','sessall');
-  h+=up.length?'<div class="rd-up" data-help="sessions">'+up.slice(0,UI.UPCOMING_MAX).map(function(s,i){return rdSessRow(s,i===0?'<span class="rd-chip">Next</span>':'')}).join('')+'</div><button class="rd-book" data-help="book" data-act="session">'+ICON('i-plus','width:16px;height:16px')+'Book a session</button>':
+  h+=up.length?'<div class="rd-up" data-help="sessions">'+up.slice(0,UI.UPCOMING_MAX).map(function(s,i){return rdSessRow(s,i===0?'<span class="rd-chip">Next</span>':'')}).join('')+'</div><button class="rd-book" data-help="book" data-act="session">'+ICON('i-plus','width:16px;height:16px')+'Book a session</button><button class="rd-book" data-act="cal|week">'+ICON('i-cal','width:16px;height:16px')+'Add this week to my calendar</button>':
    '<div class="rd-up" data-help="sessions"><div class="r"><div class="t"><b>No session booked</b><span>Pick a day and time. '+DESK()+' confirms it with you.</span></div><button class="btn sm" data-help="book" data-act="session">Book</button></div></div>';
   h+='<div style="margin-top:14px" data-help="nutrition">'+rdNutCard()+'</div>';
   h+='<div style="margin-top:14px">'+rdPromise(a)+'</div>';
@@ -2145,11 +2145,49 @@ ACT.credits=function(){var a=ACC();if(!RUNST){try{RUNST=JSON.parse(store('wbc_ru
   if($('#wcUse'))$('#wcUse').onclick=function(){ACT.rredeem()};$('#wcPlay').onclick=function(){closeSheet();goSec('play')}};
 /* ---------- sheets used by Center and Me ---------- */
 function allSess(a){return a.upcoming.slice().sort(function(x,y){return x.at-y.at})}
+// ADD TO CALENDAR (18 Nov): one session, one day or the whole week. Phone calendar (iPhone, Samsung, Outlook) takes them all in one file;
+// Google Calendar only takes one event per link, so each session gets its own button. The same session always has the same ID,
+// so adding it again updates it instead of making a copy (phone calendar).
+function calStamp(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
+function calWhen(date,hm){var p=String(hm||'').match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i)||[0,9,0],h=+p[1];if(p[3]){h=h%12+(/pm/i.test(p[3])?12:0)}var d=new Date(date+'T00:00:00');d.setHours(h,+p[2],0,0);return d}
+function calEsc(t){return String(t==null?'':t).replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/([,;])/g,'\\$1')}
+function calIcs(evs){var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Wellbe Health Center//Sessions//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Wellbe'],now=calStamp(new Date());
+  evs.forEach(function(e){L.push('BEGIN:VEVENT','UID:'+e.uid+'@wellbehealthcenter.com','DTSTAMP:'+now,'DTSTART:'+calStamp(e.start),'DTEND:'+calStamp(e.end),'SUMMARY:'+calEsc(e.title),'LOCATION:'+calEsc(e.where),'DESCRIPTION:'+calEsc(e.notes),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+calEsc(e.title),'TRIGGER:-PT60M','END:VALARM','END:VEVENT')});
+  L.push('END:VCALENDAR');return L.join('\r\n')}
+function calGoogle(e){return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(e.title)+'&dates='+calStamp(e.start)+'/'+calStamp(e.end)+'&location='+encodeURIComponent(e.where)+'&details='+encodeURIComponent(e.notes)}
+function calIOS(){return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function calDownload(evs,name){var ics=calIcs(evs);
+  if(calIOS()){location.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);return}   // iPhone opens Calendar with "Add All"
+  var u=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download=(name||'wellbe-sessions')+'.ics';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},5000)}
+function calEnd(date,start,end){var s=calWhen(date,start),e=end?calWhen(date,end):null;return e&&e>s?e:new Date(s.getTime()+60*60000)}
+function calLine(e){return e.start.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' · '+e.start.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+// the sheet: what is added, one tap for the phone calendar, then Google one by one
+function calSheetHtml(evs,what){var many=evs.length>1;
+  return '<p style="margin:0 0 12px;font-size:15px"><b>'+(what==='this session'?'This session':evs.length+' session'+(many?'s':'')+' '+esc(what))+'</b>. A reminder 1 hour before each one is included.</p>'+
+   '<button class="btn block" id="calAll" style="margin-bottom:8px">'+(many?'Add all '+evs.length+' to my phone calendar':'Add to my phone calendar')+'</button>'+
+   '<p class="muted" style="font-size:13px;margin:0 0 16px">iPhone: tap <b>Add All</b> in the window that opens. Android, Outlook: open the file that downloads with your calendar.</p>'+
+   '<div style="font-weight:700;margin:0 0 8px">Google Calendar'+(many?' <span class="muted" style="font-weight:500;font-size:13px">(Google takes one at a time)</span>':'')+'</div>'+
+   evs.map(function(e,i){return '<a class="btn sec2 block" style="margin-bottom:8px;justify-content:space-between" target="_blank" rel="noopener" href="'+calGoogle(e)+'" data-calg="'+i+'"><span style="text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(calLine(e)+' · '+e.title.replace('Wellbe · ',''))+'</span><span style="flex:none;margin-left:10px">Add</span></a>'}).join('')}
+function calBind(evs,name){var b=document.getElementById('calAll');if(b)b.onclick=function(){calDownload(evs,name)};
+  [].forEach.call(document.querySelectorAll('[data-calg]'),function(a){a.addEventListener('click',function(){setTimeout(function(){a.lastChild.textContent='Added ✓';a.style.opacity='.6'},300)})})}
+function calEv(s){var st=calWhen(s.date,s.start);return {uid:'wb-'+s.id+'-'+(ACC().cid||''),start:st,end:calEnd(s.date,s.start,s.end),title:'Wellbe · '+tabName(s.tab)+(s.trainer?' with '+s.trainer:''),where:'Wellbe Health Center',notes:'Reschedule or cancel in the Wellbe app: https://app.wellbehealthcenter.com/client/'}}
+function calWeekEnd(){var d=dOf(D.today),k=(7-d.getDay())%7;d.setDate(d.getDate()+k);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}   /* through Sunday */
+// what: 'week' | 'all' | 'day:yyyy-mm-dd' | a session id
+ACT.cal=function(what){var a=ACC(),up=allSess(a).filter(function(s){return !/cancel/i.test(s.att||'')&&s.at>Date.now()-36e5}),l,t,lab;
+  if(!what||what==='week'){var we=calWeekEnd();l=up.filter(function(s){return s.date<=we});lab='this week';if(!l.length){l=up.slice(0,7);lab='coming up'}}
+  else if(what==='all'){l=up;lab='coming up'}
+  else if(what.slice(0,4)==='day:'){var dd=what.slice(4);l=up.filter(function(s){return s.date===dd});lab='on '+dayShortX(dd)}
+  else{l=up.filter(function(s){return s.id===what});lab='this session'}
+  if(!l.length){toast('No session booked'+(lab==='this week'?' this week':''));return}
+  openSheet('Add to calendar',calSheetHtml(l.map(calEv),lab));calBind(l.map(calEv),'wellbe-sessions')};
 ACT.sess=function(id){var a=ACC(),s=a.upcoming.filter(function(x){return x.id===id})[0]||a.past.filter(function(x){return x.id===id})[0];if(!s)return;
   var td=s.date===D.today&&!/cancel/i.test(s.att||'')&&s.at>Date.now()-36e5;
-  openSheet(tabName(s.tab)+' · '+dayShortX(s.date),'<div class="list">'+sessItem(s,!s.att)+'</div>'+(td&&s.at>Date.now()?'<button class="btn sec2 block" style="margin-top:12px" data-late="'+esc(s.id)+'">'+ICON('i-clock','width:18px;height:18px')+'I’ll be late</button>':''));bind()};
+  var sameDay=a.upcoming.filter(function(x){return x.date===s.date&&!/cancel/i.test(x.att||'')}).length;
+  openSheet(tabName(s.tab)+' · '+dayShortX(s.date),'<div class="list">'+sessItem(s,!s.att)+'</div>'+(td&&s.at>Date.now()?'<button class="btn sec2 block" style="margin-top:12px" data-late="'+esc(s.id)+'">'+ICON('i-clock','width:18px;height:18px')+'I’ll be late</button>':'')+
+   (!s.att&&s.at>Date.now()?'<button class="btn sec2 block" style="margin-top:12px" data-act="cal|'+esc(s.id)+'">'+ICON('i-cal','width:18px;height:18px')+'Add to my calendar</button>'+(sameDay>1?'<button class="btn ghost block" style="margin-top:8px" data-act="cal|day:'+s.date+'">Add all '+sameDay+' on '+dayShortX(s.date)+'</button>':''):''));bind()};
 ACT.sessall=function(){var a=ACC(),up=allSess(a);
-  openSheet('My sessions','<button class="btn block" data-act="session">'+ICON('i-plus')+'Request a session</button><div class="sec"><h2>Coming up</h2><small>'+up.length+'</small></div>'+(up.length?'<div class="list">'+up.map(function(s){return sessItem(s,true)}).join('')+'</div>':'<div class="empty">No sessions booked.</div>')+spotsRow(a)+
+  openSheet('My sessions','<button class="btn block" data-act="session">'+ICON('i-plus')+'Request a session</button>'+(up.length?'<div style="display:flex;gap:8px;margin-top:8px"><button class="btn sec2" style="flex:1" data-act="cal|week">'+ICON('i-cal','width:18px;height:18px')+'Add this week</button><button class="btn ghost" style="flex:1" data-act="cal|all">Add all '+up.length+'</button></div>':'')+'<div class="sec"><h2>Coming up</h2><small>'+up.length+'</small></div>'+(up.length?'<div class="list">'+up.map(function(s){return sessItem(s,true)}).join('')+'</div>':'<div class="empty">No sessions booked.</div>')+spotsRow(a)+
    '<div class="note" style="margin-top:18px">'+ICON('i-alert')+'<span><b>Cancel rule:</b> a day or more before, your session is kept. On the same day it counts as done. Rescheduling is always free.</span></div>'+
    (a.past.length?'<div class="sec"><h2>Last 30 days</h2><small>'+a.past.filter(function(s){return /Present|Done/.test(s.att)}).length+' done</small></div><div class="list">'+a.past.map(function(s){return sessItem(s,false)}).join('')+'</div>':''));bind()};
 ACT.reqall=function(){var a=ACC();openSheet('My requests',a.requests.length?'<div class="list">'+a.requests.slice(0,40).map(reqItem).join('')+'</div>':'<div class="empty">No requests yet.</div>')};

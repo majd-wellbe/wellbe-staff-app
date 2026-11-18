@@ -619,6 +619,47 @@ function clientById(id){return ix().cl[id]}
 // never undefined: guests and clients outside this phone's list get an empty card instead of crashing
 function clientOf(id){return clientById(id)||{id:id,name:'',phone:'',email:'',notes:'',program:'',log:[]}}
 function pkgById(id){return ix().pk[id]}
+// ADD TO CALENDAR (18 Nov): one session, one day or the whole week. Phone calendar (iPhone, Samsung, Outlook) takes them all in one file;
+// Google Calendar only takes one event per link, so each session gets its own button. The same session always has the same ID,
+// so adding it again updates it instead of making a copy (phone calendar).
+function calStamp(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
+function calWhen(date,hm){var p=String(hm||'').match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i)||[0,9,0],h=+p[1];if(p[3]){h=h%12+(/pm/i.test(p[3])?12:0)}var d=new Date(date+'T00:00:00');d.setHours(h,+p[2],0,0);return d}
+function calEsc(t){return String(t==null?'':t).replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/([,;])/g,'\\$1')}
+function calIcs(evs){var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Wellbe Health Center//Sessions//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Wellbe'],now=calStamp(new Date());
+  evs.forEach(function(e){L.push('BEGIN:VEVENT','UID:'+e.uid+'@wellbehealthcenter.com','DTSTAMP:'+now,'DTSTART:'+calStamp(e.start),'DTEND:'+calStamp(e.end),'SUMMARY:'+calEsc(e.title),'LOCATION:'+calEsc(e.where),'DESCRIPTION:'+calEsc(e.notes),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+calEsc(e.title),'TRIGGER:-PT60M','END:VALARM','END:VEVENT')});
+  L.push('END:VCALENDAR');return L.join('\r\n')}
+function calGoogle(e){return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(e.title)+'&dates='+calStamp(e.start)+'/'+calStamp(e.end)+'&location='+encodeURIComponent(e.where)+'&details='+encodeURIComponent(e.notes)}
+function calIOS(){return /iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function calDownload(evs,name){var ics=calIcs(evs);
+  if(calIOS()){location.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);return}   // iPhone opens Calendar with "Add All"
+  var u=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download=(name||'wellbe-sessions')+'.ics';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},5000)}
+function calEnd(date,start,end){var s=calWhen(date,start),e=end?calWhen(date,end):null;return e&&e>s?e:new Date(s.getTime()+60*60000)}
+function calLine(e){return e.start.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' · '+e.start.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+// the sheet: what is added, one tap for the phone calendar, then Google one by one
+function calSheetHtml(evs,what){var many=evs.length>1;
+  return '<p style="margin:0 0 12px;font-size:15px"><b>'+(what==='this session'?'This session':evs.length+' session'+(many?'s':'')+' '+esc(what))+'</b>. A reminder 1 hour before each one is included.</p>'+
+   '<button class="btn full" id="calAll" style="margin-bottom:8px">'+(many?'Add all '+evs.length+' to my phone calendar':'Add to my phone calendar')+'</button>'+
+   '<p class="muted" style="font-size:13px;margin:0 0 16px">iPhone: tap <b>Add All</b> in the window that opens. Android, Outlook: open the file that downloads with your calendar.</p>'+
+   '<div style="font-weight:700;margin:0 0 8px">Google Calendar'+(many?' <span class="muted" style="font-weight:500;font-size:13px">(Google takes one at a time)</span>':'')+'</div>'+
+   evs.map(function(e,i){return '<a class="btn sec full" style="margin-bottom:8px;justify-content:space-between" target="_blank" rel="noopener" href="'+calGoogle(e)+'" data-calg="'+i+'"><span style="text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(calLine(e)+' · '+e.title.replace('Wellbe · ',''))+'</span><span style="flex:none;margin-left:10px">Add</span></a>'}).join('')}
+function calBind(evs,name){var b=document.getElementById('calAll');if(b)b.onclick=function(){calDownload(evs,name)};
+  [].forEach.call(document.querySelectorAll('[data-calg]'),function(a){a.addEventListener('click',function(){setTimeout(function(){a.lastChild.textContent='Added ✓';a.style.opacity='.6'},300)})})}
+function calEv(s){var names=s.clients.map(function(c){var x=clientById(c.cid);return x?first(x.name):''}).filter(Boolean),mine=ME.role==='trainer';
+  return {uid:'wbs-'+s.id+'-'+String(ME.name||'').replace(/\W/g,''),start:calWhen(s.date,s.start),end:calEnd(s.date,s.start,s.end||endT(s.start)),
+    title:'Wellbe · '+s.tab+(names.length?' · '+names.join(', '):'')+(!mine&&s.trainer?' ('+s.trainer+')':''),where:'Wellbe Health Center'+(s.room?', '+s.room:''),notes:(s.trainer?'Trainer: '+s.trainer+'\n':'')+(names.length?'Clients: '+names.join(', ')+'\n':'')+'Wellbe Team app: https://app.wellbehealthcenter.com/'}}
+// what: 'day' (the day open in the schedule), 'week' (the days of the schedule), 's:<session id>'
+// trainers get their own sessions; owner and front desk get what the schedule shows (all, or the trainer picked)
+function calAction(what){what=typeof what==='string'?what:'pick';var mine=function(x){return x.status!=='Cancelled'&&(ME.role!=='trainer'||x.trainer===ME.name)&&(!UI.tr||ME.role==='trainer'||x.trainer===UI.tr)};
+  if(what==='pick'){openSheet('Add to calendar','<button class="btn block" style="margin-bottom:8px" id="calD">'+ICON('i-cal')+(DAY===T?'Today':dayLabel(DAY))+' ('+sessOn(DAY).filter(mine).length+')</button><button class="btn sec block" id="calW">'+ICON('i-cal')+'The whole week ('+UI.calDays.reduce(function(n,d){return n+sessOn(d).filter(mine).length},0)+')</button>'+(UI.tr&&ME.role!=='trainer'?'<p class="muted" style="font-size:13px;margin-top:10px">Only '+esc(UI.tr)+'’s sessions (the trainer picked on the schedule).</p>':''));
+    $('#calD').onclick=function(){calAction('day')};$('#calW').onclick=function(){calAction('week')};return}
+  var l,lab;
+  if(what==='day'){l=sessOn(DAY).filter(mine);lab=DAY===T?'today':'on '+dayLabel(DAY)}
+  else if(what==='week'){l=[];(UI.calDays||[DAY]).forEach(function(d){l=l.concat(sessOn(d).filter(mine))});lab='this week'}
+  else{l=SESS.filter(function(x){return x.id===what.slice(2)});lab='this session'}
+  var nowMs=Date.now()-36e5;l=l.filter(function(x){return x.status!=='Cancelled'&&calWhen(x.date,x.start).getTime()>nowMs});if(!l.length){toast('No sessions coming up '+lab);return}
+  var ev=l.map(calEv);openSheet('Add to calendar',calSheetHtml(ev,lab));calBind(ev,'wellbe-'+(ME.role==='trainer'?'my-':'')+'sessions')};
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-calsess]');if(!t)return;e.preventDefault();e.stopPropagation();calAction('s:'+t.dataset.calsess)},true);
 function sessOn(date,trainer){return (ix().byD[date]||[]).filter(function(s){return !trainer||s.trainer===trainer}).sort(function(a,b){return a.start<b.start?-1:1})}
 function clientBadges(c,showMoney){
   var p=pkgById(c.pkg)||pkgOf(c.cid), out='';
@@ -696,9 +737,11 @@ VIEWS.schedule=function(){
   else{var m0=addDays(monday,7*wk);for(var j=0;j<6;j++)days.push(ymd(addDays(m0,j)))}
   if(days.indexOf(DAY)<0)DAY=wk?days[0]:T;
   var wkLab=!wk?'This week':wk===-1?'Last week':wk===1?'Next week':(-wk)+' weeks ago';
+  UI.calDays=days;
   return '<div class="h"><h2>Schedule</h2><button class="btn sec sm" data-act="week">'+ICON('i-cal','icon')+'Book next week</button></div>'+
    (ME.role!=='trainer'?'<div class="wknav"><button class="btn sec sm" data-wk="'+(wk-1)+'"'+(wk<=-4?' disabled':'')+'>‹ Earlier</button><b>'+wkLab+'<small>'+dayLabel(days[0])+' to '+dayLabel(days[days.length-1])+'</small></b><button class="btn sec sm" data-wk="'+(wk+1)+'"'+(wk>=1?' disabled':'')+'>Later ›</button></div>':'')+
    '<div class="chips" role="tablist">'+days.map(function(d){return '<button class="chip" aria-pressed="'+(d===DAY)+'" data-day="'+d+'">'+(d===T?'Today':dayLabel(d))+'</button>'}).join('')+'</div>'+
+   (days[days.length-1]>=T?'<div style="display:flex;gap:8px;align-items:center;margin:0 0 12px"><span class="muted" style="font-size:14px;flex:none">'+ICON('i-cal','icon')+' Add to calendar:</span><button class="btn sec sm" data-act="calday">'+(DAY===T?'Today':dayLabel(DAY).split(' ').slice(0,2).join(' '))+'</button><button class="btn sec sm" data-act="calweek">This week</button></div>':'')+
    (function(){var all=sessOn(DAY),trs=[];all.forEach(function(s){if(s.trainer&&trs.indexOf(s.trainer)<0)trs.push(s.trainer)});trs.sort();if(UI.tr&&trs.indexOf(UI.tr)<0&&!all.length)UI.tr='';
     var list=UI.tr?all.filter(function(s){return s.trainer===UI.tr}):all;
     return (trs.length>1||UI.tr?'<div class="chips" role="tablist" aria-label="Trainer">'+[''].concat(trs).map(function(t){return '<button class="chip" aria-pressed="'+((UI.tr||'')===t)+'" data-tr="'+esc(t)+'">'+(t?esc(t)+' ('+all.filter(function(s){return s.trainer===t}).length+')':'All')+'</button>'}).join('')+'</div>':'')+
@@ -970,7 +1013,7 @@ function sessSheet(id){
   var pill=s.status==='Done'?'<span class="pill p-good">Done</span>':s.status==='Cancelled'?'<span class="pill p-mute">Cancelled</span>':'<span class="pill p-warn">'+esc(s.status||'Scheduled')+'</span>';
   var rooms=sessRooms();if(s.room&&rooms.indexOf(s.room)<0)rooms.unshift(s.room);
   var trs=trainerList();if(s.trainer&&trs.indexOf(s.trainer)<0)trs.unshift(s.trainer);
-  var body='<div id="sxErr"></div><div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'+pill+'<span class="muted" style="font-size:14px">'+dayLabel(s.date)+' · '+hl(s.start)+' to '+hl(s.end||endT(s.start))+'</span></div>'+
+  var body='<div id="sxErr"></div><div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'+pill+'<span class="muted" style="font-size:14px">'+dayLabel(s.date)+' · '+hl(s.start)+' to '+hl(s.end||endT(s.start))+'</span>'+(s.status!=='Cancelled'&&s.date>=T?'<button class="btn sec sm" data-calsess="'+s.id+'" style="margin-left:auto">'+ICON('i-cal')+'Calendar</button>':'')+'</div>'+
    '<div class="two"><div class="field"><label for="sxD">Day</label><input id="sxD" type="date" value="'+s.date+'" min="'+ymd(addDays(TODAY,-C('windows.backfillDays')))+'"'+dis+'></div><div class="field"><label for="sxT">Time</label><input id="sxT" type="time" value="'+s.start+'" step="'+stepSec()+'"'+dis+'></div></div>'+
    '<div class="two"><div class="field"><label for="sxTr">Trainer</label><select id="sxTr"'+(staff&&!fx?'':' disabled')+'>'+trs.map(function(t){return '<option'+(t===s.trainer?' selected':'')+'>'+esc(t)+'</option>'}).join('')+'</select></div><div class="field"><label for="sxR">Room</label><select id="sxR"'+dis+'>'+rooms.map(function(r){return '<option'+(r===s.room?' selected':'')+'>'+esc(r)+'</option>'}).join('')+'</select></div></div>'+
    '<div class="h" style="margin:4px 0 8px"><h2 style="font-size:18px">'+(cap>1?'Clients':'Client')+'</h2>'+(cap>1?'<small>'+s.clients.length+' of '+cap+' seats</small>':'')+'</div>'+
@@ -1306,6 +1349,7 @@ function clientSheet(id){
   if($('#melFlag'))$('#melFlag').onchange=function(){c.mel=this.checked;save('app_flag',{cid:c.id,name:c.name,mel:c.mel},c.mel?first(c.name)+' is now '+melName()+'\'s client':first(c.name)+' is a center client again');render()};
   if($('#editNotes'))$('#editNotes').onclick=function(){var s=SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})}).sort(function(a,b){return a.date<b.date?1:-1}).filter(function(x){return x.date<=T})[0]||SESS.filter(function(x){return x.clients.some(function(y){return y.cid===id})})[0];if(!s){toast('Notes are added from a session: book one first');return}noteSheet(s.id,s.clients.findIndex(function(y){return y.cid===id}))};
 }
+ACTIONS.cal=calAction;ACTIONS.calday=function(){calAction('day')};ACTIONS.calweek=function(){calAction('week')};   // add sessions to the phone / Google calendar (18 Nov)
 ACTIONS.sell=function(cid){
   var months=1,PRICE=null;   // PRICE: final price typed by staff (the discount is then calculated)
   openSheet('Sell a package','<div class="field"><label for="sc">Client</label><select id="sc">'+CLIENTS.slice().sort(byName).map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.name)+'</option>'}).join('')+'</select></div>'+
