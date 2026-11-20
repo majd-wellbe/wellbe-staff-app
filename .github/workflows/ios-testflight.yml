@@ -28,9 +28,9 @@ jobs:
       - name: Install and pack the web app
         working-directory: phase5/mobile
         run: |
-          npm install
           # First builds ship without Health and in-app purchases (nothing purchasable at launch).
-          npm uninstall @capgo/capacitor-health @revenuecat/purchases-capacitor
+          npm pkg delete "dependencies.@capgo/capacitor-health" "dependencies.@revenuecat/purchases-capacitor"
+          npm install
           npm run web
           npx cap add ios
           npx cap sync ios
