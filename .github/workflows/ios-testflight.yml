@@ -31,6 +31,7 @@ jobs:
           # First builds ship without Health and in-app purchases (nothing purchasable at launch).
           npm pkg delete "dependencies.@capgo/capacitor-health" "dependencies.@revenuecat/purchases-capacitor"
           npm install
+          npm install --no-save typescript
           # copy-web.js looks one folder too high for client and core: point it at the repo root
           sed -i '' "s#'../..'#'../../..'#" scripts/copy-web.js
           npm run web
