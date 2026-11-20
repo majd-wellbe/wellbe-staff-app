@@ -1,0 +1,87 @@
+name: iOS TestFlight
+
+# Builds the Wellbe client app for iPhone on a cloud Mac and uploads it to TestFlight.
+# Run by hand: Actions tab, "iOS TestFlight", Run workflow.
+# Needs 3 repo secrets: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 (App Store Connect API key).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      TEAM_ID: 3LNJF23FSP
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Install and pack the web app
+        working-directory: phase5/mobile
+        run: |
+          npm install
+          # First builds ship without Health and in-app purchases (nothing purchasable at launch).
+          npm uninstall @capgo/capacitor-health @revenuecat/purchases-capacitor
+          npm run web
+          npx cap add ios
+          npx cap sync ios
+
+      - name: App settings
+        working-directory: phase5/mobile/ios/App
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" App/Info.plist
+
+      - name: API key file
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey.p8"
+
+      - name: Archive
+        working-directory: phase5/mobile/ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            MARKETING_VERSION=1.0.0 CURRENT_PROJECT_VERSION=${{ github.run_number }}
+
+      - name: Sign and upload to TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/export.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Remove key file
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"
