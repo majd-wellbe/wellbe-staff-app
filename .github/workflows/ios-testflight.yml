@@ -31,7 +31,11 @@ jobs:
           # First builds ship without Health and in-app purchases (nothing purchasable at launch).
           npm pkg delete "dependencies.@capgo/capacitor-health" "dependencies.@revenuecat/purchases-capacitor"
           npm install
-          npm install --no-save typescript
+          # The build reads a JSON copy of capacitor.config.ts (no TypeScript needed on the build machine)
+          rm capacitor.config.ts
+          cat > capacitor.config.json <<'JSON'
+          {"appId":"com.wellbe.client","appName":"Wellbe","webDir":"www","backgroundColor":"#151b1e","ios":{"contentInset":"always"},"plugins":{"SplashScreen":{"launchShowDuration":800,"backgroundColor":"#151b1e","showSpinner":false},"PushNotifications":{"presentationOptions":["badge","sound","alert"]},"LocalNotifications":{"smallIcon":"ic_stat_wellbe","iconColor":"#1f6e5b"}}}
+          JSON
           # copy-web.js looks one folder too high for client and core: point it at the repo root
           sed -i '' "s#'../..'#'../../..'#" scripts/copy-web.js
           npm run web
