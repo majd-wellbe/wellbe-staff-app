@@ -22,8 +22,13 @@ jobs:
         with:
           node-version: 20
 
-      - name: Xcode version
-        run: xcodebuild -version
+      - name: Select Xcode 26 (Apple only accepts uploads built with the iOS 26 SDK)
+        run: |
+          ls /Applications | grep -i xcode
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$X" ]; then echo "No Xcode 26 on this machine"; exit 1; fi
+          sudo xcode-select -s "$X"
+          xcodebuild -version
 
       - name: Install and pack the web app
         working-directory: phase5/mobile
