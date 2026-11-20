@@ -2,7 +2,7 @@
 --   Each expense keeps "paid so far". Every change of that number is kept as a payment with its date.
 --   The Numbers page counts an expense by what was paid, in the month it was paid (the screens add the payments up).
 --   Default: an expense is fully paid on its own date (all expenses before this, recurring ones, the Meta Ads task).
--- No new actions: app_expense also takes { paid } when adding, and { id, paid } to change "paid so far".
+-- No new actions: app_expense also takes { paid } when adding, and { id, what?, cat?, d?, amt?, paid? } to edit an expense.
 
 alter table public.expenses add column if not exists paid_cents integer;
 
@@ -50,33 +50,50 @@ create or replace function app.exp_pays(p_expense uuid) returns jsonb language s
 $$;
 revoke all on function app.exp_pays(uuid) from public, anon, authenticated;
 
--- app_expense: add { d, what, cat, amt, paid?, recId? }  or change "paid so far" { id, paid }
+-- app_expense: add { d, what, cat, amt, paid?, recId? }  or edit { id, what?, cat?, d?, amt?, paid? }
 create or replace function public.api_app_expense(p jsonb) returns jsonb language plpgsql security definer set search_path to 'public' as $$
 declare me jsonb := app.need(array['owner', 'assistant']); amt numeric := app.ops_num(p->'amt'); lid text; rec uuid;
   e public.expenses; np int; diff int; y public.expense_payments; today date := app_today(); paid int;
+  nwhat text; ncat text; nday date; namt int;
 begin
-  -- change "paid so far" on an expense
+  -- edit an expense: any of what, cat, d, amt, paid ("paid so far")
   if coalesce(p->>'id', '') <> '' then
     select * into e from public.expenses where legacy_id = upper(btrim(p->>'id')) for update;
     if e.id is null then raise exception 'Expense % not found', p->>'id'; end if;
-    if app.ops_num(p->'paid') is null then raise exception 'Paid amount missing'; end if;
-    np := round(app.ops_num(p->'paid') * 100);
-    if np < 0 then raise exception 'Paid amount missing'; end if;
-    if np > e.amount_cents then raise exception 'Paid so far can''t be more than the expense ($%)', app.jsnum(e.amount_cents / 100.0); end if;
-    diff := np - coalesce(e.paid_cents, 0);
-    if diff > 0 then
-      insert into public.expense_payments (expense_id, day, amount_cents, by_who) values (e.id, today, diff, me->>'name');
-    elsif diff < 0 then
-      -- a correction downwards: take it off the latest payments first
-      diff := -diff;
-      for y in select * from public.expense_payments where expense_id = e.id order by day desc, created_at desc loop
-        exit when diff <= 0;
-        if y.amount_cents <= diff then delete from public.expense_payments where id = y.id; diff := diff - y.amount_cents;
-        else update public.expense_payments set amount_cents = amount_cents - diff where id = y.id; diff := 0; end if;
-      end loop;
+    if p ? 'what' then nwhat := app.ops_clean(p->>'what', 120); if nwhat = '' then raise exception 'What and amount needed'; end if; else nwhat := e.what; end if;
+    if p ? 'cat' then ncat := app.ops_clean(p->>'cat', 40); else ncat := e.category; end if;
+    if p ? 'd' then if app.ops_ymd(p->>'d') is null then raise exception 'Pick a valid day'; end if; nday := (p->>'d')::date; else nday := e.day; end if;
+    if p ? 'amt' then if not coalesce(amt > 0, false) then raise exception 'What and amount needed'; end if; namt := round(amt * 100); else namt := e.amount_cents; end if;
+    if p ? 'paid' and jsonb_typeof(p->'paid') <> 'null' and coalesce(p->>'paid', '') <> '' then
+      np := round(app.ops_num(p->'paid') * 100);
+      if np is null or np < 0 then raise exception 'Paid amount missing'; end if;
+    elsif coalesce(e.paid_cents, e.amount_cents) >= e.amount_cents then np := namt;      -- it was fully paid: it stays fully paid
+    else np := least(coalesce(e.paid_cents, 0), namt);
     end if;
-    update public.expenses set paid_cents = np where id = e.id;
-    return jsonb_build_object('id', e.legacy_id, 'paid', app.usd(np), 'pays', app.exp_pays(e.id));
+    if np > namt then raise exception 'Paid so far can''t be more than the expense ($%)', app.jsnum(namt / 100.0); end if;
+    -- payments made on the expense's own date follow it when the date changes
+    if nday <> e.day then update public.expense_payments set day = nday where expense_id = e.id and day = e.day; end if;
+    if coalesce(e.paid_cents, e.amount_cents) >= e.amount_cents and np = namt and not exists (select 1 from public.expense_payments where expense_id = e.id and day <> nday) then
+      -- it was fully paid on its own date and still is: a correction, not a new payment
+      delete from public.expense_payments where expense_id = e.id;
+      if np > 0 then insert into public.expense_payments (expense_id, day, amount_cents, by_who) values (e.id, nday, np, me->>'name'); end if;
+    else
+      diff := np - coalesce((select sum(amount_cents) from public.expense_payments where expense_id = e.id), 0);
+      if diff > 0 then
+        insert into public.expense_payments (expense_id, day, amount_cents, by_who) values (e.id, today, diff, me->>'name');
+      elsif diff < 0 then
+        -- a correction downwards: take it off the latest payments first
+        diff := -diff;
+        for y in select * from public.expense_payments where expense_id = e.id order by day desc, created_at desc loop
+          exit when diff <= 0;
+          if y.amount_cents <= diff then delete from public.expense_payments where id = y.id; diff := diff - y.amount_cents;
+          else update public.expense_payments set amount_cents = amount_cents - diff where id = y.id; diff := 0; end if;
+        end loop;
+      end if;
+    end if;
+    update public.expenses set what = nwhat, category = ncat, day = nday, amount_cents = namt, paid_cents = np,
+      month_label = case when month_label is null then null else to_char(nday, 'FMMonth YYYY') end where id = e.id;
+    return jsonb_build_object('id', e.legacy_id, 'd', app.ymd(nday), 'what', nwhat, 'cat', coalesce(ncat, ''), 'amt', app.usd(namt), 'paid', app.usd(np), 'pays', app.exp_pays(e.id));
   end if;
 
   if not coalesce(amt > 0, false) or coalesce(p->>'what', '') = '' then raise exception 'What and amount needed'; end if;
