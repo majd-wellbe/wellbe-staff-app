@@ -581,7 +581,7 @@ function cancelKind(s){ // Early = cancelled before the day of the session
   return s.date>T?'Early Cancel':'Late Cancel'}
 // clients a trainer already has in that hour (all services), and whether `add` more would go over their cap
 function loadAt(date,start,tr){var n=0,h=String(start||'').split(':')[0];(ix().byD[date]||[]).forEach(function(s){if(s.date===date&&String(s.start).split(':')[0]===h&&s.trainer===tr&&s.status!=='Cancelled')n+=s.clients.filter(function(c){return c.att!=='Early Cancel'}).length});return n}
-function overCap(date,start,tr,add){var cp=capOf(tr);return cp>0&&loadAt(date,start,tr)+add>cp}
+function overCap(date,start,tr,add){var cp=capOf(tr);if(cp>0&&SESS.some(function(x){return x.tab==='1:3'&&x.extra&&x.date===date&&x.start===start&&x.trainer===tr&&x.status!=='Cancelled'&&x.clients.length+add<=svc('1:3').cap+1}))return false;return cp>0&&loadAt(date,start,tr)+add>cp}   /* a 1:3 opened with Exception +1 has room for its 4th */
 
 /* ---------------- state + shell ---------------- */
 var ME=null, VIEW='home', DAY=T, UI={week:'next', q:'', month:0};
@@ -1007,7 +1007,7 @@ function sessPayPill(p,staff){if(!p)return '';if(!(p.price>0))return '<div class
    :'<div class="payrow"><span class="pill p-good">'+ICON('i-check')+'Paid '+money(p.price)+'</span><span class="muted" style="font-size:13px">Package fully paid</span></div>'}
 function sessSheet(id){
   var s=SESS.filter(function(x){return x.id===id})[0];if(!s){toast('Session not found, refresh');return}
-  var staff=ME.role!=='trainer',fx=fixedTr(s.tab),cap=svc(s.tab).cap||s.clients.length,isPP=s.tab==='Physio'||s.tab==='Prehab',kind=cancelKind(s);
+  var staff=ME.role!=='trainer',fx=fixedTr(s.tab),cap=(svc(s.tab).cap||s.clients.length)+(s.tab==='1:3'&&s.extra?1:0),isPP=s.tab==='Physio'||s.tab==='Prehab',kind=cancelKind(s);
   var att=s.clients.map(function(c){return c.att||(s.status==='Cancelled'?'':(s.date<=T?'Present':''))}),orig={date:s.date,start:s.start,trainer:s.trainer,room:s.room,pay:s.pay||'',att:att.slice()},cur=JSON.parse(JSON.stringify(orig)),why={};
   var dis=staff?'':' disabled';
   var pill=s.status==='Done'?'<span class="pill p-good">Done</span>':s.status==='Cancelled'?'<span class="pill p-mute">Cancelled</span>':'<span class="pill p-warn">'+esc(s.status||'Scheduled')+'</span>';
@@ -1023,6 +1023,8 @@ function sessSheet(id){
       sessPayPill(p,staff)+(s.status==='Cancelled'&&!att[i]?'':'<div class="att" role="group" aria-label="Attendance for '+esc(c.name)+'">'+ATTS.map(function(x){return '<button class="'+x[1]+'" aria-pressed="'+(att[i]===x[0])+'" data-sxa="'+i+'|'+x[0]+'">'+x[0].replace(' Cancel',' cancel').replace('No Show','No show')+'</button>'}).join('')+'</div>')+
       '<div id="sxw'+i+'"></div></div>'}).join('')+
    (staff&&cap>s.clients.length&&s.status!=='Cancelled'?'<button class="btn sec full" id="sxAdd" style="margin-bottom:12px">'+ICON('i-plus')+'Add a client to the free seat</button>':'')+
+   (staff&&s.tab==='1:3'&&s.status!=='Cancelled'&&!s.extra&&s.clients.length>=svc('1:3').cap?'<button class="btn sec full" id="sxX1" style="margin-bottom:12px">'+ICON('i-plus')+'Exception +1: a 4th client, this session only</button>':'')+
+   (staff&&s.tab==='1:3'&&s.extra&&s.clients.length<=svc('1:3').cap?'<button class="btn sec full" id="sxX0" style="margin-bottom:12px">Close the 4th seat</button>':'')+
    (staff&&s.clients.length?'<button class="btn sec full" id="sxDel" style="margin-bottom:12px;color:var(--bad)">'+ICON('i-x')+'Delete this session</button>':'')+
    (isPP?'<div class="field"><span class="flabel">Payment for this session</span><div class="seg" id="sxPay">'+sessPays().map(function(m){return '<button class="chip" aria-pressed="'+(m===(s.pay||''))+'"'+dis+'>'+esc(m)+'</button>'}).join('')+'</div></div>':'');
   openSheet(s.tab+' session',body,'<button class="btn full" id="sxSave">Save changes</button>');
@@ -1047,6 +1049,9 @@ function sessSheet(id){
       sessNotify([{cids:[c.cid],names:[c.name],text:'Hi '+first(c.name)+', you are no longer booked in the '+s.tab+' session on '+dayLabel(s.date)+' at '+hl(s.start)+'. No pass was used.'}],'Removed from the session')})
      .catch(function(e){BUSY--;paintBusy();b.disabled=false;$('#sxErr').innerHTML='<div class="note bad" style="margin-bottom:12px">'+ICON('i-alert')+'<span>Not removed: '+esc(e.message)+'</span></div>'})}});
   // Majd, 12 Nov: delete the whole session (owner and front desk): every client is taken out, no pass used, no trainer pay, the session is Cancelled
+  // Exception +1 (21 Nov): opens a 4th seat on this 1:3 only. Staff then add the client with "Add a client to the free seat".
+  var xs=function(on){s.extra=on?1:0;save('app_sess_extra',{ref:s.ref,id:s.id,on:on},on?'4th seat open: add the client':'Back to 3 seats').then(function(){},function(){s.extra=on?0:1});render();sessSheet(id)};
+  if($('#sxX1'))$('#sxX1').onclick=function(){xs(true)};if($('#sxX0'))$('#sxX0').onclick=function(){xs(false)};
   var del=$('#sxDel');if(del)del.onclick=function(){var b=del;
     if(b.dataset.sure!=='1'){b.dataset.sure='1';b.innerHTML=ICON('i-x')+'Tap again: delete this '+esc(s.tab)+' session on '+dayLabel(s.date)+' at '+hl(s.start);return}
     b.disabled=true;b.textContent='Deleting…';BUSY++;paintBusy();var cl=s.clients.slice(),fut=s.date>=T;
