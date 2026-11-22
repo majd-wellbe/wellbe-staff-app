@@ -1138,11 +1138,11 @@ function render(){
   if(ONB||(!D.guest&&!a.goal&&!store('wbc_goal_later_'+a.cid))){app.innerHTML=onbView(a);bindOnb(a);return}
   if(!full)VIEW='home';
   if(SEC==='work'){SEC='plan';PLANTAB='wo'}else if(SEC==='nut'){SEC='plan';PLANTAB='nut'}if(SEC==='shop'&&D.guest)SEC='center';
-  var body=((SEC==='center'||SEC==='me')&&!D.guest?walletBar(a):'')+(SEC==='center'&&!D.guest?noticeCards():'')+(SEC==='play'?VIEWS.play():SEC==='plan'?VIEWS.myplan():SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic());
+  var body=((SEC==='center'||SEC==='me')&&!D.guest?walletBar(a):'')+(SEC==='center'&&!D.guest?noticeCards():'')+(SEC==='play'?VIEWS.play():SEC==='plan'?(planOpen()?VIEWS.myplan():planLocked()):SEC==='shop'?VIEWS.shop():SEC==='me'?VIEWS.me():D.guest?VIEWS.wellbe():full?VIEWS.home():VIEWS.basic());
   setApp(app,'<div class="top"><div class="in"><div class="brand lg"><img src="logo-word.webp" alt="Wellbe Health Center"></div><a class="help" data-help="whatsapp" href="'+waLink('Hi '+DESK()+', this is '+a.name+'. ')+'" target="_blank" rel="noopener">'+ICON('i-wa','width:18px;height:18px')+''+DESK()+'</a>'+hqBtn()+'<button class="me" data-help="me" data-sec="me" aria-label="My profile"'+(SEC==='me'?' aria-current="page"':'')+'>'+avatar(a)+'</button></div></div>'+
    '<main'+((SEC==='center'||SEC==='shop')&&!D.guest&&full&&cartTotal().n?' class="has-cart"':'')+'>'+((SEC==='center'||SEC==='me')&&D.accounts.length>1?'<div class="accs" role="tablist" aria-label="Accounts">'+D.accounts.map(function(x,i){return '<button class="acc" aria-pressed="'+(i===A)+'" data-acc="'+i+'">'+esc(x.first)+'</button>'}).join('')+'</div>':'')+body+'</main>'+
    tabsView()+((SEC==='center'||SEC==='shop')&&!D.guest?cartBar():'')+modalView());
-  bind();if(SEC==='plan'&&PLANTAB==='wo'&&!D.guest)woBindView();if(D.guest)bindGuest();if(SEC==='plan'&&PLANTAB==='nut')nutBind();rdBind();
+  bind();if(SEC==='plan'&&planOpen()&&PLANTAB==='wo'&&!D.guest)woBindView();if(D.guest)bindGuest();if(SEC==='plan'&&planOpen()&&PLANTAB==='nut')nutBind();rdBind();
   if(full||a.goal)loadStreak(a);
   helpTick();
 }
@@ -1570,16 +1570,23 @@ ACT.out=function(){signOut(false)};
 function normPhone(p){var raw=String(p||'').trim(),d=raw.replace(/\D/g,'');if(!d)return '';
   if(raw.charAt(0)==='+')return d;if(d.indexOf('00')===0)return d.slice(2);if(d.indexOf('961')===0&&d.length>=10)return d;
   if(d.charAt(0)==='0')d=d.slice(1);return d.length<=8?'961'+d:d}
-function inviteText(friend,from){return 'Hi '+friend+'! 🎉 This is '+DESK()+' from Wellbe Health Center in '+cfg('center.location','')+'. '+from+' loves training with us and wanted you to be part of it, so here is your personal invite! 💪 When would you like to come by and meet the team?'}
-ACT.friend=function(){
+function inviteText(friend,from){var loc=cfg('center.location','');return 'Hi '+friend+'! 🎉 It’s '+from+'. I train at Wellbe Health Center'+(loc?' in '+loc:'')+' and I’d love you to try it. Here is a free trial session on me, book it here: https://app.wellbehealthcenter.com/client/ 💪'}
+// contacts on the installed app (Capacitor plugin). In a browser this is null and the old paths run
+function nativeContacts(){var c=window.Capacitor;return c&&c.isNativePlatform&&c.isNativePlatform()&&c.Plugins&&c.Plugins.Contacts||null}
+function canPick(){return !!(nativeContacts()||navigator.contacts&&navigator.contacts.select)}
+// My Plan: staff only until the setting ui.planFor is 'all' (the server marks staff accounts with staff:true)
+function planOpen(){var a=ACC()||{};return cfg('ui.planFor','staff')==='all'||!!a.staff}
+function planLocked(){return '<div class="card" style="margin-top:18px;text-align:center;padding:28px 20px" data-help="plan-locked"><div style="font-size:34px">🔒</div><h3 style="margin-top:8px">My Plan is coming soon</h3><p class="muted" style="margin-top:6px">Your workouts and nutrition plan will open here. We will tell you as soon as it is ready.</p></div>'}
+ACT.friend=function(){var nc=nativeContacts();
+  if(nc){nc.pickContact({projection:{name:true,phones:true}}).then(function(r){var c=r&&r.contact;if(!c){inviteSheet('','');return}var n=c.name||{},nm=n.display||[n.given,n.family].filter(Boolean).join(' ')||'',ph=c.phones&&c.phones[0]&&c.phones[0].number||'';inviteSheet(nm,ph)}).catch(function(){inviteSheet('','')});return}
   if(navigator.contacts&&navigator.contacts.select){navigator.contacts.select(['name','tel'],{multiple:false}).then(function(r){var c=r&&r[0];if(!c)return;inviteSheet((c.name&&c.name[0])||'',(c.tel&&c.tel[0])||'')}).catch(function(){inviteSheet('','')})}
   else inviteSheet('','')};
-function inviteSheet(nm,ph){var a=ACC(),picker=!!(navigator.contacts&&navigator.contacts.select);
-  openSheet('Invite a friend','<p class="muted" style="margin-bottom:4px">Add their name and phone number. '+DESK()+' will reach out with a warm welcome from you.</p>'+
+function inviteSheet(nm,ph){var a=ACC(),picker=canPick();
+  openSheet('Invite a friend','<p class="muted" style="margin-bottom:4px">Check their name and phone number. You send them the invite on WhatsApp, and '+DESK()+' gets their number to welcome them.</p>'+
    '<div class="field"><label for="fnm">Their name</label><input class="inp" id="fnm" autocomplete="off" value="'+esc(nm)+'" placeholder="e.g. Sara"></div>'+
    '<div class="field"><label for="fph">Their phone number</label><input class="inp" id="fph" type="tel" inputmode="tel" value="'+esc(ph)+'" placeholder="e.g. 03 123 456"></div>'+
    (picker?'<button class="btn ghost sm block" style="margin-top:10px" id="repick">'+ICON('i-users','width:18px;height:18px')+'Pick another contact</button>':''),
-   '<button class="btn block" id="go">'+ICON('i-heart')+'Send to '+DESK()+'</button>');
+   '<button class="btn block" id="go">'+ICON('i-heart')+'Invite</button>');
   if($('#repick'))$('#repick').onclick=function(){ACT.friend()};
   $('#go').onclick=function(){var b=this,n=$('#fnm').value.trim(),p=normPhone($('#fph').value);
     if(!n){toast('Write their name');return}if(p.length<10||p.length>15){toast('Check the phone number');return}
@@ -1587,7 +1594,9 @@ function inviteSheet(nm,ph){var a=ACC(),picker=!!(navigator.contacts&&navigator.
     busy(b,true);
     send('app_cl_request',{kind:'invite',fname:n,phone:p,msg:msg}).then(function(j){var st=((j&&j.ref)||{}).status,amt=refAmt();
        if(j&&j.ref){a.refs=(a.refs||[]).filter(function(x){return x.n!==n});a.refs.unshift({n:n,d:D.today,st:{'Already invited':'already','Already a client':'client'}[st]||'invited'})}
-       success('Invite on its way! 🎉',''+DESK()+' will send '+esc(first)+' a warm welcome from you. Thank you for sharing Wellbe.'+(st==='Invited'&&amt?' When '+esc(first)+' comes to the free trial, you get '+money(amt)+' Wellbe Credit for your next package.':''))})
+       if(st==='Already a client'){success('Already with us 💚',esc(first)+' already trains at Wellbe. Thank you for sharing!');return}
+       openSheet('',' <div class="done"><div class="ok">'+ICON('i-heart')+'</div><h3>One last tap 🎉</h3><p>Send '+esc(first)+' your invite on WhatsApp. '+DESK()+' has their number and will welcome them.'+(st==='Invited'&&amt?' When '+esc(first)+' comes to the free trial, you get '+money(amt)+' Wellbe Credit for your next package.':'')+'</p></div>','<a class="btn wa block" id="wfr" target="_blank" rel="noopener" href="'+link+'">'+ICON('i-wa')+'Send the invite on WhatsApp</a>');
+       $('#wfr').addEventListener('click',function(){setTimeout(closeSheet,400)})})
      .catch(function(e){busy(b,false);
        if(e&&/own number/i.test(e.message||'')){toast(e.message);return}   // you cannot invite yourself
        // backend not updated yet: hand it to Romy on WhatsApp in one tap
@@ -2108,9 +2117,9 @@ VIEWS.home=function(){var a=ACC(),p=currentPkg(a),q=quoteOfDay(),up=a.upcoming.f
   h+='<div style="margin-top:22px" data-help="invite">'+friendCard()+'</div>';
   return h};
 function rdRate(){return rdH2('Rate us')+'<div class="rd-rate" data-help="rate"><div class="card"><div class="stars">★★★★★</div><b>On Google</b><span>Helps others find us</span><button class="btn sm" style="margin-top:10px;width:100%;background:#e8a400;color:#fff" data-review="1">Review</button></div><div class="card"><div class="stars">★★★★★</div><b>In the app</b><span>Tell us how we are doing</span><button class="btn sm sec2" style="margin-top:10px;width:100%" data-act="rate">Rate</button></div></div>'}
-function friendCard(){var a=ACC()||{},amt=refAmt();return '<div class="invite rd-inv"><h3>'+(amt?'Invite a friend for a free trial and win '+money(amt)+' Wellbe Credit':'Who would you like to invite to Wellbe?')+'</h3><p>We’ll reach out with a warm welcome and a free trial session from you.</p>'+
+function friendCard(){var a=ACC()||{},amt=refAmt();return '<div class="invite rd-inv"><h3>'+(amt?'Invite a friend for a free trial and win '+money(amt)+' Wellbe Credit':'Who would you like to invite to Wellbe?')+'</h3><p>Pick a friend and send them a free trial session from you.</p>'+
   (amt?'<div class="ref-earn">'+ICON('i-gift','width:22px;height:22px;flex:none')+'<span>When your friend comes to their free trial session, you get <b>'+money(amt)+' Wellbe Credit</b> for your next package.</span></div>':'')+
-  '<button class="pick" data-act="friend"><span class="ic">'+ICON('i-users')+'</span><span class="grow"><b>Choose from my contacts</b><span>'+(navigator.contacts&&navigator.contacts.select?'Pick them, or type their name and phone number':'Type their name and phone number')+'</span></span>'+ICON('i-plus','width:20px;height:20px')+'</button>'+refList(a)+'</div>'}
+  '<button class="pick" data-act="friend"><span class="ic">'+ICON('i-users')+'</span><span class="grow"><b>Choose from my contacts</b><span>'+(canPick()?'Pick them, then send your invite on WhatsApp':'Type their name and phone number')+'</span></span>'+ICON('i-plus','width:20px;height:20px')+'</button>'+refList(a)+'</div>'}
 // referral credit: the server setting referral.amount (0 = off). It is wallet money for packages, not the game's Cash or coins
 function refAmt(){var v=Number(cfg('referral.amount',10));return v>0?v:0}
 var REFST={invited:['Invited',''],joined:['Joined','j'],earned:['earned','e'],already:['Already invited','m'],client:['Already a client','m']};
