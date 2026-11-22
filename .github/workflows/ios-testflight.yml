@@ -36,6 +36,8 @@ jobs:
           # First builds ship without Health and in-app purchases (nothing purchasable at launch).
           npm pkg delete "dependencies.@capgo/capacitor-health" "dependencies.@revenuecat/purchases-capacitor"
           npm install
+          # phone contacts picker for Invite a friend (version 6 = Capacitor 6)
+          npm install @capacitor-community/contacts@6
           # The build reads a JSON copy of capacitor.config.ts (no TypeScript needed on the build machine)
           rm capacitor.config.ts
           cat > capacitor.config.json <<'JSON'
@@ -51,6 +53,10 @@ jobs:
         working-directory: phase5/mobile/ios/App
         run: |
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" App/Info.plist
+          /usr/libexec/PlistBuddy -c 'Add :NSContactsUsageDescription string "Wellbe opens your contacts so you can pick a friend to invite to a free trial session."' App/Info.plist
+          # app icon: the Wellbe icon from the client app, sized up to the 1024 px the App Store asks for
+          sips -z 1024 1024 ../../../../client/icon-512.png --out App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          ls -la App/Assets.xcassets/AppIcon.appiconset
 
       - name: API key file
         env:
