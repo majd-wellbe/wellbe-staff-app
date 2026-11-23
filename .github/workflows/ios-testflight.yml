@@ -41,7 +41,7 @@ jobs:
           # The build reads a JSON copy of capacitor.config.ts (no TypeScript needed on the build machine)
           rm capacitor.config.ts
           cat > capacitor.config.json <<'JSON'
-          {"appId":"com.wellbe.client","appName":"Wellbe","webDir":"www","backgroundColor":"#151b1e","ios":{"contentInset":"always"},"plugins":{"SplashScreen":{"launchShowDuration":800,"backgroundColor":"#151b1e","showSpinner":false},"PushNotifications":{"presentationOptions":["badge","sound","alert"]},"LocalNotifications":{"smallIcon":"ic_stat_wellbe","iconColor":"#1f6e5b"}}}
+          {"appId":"com.wellbe.client","appName":"Wellbe","webDir":"www","backgroundColor":"#151b1e","ios":{"contentInset":"never"},"plugins":{"SplashScreen":{"launchShowDuration":800,"backgroundColor":"#151b1e","showSpinner":false},"PushNotifications":{"presentationOptions":["badge","sound","alert"]},"LocalNotifications":{"smallIcon":"ic_stat_wellbe","iconColor":"#1f6e5b"}}}
           JSON
           # copy-web.js looks one folder too high for client and core: point it at the repo root
           sed -i '' "s#'../..'#'../../..'#" scripts/copy-web.js
@@ -57,6 +57,9 @@ jobs:
           # app icon: the Wellbe icon from the client app, sized up to the 1024 px the App Store asks for
           sips -z 1024 1024 ../../../../client/icon-512.png --out App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
           ls -la App/Assets.xcassets/AppIcon.appiconset
+          sips -p 2732 2732 --padColor 18191B ../../../../client/icon-512.png --out "$RUNNER_TEMP/splash.png"
+          for f in App/Assets.xcassets/Splash.imageset/*.png; do cp "$RUNNER_TEMP/splash.png" "$f"; done
+          ls -la App/Assets.xcassets/Splash.imageset
 
       - name: API key file
         env:
@@ -73,7 +76,7 @@ jobs:
             -archivePath "$RUNNER_TEMP/App.xcarchive" archive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            MARKETING_VERSION=1.0.0 CURRENT_PROJECT_VERSION=${{ github.run_number }}
+            TARGETED_DEVICE_FAMILY=1 MARKETING_VERSION=1.0.0 CURRENT_PROJECT_VERSION=${{ github.run_number }}
 
       - name: Sign and upload to TestFlight
         run: |
