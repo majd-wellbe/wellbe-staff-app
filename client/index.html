@@ -2484,7 +2484,8 @@ function stepDefs(){var a=ACC(),N=nGet(),RS=RUNST&&RUNC===a.cid?RUNST:null,C=RS&
    ['body','Add weight, height and goal','Add','nutbody',N?!!(N.body&&N.body.weight&&N.body.height&&N.target):null],
    ['intake','Answer the 5 minute questionnaire','Start','nutq',N?!!N.done:null],
    ['run','Finish your first Corniche Run','Play','play',RS?((RS.bestM||0)>0||(RS.best||0)>0):null],
-   ['credit','Use your Wellbe Credit',C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play',RS?((C.pending||0)>0||((C.total||0)-(C.bal||0))>0):null]]}
+   ['credit','Use your Wellbe Credit',C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play',RS?((C.pending||0)>0||((C.total||0)-(C.bal||0))>0):null],
+   ['rate','Rate your experience with Wellbe','Rate','rate',!!store('wbc_rated')]]}
 // a step met now and not saved yet: saved on the phone at once and sent to the server (first time only)
 function stepsSync(){var a=ACC();if(!a)return;var cid=a.cid,h=hsOf(cid),nw=[];
   stepDefs().forEach(function(s){if(s[4]===true&&!h.steps[s[0]]){h.steps[s[0]]={doneAt:new Date().toISOString()};if(h.spend.indexOf(s[0])<0)h.spend.push(s[0]);nw.push(s[0])}});
