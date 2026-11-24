@@ -1,0 +1,6 @@
+-- 0025 (24 Nov 2026, applied live as "client_of_and_paid_log")
+-- app.pkg_paid_log + trigger pkg_paid_track on public.packages (every paid_cents change, with the day; old packages backfilled on their start date).
+-- api_app_boot (owner / front desk) sends paidLog {PKG-id: [[day, $], ...]} for packages of clients with brought_by.
+-- api_app_cedit accepts { by, mel }: "Client of" Wellbe / Melanie (is_mel) / a trainer (brought_by).
+-- Trainer bonus (pay.bring %, Simon 20) = % of what his clients PAY on 1:1/1:2/1:3 packages, in the month paid (staff app payroll).
+-- Full bodies: see the applied migration in Supabase.
