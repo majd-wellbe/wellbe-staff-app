@@ -519,7 +519,7 @@ function buildPatterns(){
 
 /* ---------------- rules ---------------- */
 // pay rules per person: cfg.staff[].pay  {rule:'tier', base} | {rule:'cut', cut} | {rule:'fixed', fixed:{training, Physio, PhysioIns, Prehab, Osteo...}}
-function payOf(name){return staffT(name).pay||{}}
+function payOf(name,d){var p=staffT(name).pay||{};if(d&&p.periods&&p.periods.length){var x=p.periods.filter(function(q){return (!q.from||d>=q.from)&&(!q.to||d<=q.to)})[0];if(x){var o={},k;for(k in p)o[k]=p[k];for(k in x)o[k]=x[k];return o}}return p}   /* 24 Nov: pay.periods [{from,to,tiers...}] = a rule for some months only (probation), so past months keep their own rates */
 // per session pay for fixed-rate people (by service, PhysioIns = physio paid by insurance, training = any other session)
 function fixedPay(s){var r=payOf(s.trainer),f=r.fixed;if(osteoShare(s))return 0;if(r.rule!=='fixed'||!f)return 0;
   if(s.clients.length&&s.clients.every(function(c){var p=pkgById(c.pkg);return p&&!(p.price>0)&&/assessment/i.test(p.type||'')}))return 0;
@@ -647,7 +647,7 @@ function calBind(evs,name){var b=document.getElementById('calAll');if(b)b.onclic
   [].forEach.call(document.querySelectorAll('[data-calg]'),function(a){a.addEventListener('click',function(){setTimeout(function(){a.lastChild.textContent='Added ✓';a.style.opacity='.6'},300)})})}
 function calEv(s){var names=s.clients.map(function(c){var x=clientById(c.cid);return x?first(x.name):''}).filter(Boolean),mine=ME.role==='trainer';
   return {uid:'wbs-'+s.id+'-'+String(ME.name||'').replace(/\W/g,''),start:calWhen(s.date,s.start),end:calEnd(s.date,s.start,s.end||endT(s.start)),
-    title:'Wellbe · '+s.tab+(names.length?' · '+names.join(', '):'')+(!mine&&s.trainer?' ('+s.trainer+')':''),where:'Wellbe Health Center'+(s.room?', '+s.room:''),notes:(s.trainer?'Trainer: '+s.trainer+'\n':'')+(names.length?'Clients: '+names.join(', ')+'\n':'')+'Wellbe Team app: https://app.wellbehealthcenter.com/'}}
+    title:'Wellbe · '+sLabel(s)+(names.length?' · '+names.join(', '):'')+(!mine&&s.trainer?' ('+s.trainer+')':''),where:'Wellbe Health Center'+(s.room?', '+s.room:''),notes:(s.trainer?'Trainer: '+s.trainer+'\n':'')+(names.length?'Clients: '+names.join(', ')+'\n':'')+'Wellbe Team app: https://app.wellbehealthcenter.com/'}}
 // what: 'day' (the day open in the schedule), 'week' (the days of the schedule), 's:<session id>'
 // trainers get their own sessions; owner and front desk get what the schedule shows (all, or the trainer picked)
 function calAction(what){what=typeof what==='string'?what:'pick';var mine=function(x){return x.status!=='Cancelled'&&(ME.role!=='trainer'||x.trainer===ME.name)&&(!UI.tr||ME.role==='trainer'||x.trainer===UI.tr)};
@@ -670,7 +670,7 @@ function clientBadges(c,showMoney){
 }
 function sessCard(s,opts){
   opts=opts||{};
-  var head='<div class="hd"><span class="time">'+hl(s.start).replace(' AM','').replace(' PM','')+'<br><span style="font:600 11px var(--body);color:var(--ink-3)">'+(+s.start.split(':')[0]<12?'AM':'PM')+'</span></span><div class="main"><b>'+s.tab+(s.tab==='1:1'?' personal':(s.tab.indexOf(':')>0?' semi private':''))+' · '+esc(s.trainer)+'</b><span>'+esc(s.room)+' · '+s.id+'</span></div>'+
+  var head='<div class="hd"><span class="time">'+hl(s.start).replace(' AM','').replace(' PM','')+'<br><span style="font:600 11px var(--body);color:var(--ink-3)">'+(+s.start.split(':')[0]<12?'AM':'PM')+'</span></span><div class="main"><b>'+esc(sLabel(s))+(s.tab==='1:1'?' personal':(s.tab.indexOf(':')>0?' semi private':''))+' · '+esc(s.trainer)+'</b><span>'+esc(s.room)+' · '+s.id+'</span></div>'+
      (s.status==='Done'?'<span class="pill p-good">'+ICON('i-check')+'Done</span>':s.status==='Cancelled'?'<span class="pill p-mute">Cancelled</span>':'')+
      (opts.change?'<button class="btn sec sm" data-change="'+s.id+'">Change</button>':'')+'</div>';
   var body=s.clients.map(function(c,i){
@@ -774,7 +774,9 @@ VIEWS.more=function(){
 
 /* trainer */
 // a day of the week view: one line per session
-function dayBlock(label,list){return '<div class="day"><h3>'+label+'<small>'+list.length+' sessions</small></h3>'+list.map(function(s){return '<div class="slot"><span class="t">'+hl(s.start).replace(':00','')+'</span><div class="main"><b>'+esc(s.tab)+'</b> · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'}).join('')+'</div>'}
+// 24 Nov: a Physio session on an assessment package shows as Assessment (the package type says it, the session kind stays Physio)
+function sLabel(s){return s.clients&&s.clients.some(function(c){var p=pkgById(c.pkg);return p&&/assess/i.test(p.type||'')})?'Assessment':s.tab}
+function dayBlock(label,list){return '<div class="day"><h3>'+label+'<small>'+list.length+' sessions</small></h3>'+list.map(function(s){return '<div class="slot"><span class="t">'+hl(s.start).replace(':00','')+'</span><div class="main"><b>'+esc(sLabel(s))+'</b> · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'}).join('')+'</div>'}
 function trainerToday(){
   var mine=sessOn(T,ME.trainer),nt=noticeTodoItems();
   return nutTodoBlock()+'<div class="h"><h2>Today</h2><small>'+dayLong(T)+'</small></div>'+
@@ -838,7 +840,7 @@ function dashNums(R){
   return {mjPay:mjPay,posP:posP,mine:net0+mjPay+posP,romy:ro,insPaid:ip,insAmt:ipAmt,insWait:iw,R:R,done:done,byType:byType,rev:rev,byTrainer:byTrainer,pay:pay,exp:exp,expN:ex.length,ex:ex,cash:cash,net:rev-pay-exp,sessions:done.length,hours:hours,owed:overdue().reduce(function(a,b){return a+b.due},0)}}
 // what one session earned the center and what it cost in trainer pay
 function sessCharged(s){var v=0;s.clients.forEach(function(c){if(deducts(c.att||'Present'))v+=centerValue(s,c)});return v}
-function sessPay(s,count){var r=payOf(s.trainer);
+function sessPay(s,count){var r=payOf(s.trainer,s.date);
   if(r.rule==='tier')return tier(count,r.tiers||(r.fixed&&r.fixed.tiers));
   if(r.rule==='fixed')return fixedPay(s);
   if(r.rule==='cut'){var cv=0,n=0;s.clients.forEach(function(c){if(deducts(c.att||'Present')&&!melSvc(s.tab)&&!isMel(c.cid)){cv+=centerValue(s,c);n++}});return n?Math.max(0,cv-melCut()):0}
@@ -912,12 +914,12 @@ function bar(l,v,max,txt){return '<div class="bar" title="'+esc(l)+': '+esc(txt)
 // month to date per trainer: delivered sessions, revenue, the cut trainer's own clients vs her service, fixed per-session pay
 function monthByTrainer(monthStart,to){var by={};to=to||T;
   SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=upTo()&&delivered(s)}).forEach(function(s){
-    var t=by[s.trainer]=by[s.trainer]||{sessions:0,rev:0,melPay:0,own:0,fixed:0};t.sessions++;t.fixed+=fixedPay(s);
+    var t=by[s.trainer]=by[s.trainer]||{sessions:0,rev:0,melPay:0,own:0,fixed:0,d:monthStart};t.sessions++;t.fixed+=fixedPay(s);
     var v=0,centerV=0,centerN=0;s.clients.forEach(function(c){if(!deducts(c.att||'Present'))return;var x=centerValue(s,c);v+=x;
       if(!melSvc(s.tab)&&!isMel(c.cid)){centerV+=x;centerN++}else t.own++});
     t.rev+=v;if(centerN)t.melPay+=Math.max(0,centerV-melCut())});
   return by}
-function trainerPay(name,t){var r=payOf(name);if(r.rule==='tier')return t.sessions*tier(t.sessions,r.tiers||(r.fixed&&r.fixed.tiers))+(r.base||0);if(r.rule==='cut')return t.melPay;if(r.rule==='fixed')return t.fixed;return 0}
+function trainerPay(name,t){var r=payOf(name,t&&t.d);if(r.rule==='tier')return t.sessions*tier(t.sessions,r.tiers||(r.fixed&&r.fixed.tiers))+(r.base||0);if(r.rule==='cut')return t.melPay;if(r.rule==='fixed')return t.fixed;return 0}
 
 /* ---------------- interactions ---------------- */
 function bindView(){
@@ -1027,7 +1029,7 @@ function sessSheet(id){
    (staff&&s.tab==='1:3'&&s.extra&&s.clients.length<=svc('1:3').cap?'<button class="btn sec full" id="sxX0" style="margin-bottom:12px">Close the 4th seat</button>':'')+
    (staff&&s.clients.length?'<button class="btn sec full" id="sxDel" style="margin-bottom:12px;color:var(--bad)">'+ICON('i-x')+'Delete this session</button>':'')+
    (isPP?'<div class="field"><span class="flabel">Payment for this session</span><div class="seg" id="sxPay">'+sessPays().map(function(m){return '<button class="chip" aria-pressed="'+(m===(s.pay||''))+'"'+dis+'>'+esc(m)+'</button>'}).join('')+'</div></div>':'');
-  openSheet(s.tab+' session',body,'<button class="btn full" id="sxSave">Save changes</button>');
+  openSheet(sLabel(s)+' session',body,'<button class="btn full" id="sxSave">Save changes</button>');
   var btn=$('#sxSave');
   var changed=function(){return JSON.stringify(cur)!==JSON.stringify(orig)};
   var paintBtn=function(){btn.disabled=false;btn.textContent='Save changes'};   // never greyed out: iPhones report a new date only when the picker closes
@@ -1107,7 +1109,7 @@ function sessNotify(msgs,type){
      .then(function(){closeSheet();render();toast('Notification sent')}).catch(function(e){b.disabled=false;b.textContent='Send notification';toast('Not sent: '+e.message)})}}
 function changeSession(id){
   var s=SESS.filter(function(x){return x.id===id})[0];if(!s){toast('Session not found, refresh');return} var kind=cancelKind(s);
-  var body='<div class="card" style="padding:12px 14px;margin-bottom:14px"><b>'+dayLong(s.date)+' · '+hl(s.start)+'</b><div class="muted" style="font-size:14px">'+esc(s.tab)+' with '+esc(s.trainer)+' · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'+
+  var body='<div class="card" style="padding:12px 14px;margin-bottom:14px"><b>'+dayLong(s.date)+' · '+hl(s.start)+'</b><div class="muted" style="font-size:14px">'+esc(sLabel(s))+' with '+esc(s.trainer)+' · '+s.clients.map(function(c){return esc(c.name)}).join(', ')+'</div></div>'+
    (s.clients.length>1?'<div class="field"><span class="flabel">Who?</span><div class="seg" id="who">'+s.clients.map(function(c,i){return '<button aria-pressed="'+(i===0)+'" data-i="'+i+'">'+esc(first(c.name))+'</button>'}).join('')+'<button data-i="all" aria-pressed="false">Whole session</button></div></div>':'')+
    '<div class="field"><span class="flabel">What happened?</span><div id="what" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+[['move','Reschedule'],['Early Cancel','Early cancel'],['Late Cancel','Late cancel'],['No Show','No show'],['trainer','Change trainer']].map(function(x,i){return '<button class="btn sec" style="min-height:52px'+(x[0]==='trainer'?';grid-column:1/-1':'')+'" aria-pressed="'+(i===0)+'" data-w="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div></div>'+
    '<div id="whatBody"></div>';
