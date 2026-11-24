@@ -74,6 +74,7 @@ jobs:
         working-directory: phase5/mobile/android
         run: |
           set -e
+          sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick
           cat variables.gradle
           sed -i "s/versionCode 1$/versionCode $RUN/; s/versionName \"1.0\"/versionName \"1.0.0\"/" app/build.gradle
           grep -n "versionCode\|versionName\|applicationId" app/build.gradle
