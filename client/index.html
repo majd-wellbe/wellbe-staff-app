@@ -1577,6 +1577,8 @@ function canPick(){return !!(nativeContacts()||navigator.contacts&&navigator.con
 // My Plan: staff only until the setting ui.planFor is 'all' (the server marks staff accounts with staff:true)
 function planOpen(){var a=ACC()||{};return cfg('ui.planFor','staff')==='all'||!!a.staff}
 function planLocked(){return '<div class="card" style="margin-top:18px;text-align:center;padding:28px 20px" data-help="plan-locked"><div style="font-size:34px">🔒</div><h3 style="margin-top:8px">My Plan is coming soon</h3><p class="muted" style="margin-top:6px">Your workouts and nutrition plan will open here. We will tell you as soon as it is ready.</p></div>'}
+// profile step: straight to the Google review page, for everyone
+ACT.greview=function(){store('wbc_reviewed','1');window.open(D.review||cfg('center.review',''),'_blank');setTimeout(function(){stepsSync();softRender()},600)};
 ACT.friend=function(){var nc=nativeContacts();
   if(nc){nc.pickContact({projection:{name:true,phones:true}}).then(function(r){var c=r&&r.contact;if(!c){inviteSheet('','');return}var n=c.name||{},nm=n.display||[n.given,n.family].filter(Boolean).join(' ')||'',ph=c.phones&&c.phones[0]&&c.phones[0].number||'';inviteSheet(nm,ph)}).catch(function(){inviteSheet('','')});return}
   if(navigator.contacts&&navigator.contacts.select){navigator.contacts.select(['name','tel'],{multiple:false}).then(function(r){var c=r&&r[0];if(!c)return;inviteSheet((c.name&&c.name[0])||'',(c.tel&&c.tel[0])||'')}).catch(function(){inviteSheet('','')})}
@@ -2484,7 +2486,8 @@ function stepDefs(){var a=ACC(),N=nGet(),RS=RUNST&&RUNC===a.cid?RUNST:null,C=RS&
    ['body','Add weight, height and goal','Add','nutbody',N?!!(N.body&&N.body.weight&&N.body.height&&N.target):null],
    ['intake','Answer the 5 minute questionnaire','Start','nutq',N?!!N.done:null],
    ['run','Finish your first Corniche Run','Play','play',RS?((RS.bestM||0)>0||(RS.best||0)>0):null],
-   ['credit','Use your Wellbe Credit',C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play',RS?((C.pending||0)>0||((C.total||0)-(C.bal||0))>0):null]]}
+   ['credit','Use your Wellbe Credit',C.bal?'$'+(C.bal/100).toFixed(2)+' ready':'Play','play',RS?((C.pending||0)>0||((C.total||0)-(C.bal||0))>0):null],
+   ['rate','Rate your experience with Wellbe','Rate','greview',store('wbc_reviewed')==='1']]}
 // a step met now and not saved yet: saved on the phone at once and sent to the server (first time only)
 function stepsSync(){var a=ACC();if(!a)return;var cid=a.cid,h=hsOf(cid),nw=[];
   stepDefs().forEach(function(s){if(s[4]===true&&!h.steps[s[0]]){h.steps[s[0]]={doneAt:new Date().toISOString()};if(h.spend.indexOf(s[0])<0)h.spend.push(s[0]);nw.push(s[0])}});
