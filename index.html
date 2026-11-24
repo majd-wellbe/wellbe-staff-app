@@ -914,14 +914,14 @@ function bar(l,v,max,txt){return '<div class="bar" title="'+esc(l)+': '+esc(txt)
 // month to date per trainer: delivered sessions, revenue, the cut trainer's own clients vs her service, fixed per-session pay
 function monthByTrainer(monthStart,to){var by={};to=to||T;
   SESS.filter(function(s){return s.date>=monthStart&&s.date<=to&&s.date<=upTo()&&delivered(s)}).forEach(function(s){
-    var t=by[s.trainer]=by[s.trainer]||{sessions:0,rev:0,melPay:0,own:0,fixed:0,d:monthStart};t.sessions++;t.fixed+=fixedPay(s);
+    var t=by[s.trainer]=by[s.trainer]||{sessions:0,rev:0,melPay:0,own:0,fixed:0,d:monthStart,attended:0};t.sessions++;if(s.clients.some(function(c){return (c.att||'Present')==='Present'}))t.attended=(t.attended||0)+1;t.fixed+=fixedPay(s);
     var v=0,centerV=0,centerN=0;s.clients.forEach(function(c){if(!deducts(c.att||'Present'))return;var x=centerValue(s,c);v+=x;
       if(!melSvc(s.tab)&&!isMel(c.cid)){centerV+=x;centerN++}else t.own++});
     t.rev+=v;if(centerN)t.melPay+=Math.max(0,centerV-melCut())});
   bringBonus(by,monthStart,to);
   return by}
 function trainerPay(name,t){return trainerPayBase(name,t)+(t&&t.bring||0)}   /* + the bonus on packages of clients he brought (24 Nov) */
-function trainerPayBase(name,t){var r=payOf(name,t&&t.d);if(r.rule==='tier')return t.sessions*tier(t.sessions,r.tiers||(r.fixed&&r.fixed.tiers))+(r.base||0);if(r.rule==='cut')return t.melPay;if(r.rule==='fixed')return t.fixed;return 0}
+function trainerPayBase(name,t){var r=payOf(name,t&&t.d);if(r.rule==='tier'){var n=r.presentOnly?(t.attended||0):t.sessions;return n*tier(n,r.tiers||(r.fixed&&r.fixed.tiers))+(r.base||0)}   /* presentOnly (Simon, 24 Nov): only sessions where a client attended are paid */if(r.rule==='cut')return t.melPay;if(r.rule==='fixed')return t.fixed;return 0}
 // CLIENT OF a trainer (24 Nov): he earns pay.bring % of what that client PAYS on 1:1 / 1:2 / 1:3 packages (first one and renewals), in the month it is paid (boot paidLog)
 // CLIENT OF (24 Nov): Wellbe (default), Melanie (her own client, is_mel) or a trainer (brought_by: his bonus on what the client pays)
 function clientOfVal(c){return c&&c.mel?'mel':(c&&c.by)||''}
