@@ -1,0 +1,114 @@
+name: Android Play build
+
+# Manual run. Builds the signed Android App Bundle (.aab) for Google Play and attaches it to a GitHub release.
+# Build number (versionCode) = the run number of this workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # The upload key is kept encrypted in the repo. Its password is derived from this existing secret.
+      SEED: ${{ secrets.ASC_KEY_P8 }}
+      RUN: ${{ github.run_number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Upload key (made once, then kept encrypted in the repo)
+        run: |
+          set -e
+          if [ -z "$SEED" ]; then echo "Secret ASC_KEY_P8 is missing"; exit 1; fi
+          PASS=$(printf '%s' "$SEED" | sha256sum | cut -c1-40)
+          echo "::add-mask::$PASS"
+          echo "KS_PASS=$PASS" >> "$GITHUB_ENV"
+          ENC=phase5/mobile/android-upload.p12.enc
+          if [ ! -f "$ENC" ]; then
+            keytool -genkeypair -alias upload -keyalg RSA -keysize 2048 -validity 10950 -storetype PKCS12 \
+              -keystore "$RUNNER_TEMP/upload.p12" -storepass "$PASS" -dname "CN=Majd Bou Habib, O=Wellbe, C=LB"
+            openssl enc -aes-256-cbc -pbkdf2 -salt -in "$RUNNER_TEMP/upload.p12" -out "$ENC" -pass "pass:$PASS"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "$ENC"
+            git commit -m "Android upload key (encrypted), made by the Android Play build"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            openssl enc -d -aes-256-cbc -pbkdf2 -in "$ENC" -out "$RUNNER_TEMP/upload.p12" -pass "pass:$PASS"
+          fi
+          keytool -list -keystore "$RUNNER_TEMP/upload.p12" -storetype PKCS12 -storepass "$PASS" | grep -i "fingerprint"
+
+      - name: Install and pack the web app (Capacitor 8 = Android 16 target, required by Google Play)
+        working-directory: phase5/mobile
+        run: |
+          set -e
+          # Android test builds ship without Health, purchases, push (needs Firebase) and the iOS project.
+          npm pkg delete "dependencies.@capgo/capacitor-health" "dependencies.@revenuecat/purchases-capacitor" "dependencies.@capacitor/push-notifications" "devDependencies.@capacitor/ios" "devDependencies.@capacitor/android" "devDependencies.@capacitor/cli"
+          npm install @capacitor/core@8 @capacitor/android@8 @capacitor/app@8 @capacitor/preferences@8 @capacitor/local-notifications@8 @capacitor/splash-screen@8 @capacitor/status-bar@8
+          npm install -D @capacitor/cli@8
+          rm capacitor.config.ts
+          cat > capacitor.config.json <<'JSON'
+          {"appId":"com.wellbe.client","appName":"Wellbe","webDir":"www","backgroundColor":"#151b1e","plugins":{"SplashScreen":{"launchShowDuration":800,"backgroundColor":"#18191b","showSpinner":false},"LocalNotifications":{"iconColor":"#1f6e5b"}}}
+          JSON
+          sed -i "s#'../..'#'../../..'#" scripts/copy-web.js
+          npm run web
+          npx cap add android
+          npx cap sync android
+          npm ls --depth=0 || true
+
+      - name: App settings (version, icon, loading screen)
+        working-directory: phase5/mobile/android
+        run: |
+          set -e
+          sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick
+          cat variables.gradle
+          sed -i "s/versionCode 1$/versionCode $RUN/; s/versionName \"1.0\"/versionName \"1.0.0\"/" app/build.gradle
+          grep -n "versionCode\|versionName\|applicationId" app/build.gradle
+          ICON=../../../client/icon-512.png
+          for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+            n=${d%%:*}; s=${d##*:}
+            for f in ic_launcher ic_launcher_round ic_launcher_foreground; do
+              convert "$ICON" -resize ${s}x${s} "app/src/main/res/mipmap-$n/$f.png"
+            done
+          done
+          rm -rf app/src/main/res/mipmap-anydpi-v26
+          for f in $(find app/src/main/res -name "splash.png"); do
+            w=$(identify -format "%w" "$f"); h=$(identify -format "%h" "$f")
+            m=$(( w < h ? w : h )); i=$(( m * 2 / 5 ))
+            convert "$ICON" -resize ${i}x${i} -background "#18191B" -gravity center -extent ${w}x${h} "$f"
+          done
+          cat app/src/main/AndroidManifest.xml
+
+      - name: Build and sign the app bundle
+        working-directory: phase5/mobile/android
+        run: |
+          set -e
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          jarsigner -keystore "$RUNNER_TEMP/upload.p12" -storetype PKCS12 -storepass "$KS_PASS" -sigalg SHA256withRSA -digestalg SHA-256 "$AAB" upload
+          jarsigner -verify "$AAB" | tail -2
+          cp "$AAB" "$RUNNER_TEMP/wellbe-android-$RUN.aab"
+          ls -la "$RUNNER_TEMP/wellbe-android-$RUN.aab"
+
+      - name: Attach the bundle to a GitHub release (direct download)
+        run: |
+          gh release create "android-$RUN" "$RUNNER_TEMP/wellbe-android-$RUN.aab" --title "Android build $RUN" --notes "Signed app bundle for Google Play, version 1.0.0 ($RUN)." --target "$GITHUB_SHA"
+
+      - name: Remove key file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.p12"
